@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { GameButton } from '../components/common/GameButton';
 import { GameCard } from '../components/common/GameCard';
 import { RouteHeader } from '../components/common/RouteHeader';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { LockIcon, JoinRoomIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
+import { sanitizeRoomCode } from '../domain/multiplayer/roomManager';
 
 interface JoinRoomScreenProps {
   onJoin: (roomId: string, password?: string) => void;
@@ -21,15 +22,25 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
   errorMessage,
 }) => {
   const { theme } = useTheme();
-  const [roomId, setRoomId] = useState(initialRoomId);
+  const [roomId, setRoomId] = useState(sanitizeRoomCode(initialRoomId));
   const [password, setPassword] = useState('');
   const [isJoining, setIsJoining] = useState(false);
 
+  const handlePaste = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text) setRoomId(sanitizeRoomCode(text));
+      }
+    } catch (_) {}
+  };
+
   const handleJoin = () => {
-    if (!roomId.trim()) return;
+    const cleanCode = sanitizeRoomCode(roomId);
+    if (!cleanCode) return;
     setIsJoining(true);
     setTimeout(() => {
-      onJoin(roomId.trim().toUpperCase(), password.trim());
+      onJoin(cleanCode, password.trim());
       setIsJoining(false);
     }, 250);
   };
@@ -59,7 +70,17 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
           )}
 
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Room code</Text>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: theme.textSecondary }]}>Room code</Text>
+              <TouchableOpacity
+                onPress={handlePaste}
+                style={[styles.pasteBadge, { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle }]}
+                accessibilityRole="button"
+                accessibilityLabel="Paste Room Code"
+              >
+                <Text style={[styles.pasteBadgeText, { color: COLORS.gentleOlive }]}>Paste code</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={[
                 styles.codeInput,
@@ -72,7 +93,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
               placeholder="e.g. K9X2P7"
               placeholderTextColor={theme.textMuted}
               value={roomId}
-              onChangeText={(txt) => setRoomId(txt.toUpperCase())}
+              onChangeText={(txt) => setRoomId(sanitizeRoomCode(txt))}
               autoCapitalize="characters"
               maxLength={6}
             />
@@ -158,11 +179,27 @@ const styles = StyleSheet.create({
     gap: SPACING.xs, // 4px
     marginBottom: SPACING.xs, // 4px
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs, // 4px
+  },
   label: {
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs, // 4px
+  },
+  pasteBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.compact,
+    borderWidth: 1,
+  },
+  pasteBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   codeInput: {
     backgroundColor: COLORS.surfaceRaised,

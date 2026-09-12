@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
-import { COLORS, RADIUS, SPACING } from '../../design/tokens';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../design/tokens';
 import { LockIcon } from '../icons/CustomIcons';
+import { useTheme } from '../../design/theme';
 
 interface RoomCodeBadgeProps {
   roomId: string;
@@ -9,13 +10,34 @@ interface RoomCodeBadgeProps {
 }
 
 export const RoomCodeBadge: React.FC<RoomCodeBadgeProps> = ({ roomId, isPrivate = false }) => {
+  const { theme, isDark } = useTheme();
+
   return (
-    <View style={styles.badge}>
-      <View style={styles.topBevel} />
-      <Text style={styles.label}>ROOM IDENTIFIER</Text>
+    <View
+      style={[
+        styles.badge,
+        {
+          backgroundColor: theme.bgCard,
+          borderColor: theme.borderSubtle,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.topBevel,
+          {
+            backgroundColor: isDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(255, 255, 255, 0.5)',
+          },
+        ]}
+      />
+      <Text style={[styles.label, { color: theme.textMuted }]}>Room code</Text>
       <View style={styles.row}>
-        <Text style={styles.code}>#{roomId}</Text>
-        {isPrivate && <LockIcon size={14} color={COLORS.goldPrimary} />}
+        <Text style={[styles.code, { color: theme.accentHazel, fontFamily: TYPOGRAPHY.monoFamily }]}>
+          {roomId}
+        </Text>
+        {isPrivate && <LockIcon size={14} color={theme.accentHazel} />}
       </View>
     </View>
   );
@@ -23,12 +45,10 @@ export const RoomCodeBadge: React.FC<RoomCodeBadgeProps> = ({ roomId, isPrivate 
 
 const styles = StyleSheet.create({
   badge: {
-    backgroundColor: COLORS.surfaceRaised,
     paddingVertical: SPACING.sm, // 8px
     paddingHorizontal: SPACING.md, // 12px
-    borderRadius: RADIUS.compact, // 8px
+    borderRadius: RADIUS.control, // 12px
     borderWidth: 1,
-    borderColor: COLORS.floatingDockBorder,
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
@@ -39,13 +59,11 @@ const styles = StyleSheet.create({
     left: 8,
     right: 8,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
   },
   label: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: COLORS.textMuted,
-    letterSpacing: 0.8,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     marginBottom: SPACING.xs, // 4px
   },
   row: {
@@ -55,8 +73,7 @@ const styles = StyleSheet.create({
   },
   code: {
     fontSize: 18,
-    fontWeight: '900',
-    color: COLORS.goldPrimary,
-    letterSpacing: 2,
+    fontWeight: '800',
+    letterSpacing: 3,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { GameButton } from '../components/common/GameButton';
 import { GameCard } from '../components/common/GameCard';
@@ -22,8 +22,17 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onLeaveLobby,
 }) => {
   const { theme } = useTheme();
+  const [copied, setCopied] = useState(false);
   const isHost = room.hostId === player.id;
   const isReadyToStart = room.playerCount >= 2;
+
+  const handleCopyCode = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(room.id);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
@@ -41,21 +50,36 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
         >
           <View style={styles.arenaBadge}>
             <Text style={[styles.arenaTitle, { color: theme.textPrimary }]}>{room.name}</Text>
-            <View
-              style={[
-                styles.codeRow,
-                { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel },
-              ]}
-            >
-              <Text style={[styles.codeLabel, { color: '#8A6724' }]}>Room code:</Text>
-              <Text style={[styles.codeVal, { color: '#8A6724' }]}>#{room.id}</Text>
+            <View style={styles.codeContainer}>
+              <View
+                style={[
+                  styles.codeRow,
+                  { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel },
+                ]}
+              >
+                <Text style={[styles.codeLabel, { color: '#8A6724' }]}>Room code:</Text>
+                <Text style={[styles.codeVal, { color: '#8A6724' }]}>#{room.id}</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.copyBtn, { backgroundColor: copied ? theme.accentOlive : theme.bgRecessed, borderColor: theme.borderSubtle }]}
+                onPress={handleCopyCode}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Copy room code"
+              >
+                <CopyIcon size={14} color={copied ? COLORS.lunarShadow : theme.textPrimary} />
+                <Text style={[styles.copyBtnText, { color: copied ? COLORS.lunarShadow : theme.textPrimary }]}>
+                  {copied ? 'Copied!' : 'Copy code'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
           {/* PLAYERS SLOTS */}
           <View style={styles.slotsContainer}>
             <Text style={[styles.sectionLabel, { color: theme.textMuted }]}>
-              CONNECTED PLAYERS ({room.playerCount}/{room.maxPlayers})
+              Connected players ({room.playerCount}/{room.maxPlayers})
             </Text>
 
             {/* Slot 1: Host */}
@@ -174,7 +198,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                     { color: isReadyToStart ? COLORS.lunarShadow : theme.textMuted },
                   ]}
                 >
-                  {isReadyToStart ? 'LAUNCH MATCH ↗' : 'AWAITING 2ND PLAYER'}
+                  {isReadyToStart ? 'Start match ↗' : 'Waiting for opponent...'}
                 </Text>
               </TouchableOpacity>
             ) : (
@@ -215,6 +239,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.2,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  codeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    flexWrap: 'wrap',
+  },
+  copyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+  },
+  copyBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   codeRow: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { COLORS, RADIUS, SHADOWS, SPACING } from '../../design/tokens';
+import { useTheme } from '../../design/theme';
 
 interface GameCardProps {
   children: React.ReactNode;
@@ -9,15 +10,29 @@ interface GameCardProps {
 }
 
 export const GameCard: React.FC<GameCardProps> = ({ children, style, highlight = false }) => {
+  const { theme, isDark } = useTheme();
+
   return (
     <View
       style={[
         styles.card,
-        highlight && styles.highlight,
+        {
+          backgroundColor: theme.bgCard,
+          borderColor: highlight ? theme.accentOlive : theme.borderSubtle,
+        },
         style,
       ]}
     >
-      <View style={styles.topBevel} />
+      <View
+        style={[
+          styles.topBevel,
+          {
+            backgroundColor: isDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(255, 255, 255, 0.6)',
+          },
+        ]}
+      />
       {children}
     </View>
   );
@@ -25,10 +40,8 @@ export const GameCard: React.FC<GameCardProps> = ({ children, style, highlight =
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surfaceRaised,
     borderRadius: RADIUS.surface,
     borderWidth: 1,
-    borderColor: COLORS.floatingDockBorder,
     padding: SPACING.lg, // 16px
     position: 'relative',
     overflow: 'hidden',
@@ -40,10 +53,9 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.10)',
   },
   highlight: {
-    borderColor: COLORS.playEmerald,
+    borderColor: COLORS.gentleOlive,
   },
 });
 

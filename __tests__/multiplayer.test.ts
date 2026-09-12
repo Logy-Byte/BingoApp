@@ -1,4 +1,10 @@
-import { RoomManager, generateRoomId, hashPassword } from '../src/domain/multiplayer/roomManager';
+import {
+  RoomManager,
+  generateRoomId,
+  hashPassword,
+  sanitizeRoomCode,
+  getHumanErrorMessage,
+} from '../src/domain/multiplayer/roomManager';
 import { AntiCheatValidator } from '../src/domain/multiplayer/antiCheatValidator';
 import { generate5x5Board } from '../src/domain/engine/gridGameEngine';
 import { Player } from '../src/domain/types';
@@ -77,6 +83,19 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
 
       expect(joinThird.success).toBe(false);
       expect(joinThird.error).toContain('full');
+    });
+
+    test('normalizes user-entered room codes via sanitizeRoomCode', () => {
+      expect(sanitizeRoomCode('  #k9-x2 p7  ')).toBe('K9X2P7');
+      expect(sanitizeRoomCode('abc12345')).toBe('ABC123');
+      expect(sanitizeRoomCode('')).toBe('');
+    });
+
+    test('returns structured error and human message for invalid codes', () => {
+      const result = roomManager.joinRoom('BAD', testPlayer);
+      expect(result.success).toBe(false);
+      expect(result.errorCode).toBe('INVALID_ROOM_CODE');
+      expect(result.error).toBe(getHumanErrorMessage('INVALID_ROOM_CODE'));
     });
 
     test('online player telemetry returns null when standalone without fake numbers', () => {

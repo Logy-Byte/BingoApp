@@ -70,6 +70,9 @@ export type IconName =
   | 'more'
   | 'copy'
   | 'share'
+  | 'sun'
+  | 'moon'
+  | 'heart'
   // State
   | 'success'
   | 'warning'

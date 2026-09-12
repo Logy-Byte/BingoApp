@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, ViewStyle, View, StyleProp } from 'react-native';
-import { COLORS, RADIUS, SPACING, TOUCH_TARGET } from '../../design/tokens';
+import { COLORS, RADIUS, SPACING, TOUCH_TARGET, TYPOGRAPHY } from '../../design/tokens';
 import { InlineLoader } from './InlineLoader';
+import { useTheme } from '../../design/theme';
 
 interface GameButtonProps {
   title: string;
@@ -24,29 +25,31 @@ export const GameButton: React.FC<GameButtonProps> = ({
   icon,
   style,
 }) => {
+  const { theme, isDark } = useTheme();
+
   const getBgColor = () => {
-    if (disabled) return COLORS.surfaceDeep;
+    if (disabled) return theme.bgRecessed;
     switch (variant) {
       case 'secondary':
-        return COLORS.surfaceRaised;
+        return theme.bgCard;
       case 'success':
-        return COLORS.playEmerald;
+      case 'primary':
+        return COLORS.gentleOlive;
       case 'danger':
         return COLORS.dangerRed;
       case 'outline':
         return 'transparent';
-      case 'primary':
       default:
-        return COLORS.playEmerald;
+        return COLORS.gentleOlive;
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return COLORS.textMuted;
-    if (variant === 'primary' || variant === 'success') return COLORS.textDark;
-    if (variant === 'outline') return COLORS.textPrimary;
+    if (disabled) return theme.textMuted;
+    if (variant === 'primary' || variant === 'success') return COLORS.lunarShadow;
+    if (variant === 'outline') return theme.textPrimary;
     if (variant === 'danger') return '#FFFFFF';
-    return COLORS.textPrimary;
+    return theme.textPrimary;
   };
 
   const getDimensions = () => {
@@ -93,9 +96,9 @@ export const GameButton: React.FC<GameButtonProps> = ({
           backgroundColor: getBgColor(),
           borderColor:
             variant === 'outline'
-              ? COLORS.borderStrong
+              ? theme.borderSubtle
               : variant === 'secondary'
-              ? COLORS.floatingDockBorder
+              ? theme.borderSubtle
               : 'transparent',
           borderWidth: variant === 'outline' || variant === 'secondary' ? 1 : 0,
         },
@@ -106,13 +109,13 @@ export const GameButton: React.FC<GameButtonProps> = ({
     >
       {/* Top Specular Bevel for Secondary and Primary */}
       {(variant === 'primary' || variant === 'secondary') && !disabled && (
-        <View style={styles.topBevel} />
+        <View style={[styles.topBevel, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.4)' }]} />
       )}
 
       {loading ? (
         <InlineLoader
           size={size === 'lg' ? 20 : 16}
-          color={variant === 'primary' || variant === 'success' ? COLORS.textDark : COLORS.textPrimary}
+          color={variant === 'primary' || variant === 'success' ? COLORS.lunarShadow : theme.textPrimary}
         />
       ) : (
         <View style={styles.contentRow}>
@@ -124,6 +127,7 @@ export const GameButton: React.FC<GameButtonProps> = ({
                 fontSize: size === 'lg' ? 15 : size === 'sm' ? 12 : 13,
                 color: getTextColor(),
                 letterSpacing: -0.2,
+                fontFamily: TYPOGRAPHY.fontFamily,
               },
             ]}
           >

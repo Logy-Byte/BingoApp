@@ -139,8 +139,10 @@ export const SURFACES = {
 };
 
 export const TYPOGRAPHY = {
+  brandFamily:
+    "'Poppins', 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   fontFamily:
-    "'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "'Sora', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   // Monospaced tabular numerals for game numbers and timers
   monoFamily:
     "'Sora', 'Menlo', 'JetBrains Mono', monospace",

@@ -29,7 +29,7 @@ export const GameModeShelf: React.FC<GameModeShelfProps> = ({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.shelfHeader, { color: theme.textMuted }]}>GAME MODES</Text>
+      <Text style={[styles.shelfHeader, { color: theme.textMuted }]}>Game modes</Text>
 
       {/* Row 1: Core Experiences with tailored identities */}
       <View style={styles.modeRow}>
@@ -64,7 +64,7 @@ export const GameModeShelf: React.FC<GameModeShelfProps> = ({
                 ]}
               >
                 <Text style={[styles.modeTagText, { color: COLORS.lunarShadow }]}>
-                  OFFLINE
+                  Offline
                 </Text>
               </View>
             </View>
@@ -107,7 +107,7 @@ export const GameModeShelf: React.FC<GameModeShelfProps> = ({
                   { backgroundColor: theme.accentHazelTint },
                 ]}
               >
-                <Text style={[styles.modeTagText, { color: '#8A6724' }]}>SOCIAL</Text>
+                <Text style={[styles.modeTagText, { color: '#8A6724' }]}>Social</Text>
               </View>
             </View>
             <Text style={[styles.tileTitle, { color: theme.textPrimary }]}>
@@ -151,7 +151,7 @@ export const GameModeShelf: React.FC<GameModeShelfProps> = ({
                 { backgroundColor: theme.accentHazelTint },
               ]}
             >
-              <Text style={[styles.modeTagText, { color: '#8A6724' }]}>24H SEED</Text>
+              <Text style={[styles.modeTagText, { color: '#8A6724' }]}>Daily seed</Text>
             </View>
           </View>
           <Text style={[styles.tileTitle, { color: theme.textPrimary }]}>
@@ -192,7 +192,7 @@ export const GameModeShelf: React.FC<GameModeShelfProps> = ({
               ]}
             >
               <Text style={[styles.modeTagText, { color: theme.textMuted }]}>
-                CASUAL
+                Casual
               </Text>
             </View>
           </View>

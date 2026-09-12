@@ -928,3 +928,58 @@ export const ConnectionIcon: React.FC<IconProps> = ({
 export const DisconnectIcon: React.FC<IconProps> = (props) => (
   <ConnectionIcon connected={false} color={ICON_COLORS.danger} {...props} />
 );
+
+export const SunIcon: React.FC<IconProps> = ({
+  size = ICON_SIZES.md,
+  color = ICON_COLORS.primary,
+  style,
+  onPress,
+  interactive,
+}) => (
+  <AnimatedIcon
+    name="sun"
+    size={size}
+    color={color}
+    style={style}
+    interactive={interactive}
+    onPress={onPress}
+    accessibilityLabel="Light Theme Sun"
+  />
+);
+
+export const MoonIcon: React.FC<IconProps> = ({
+  size = ICON_SIZES.md,
+  color = ICON_COLORS.primary,
+  style,
+  onPress,
+  interactive,
+}) => (
+  <AnimatedIcon
+    name="moon"
+    size={size}
+    color={color}
+    style={style}
+    interactive={interactive}
+    onPress={onPress}
+    accessibilityLabel="Dark Theme Moon"
+  />
+);
+
+export const HeartIcon: React.FC<IconProps> = ({
+  size = ICON_SIZES.md,
+  color = ICON_COLORS.primary,
+  style,
+  onPress,
+  interactive,
+}) => (
+  <AnimatedIcon
+    name="heart"
+    size={size}
+    color={color}
+    style={style}
+    interactive={interactive}
+    onPress={onPress}
+    accessibilityLabel="Favorite"
+  />
+);
+

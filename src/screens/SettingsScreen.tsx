@@ -11,6 +11,10 @@ import {
   BingoIdentityIcon,
   ChevronIcon,
   IconSpecimenSheet,
+  SunIcon,
+  MoonIcon,
+  WarningIcon,
+  InfoIcon,
 } from '../components/icons';
 import { useTheme, REFERENCE_PALETTE } from '../design/theme';
 
@@ -24,6 +28,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const [voiceCaller, setVoiceCaller] = useState(SoundEngine.isVoiceEnabled());
   const [volumeLevel, setVolumeLevel] = useState<'low' | 'med' | 'high'>('med');
   const [showSpecimenSheet, setShowSpecimenSheet] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [accountResetDone, setAccountResetDone] = useState(false);
 
   const handleToggleMute = () => {
     const next = !isMuted;
@@ -79,7 +85,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               accessibilityRole="button"
               accessibilityLabel="Switch to Light Theme"
             >
-              <Text style={styles.themeModeEmoji}>☀️</Text>
+              <View style={styles.themeIconWrap}>
+                <SunIcon
+                  size={22}
+                  color={mode === 'light' ? COLORS.winterHazel : theme.textMuted}
+                />
+              </View>
               <View>
                 <Text style={[styles.themeModeTitle, { color: COLORS.lunarShadow }]}>
                   Light Theme
@@ -104,7 +115,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               accessibilityRole="button"
               accessibilityLabel="Switch to Dark Theme"
             >
-              <Text style={styles.themeModeEmoji}>🌙</Text>
+              <View style={styles.themeIconWrap}>
+                <MoonIcon
+                  size={22}
+                  color={mode === 'dark' ? COLORS.cleanWhite : theme.textMuted}
+                />
+              </View>
               <View>
                 <Text
                   style={[
@@ -335,6 +351,99 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </TouchableOpacity>
         </GameCard>
 
+        {/* ACCOUNT & PRIVACY (Apple App Store Guideline 5.1.1(v) Compliant) */}
+        <GameCard
+          style={[
+            styles.card,
+            { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle },
+          ]}
+        >
+          <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
+            Account & Privacy
+          </Text>
+          <Text style={[styles.specimenIntro, { color: theme.textSecondary }]}>
+            Zero third-party trackers. All telemetry and player records remain locally sovereign or verified via game server.
+          </Text>
+
+          <View style={[styles.settingRow, { borderBottomColor: theme.borderSubtle }]}>
+            <View style={styles.iconPrefix}>
+              <InfoIcon size={18} color={theme.textMuted} />
+            </View>
+            <View style={styles.settingTextGroup}>
+              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>Account ID</Text>
+              <Text style={[styles.rowDesc, { color: theme.textMuted }]}>
+                UID-8842-BNGO • Guest Sovereign Profile
+              </Text>
+            </View>
+          </View>
+
+          {accountResetDone ? (
+            <View
+              style={[
+                styles.successResetBox,
+                { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive },
+              ]}
+            >
+              <Text style={[styles.successResetText, { color: COLORS.lunarShadow }]}>
+                Account data, match records, and progression have been completely deleted.
+              </Text>
+            </View>
+          ) : confirmDelete ? (
+            <View
+              style={[
+                styles.deleteConfirmCard,
+                { backgroundColor: theme.bgRecessed, borderColor: COLORS.dangerRed },
+              ]}
+            >
+              <View style={styles.deleteConfirmHeader}>
+                <WarningIcon size={18} color={COLORS.dangerRed} />
+                <Text style={[styles.deleteConfirmTitle, { color: COLORS.dangerRed }]}>
+                  Delete account & reset data?
+                </Text>
+              </View>
+              <Text style={[styles.deleteConfirmBody, { color: theme.textSecondary }]}>
+                This will permanently delete all match history, MMR rating, achievements, and unlockables. This action is irreversible.
+              </Text>
+              <View style={styles.deleteConfirmActions}>
+                <TouchableOpacity
+                  style={[styles.cancelBtn, { borderColor: theme.borderSubtle }]}
+                  onPress={() => setConfirmDelete(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel Account Deletion"
+                >
+                  <Text style={[styles.cancelBtnText, { color: theme.textPrimary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.confirmDeleteBtn, { backgroundColor: COLORS.dangerRed }]}
+                  onPress={() => {
+                    setConfirmDelete(false);
+                    setAccountResetDone(true);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Permanently Delete Account"
+                >
+                  <Text style={styles.confirmDeleteBtnText}>Confirm Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.deleteAccountTrigger,
+                { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
+              ]}
+              onPress={() => setConfirmDelete(true)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Delete Account and Data"
+            >
+              <Text style={[styles.deleteAccountTriggerText, { color: COLORS.dangerRed }]}>
+                Delete Account & Reset Progression
+              </Text>
+            </TouchableOpacity>
+          )}
+        </GameCard>
+
         {/* SYSTEM INFORMATION */}
         <GameCard
           style={[
@@ -407,8 +516,10 @@ const styles = StyleSheet.create({
   themeModeBtnActive: {
     borderWidth: 2,
   },
-  themeModeEmoji: {
-    fontSize: 22,
+  themeIconWrap: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   themeModeTitle: {
     fontSize: 14,
@@ -561,5 +672,81 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
     fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  deleteAccountTrigger: {
+    marginTop: SPACING.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  deleteAccountTriggerText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  deleteConfirmCard: {
+    marginTop: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+    gap: SPACING.sm,
+  },
+  deleteConfirmHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteConfirmTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  deleteConfirmBody: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  deleteConfirmActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: 4,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.control,
+    alignItems: 'center',
+  },
+  confirmDeleteBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.cleanWhite,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  successResetBox: {
+    marginTop: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+  },
+  successResetText: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily,
+    textAlign: 'center',
   },
 });

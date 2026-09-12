@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../design/tokens';
-import { SettingsIcon, VolumeIcon, SpeechIcon, RankIcon } from '../icons/CustomIcons';
+import { SettingsIcon, VolumeIcon, SpeechIcon, RankIcon, SunIcon, MoonIcon } from '../icons/CustomIcons';
 import { useTheme } from '../../design/theme';
 
 interface PlayerStageBarProps {
@@ -90,7 +90,11 @@ export const PlayerStageBar: React.FC<PlayerStageBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} theme`}
         >
-          <Text style={styles.themeIconEmoji}>{isDark ? '☀️' : '🌙'}</Text>
+          {isDark ? (
+            <SunIcon size={18} color={COLORS.winterHazel} />
+          ) : (
+            <MoonIcon size={18} color={COLORS.lunarShadow} />
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity

@@ -31,7 +31,7 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
-      <RouteHeader title="Host Match" onBack={onBack} />
+      <RouteHeader title="Create room" onBack={onBack} />
 
       <View style={styles.contentWrap}>
         <View
@@ -186,7 +186,7 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Create Room"
           >
-            <Text style={styles.createSubmitBtnText}>CREATE ROOM ↗</Text>
+            <Text style={styles.createSubmitBtnText}>Create room ↗</Text>
           </TouchableOpacity>
         </View>
       </View>

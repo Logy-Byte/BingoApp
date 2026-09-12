@@ -72,12 +72,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             { color: hasWon ? COLORS.winterHazel : theme.textPrimary },
           ]}
         >
-          {hasWon ? 'BINGO VICTORY' : 'MATCH COMPLETE'}
+          {hasWon ? 'Bingo Victory!' : 'Match Complete'}
         </Text>
 
         <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
           {hasWon
-            ? 'Verified by authoritative game engine. Winning line achieved!'
+            ? 'Winning lines completed! Excellent match performance.'
             : 'Line completion not secured before drawn balls concluded.'}
         </Text>
 
@@ -97,7 +97,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 { color: hasWon ? COLORS.lunarShadow : '#DC2626' },
               ]}
             >
-              Ranked Rating: {hasWon ? `+${ratingDelta} PTS` : `-${Math.abs(ratingDelta)} PTS`}
+              Ranked rating: {hasWon ? `+${ratingDelta} pts` : `-${Math.abs(ratingDelta)} pts`}
             </Text>
           </View>
         )}
@@ -113,7 +113,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
               },
             ]}
           >
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>FINAL SCORE</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Final score</Text>
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>
               {score.toLocaleString()}
             </Text>
@@ -138,7 +138,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 { color: hasWon ? '#8A6724' : theme.textMuted },
               ]}
             >
-              LINES COMPLETED
+              Lines completed
             </Text>
             <Text
               style={[
@@ -159,7 +159,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
               },
             ]}
           >
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>BALLS DRAWN</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Balls drawn</Text>
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>
               {totalCallsCount} / 25
             </Text>
@@ -174,7 +174,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
               },
             ]}
           >
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>MATCH TIME</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Match time</Text>
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>
               {formatTime(matchDurationSec)}
             </Text>
@@ -196,12 +196,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Play Again"
           >
-            <Text style={styles.primaryActionText}>PLAY AGAIN ↗</Text>
+            <Text style={styles.primaryActionText}>Play again ↗</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
-              styles.actionBtn,
+              styles.secondaryBtn,
               {
                 backgroundColor: theme.bgRecessed,
                 borderColor: theme.borderSubtle,
@@ -213,7 +213,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             accessibilityLabel="Return to Lobby"
           >
             <Text style={[styles.secondaryActionText, { color: theme.textPrimary }]}>
-              RETURN TO HOME
+              Return to lobby
             </Text>
           </TouchableOpacity>
         </View>

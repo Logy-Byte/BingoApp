@@ -7,6 +7,7 @@ import {
   PreviousIcon,
   NextIcon,
   ShuffleIcon,
+  HeartIcon,
 } from '../icons/CustomIcons';
 import { useTheme } from '../../design/theme';
 
@@ -31,7 +32,7 @@ export const LobbyStageHero: React.FC<LobbyStageHeroProps> = ({ onQuickPlay }) =
   const previewGrid = [
     [7, 12, 18, 22, 25],
     [3, 9, 15, 20, 24],
-    [1, 8, '★', 17, 23],
+    [1, 8, 'FREE', 17, 23],
     [5, 11, 14, 19, 21],
     [2, 6, 13, 16, 10],
   ];
@@ -87,7 +88,7 @@ export const LobbyStageHero: React.FC<LobbyStageHeroProps> = ({ onQuickPlay }) =
                 {row.map((val, cIdx) => {
                   const key = `${rIdx}-${cIdx}`;
                   const isMarked = markedSet.has(key);
-                  const isCenter = val === '★';
+                  const isCenter = val === 'FREE';
 
                   return (
                     <View
@@ -214,7 +215,7 @@ export const LobbyStageHero: React.FC<LobbyStageHeroProps> = ({ onQuickPlay }) =
           accessibilityRole="button"
           accessibilityLabel="Favorite Mode"
         >
-          <Text style={{ fontSize: 16, color: theme.textMuted }}>♡</Text>
+          <HeartIcon size={16} color={theme.textMuted} />
         </TouchableOpacity>
       </View>
     </View>
