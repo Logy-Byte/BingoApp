@@ -1,0 +1,58 @@
+const path = require('path');
+const HTMLWebpackPlugin = require('html-webpack-plugin');
+
+const appDirectory = path.resolve(__dirname);
+
+module.exports = {
+  entry: path.resolve(appDirectory, 'index.web.js'),
+  output: {
+    filename: 'bundle.web.js',
+    path: path.resolve(appDirectory, 'dist'),
+  },
+  resolve: {
+    extensions: ['.web.tsx', '.web.ts', '.tsx', '.ts', '.web.js', '.js'],
+    alias: {
+      'react-native$': 'react-native-web',
+    },
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(tsx|ts|jsx|js)$/,
+        exclude: /node_modules[/\\](?!react-native-safe-area-context)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            configFile: false,
+            babelrc: false,
+            presets: [
+              ['@babel/preset-env', { loose: true }],
+              ['@babel/preset-react', { runtime: 'automatic' }],
+              '@babel/preset-typescript',
+            ],
+            plugins: [
+              ['@babel/plugin-transform-class-properties', { loose: true }],
+              ['@babel/plugin-transform-private-methods', { loose: true }],
+              ['@babel/plugin-transform-private-property-in-object', { loose: true }],
+            ],
+          },
+        },
+      },
+      {
+        test: /\.(jpg|png|woff|woff2|eot|ttf|svg|mp3)$/,
+        type: 'asset/resource',
+      },
+    ],
+  },
+  plugins: [
+    new HTMLWebpackPlugin({
+      template: path.resolve(appDirectory, 'public/index.html'),
+    }),
+  ],
+  devServer: {
+    port: 8082,
+    historyApiFallback: true,
+    hot: true,
+    open: true,
+  },
+};
