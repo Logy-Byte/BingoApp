@@ -2,6 +2,7 @@
  * Authoritative Anti-Cheat Win Validator (5x5 Number Game)
  * Strictly verifies player win claims against authoritative called numbers,
  * cell coordinates, seeded board layout, and pattern definitions.
+ * Follows OWASP Game Security guidelines: client is untrusted.
  */
 
 import { Board5x5, WinningPattern } from '../types';
@@ -10,61 +11,106 @@ import { WINNING_PATTERNS_5X5 } from '../engine/gridGameEngine';
 export interface WinClaimPayload {
   playerId: string;
   boardId: string;
-  patternId: string;
+  patternId?: string;
+  claimTimestamp?: number;
+}
+
+export interface ClaimValidationResult {
+  isValid: boolean;
+  reason?: string;
+  validatedPatterns?: WinningPattern[];
+  lineCount?: number;
 }
 
 export class AntiCheatValidator {
   /**
    * Strictly validates whether a win claim is legitimate.
+   * Supports both specific pattern claims and full-board evaluation.
    */
   static validateClaim(
     claim: WinClaimPayload,
     playerBoard: Board5x5,
     authoritativeCalledNumbers: number[]
-  ): { isValid: boolean; reason?: string } {
-    // 1. Board ID integrity
+  ): ClaimValidationResult {
+    // 1. Board ID integrity check
     if (claim.boardId !== playerBoard.id) {
       return { isValid: false, reason: 'Board ID mismatch.' };
     }
 
-    // 2. Pattern existence
-    const targetPattern = WINNING_PATTERNS_5X5.find((p) => p.id === claim.patternId);
-    if (!targetPattern) {
-      return { isValid: false, reason: 'Invalid or unknown winning pattern.' };
-    }
-
     const calledNumbersSet = new Set(authoritativeCalledNumbers);
 
-    // 3. Verify each coordinate in target pattern was actually called
-    for (const patternCoord of targetPattern.coords) {
-      const boardCell = playerBoard.matrix[patternCoord.row]?.[patternCoord.col];
-      if (!boardCell) {
-        return { isValid: false, reason: 'Referenced coordinates out of bounds.' };
+    // If specific pattern claimed
+    if (claim.patternId) {
+      const targetPattern = WINNING_PATTERNS_5X5.find((p) => p.id === claim.patternId);
+      if (!targetPattern) {
+        return { isValid: false, reason: 'Invalid or unknown winning pattern.' };
       }
 
-      // Free space is automatically valid
-      if (boardCell.isFreeSpace) {
-        continue;
+      // Verify each coordinate in target pattern
+      for (const patternCoord of targetPattern.coords) {
+        const boardCell = playerBoard.matrix[patternCoord.row]?.[patternCoord.col];
+        if (!boardCell) {
+          return { isValid: false, reason: 'Referenced coordinates out of bounds.' };
+        }
+
+        if (boardCell.isFreeSpace) {
+          continue;
+        }
+
+        // Must have been called
+        if (!calledNumbersSet.has(boardCell.value)) {
+          return {
+            isValid: false,
+            reason: `Cell [${patternCoord.row},${patternCoord.col}] with number ${boardCell.value} has not been called!`,
+          };
+        }
+
+        // Must be marked
+        if (boardCell.state !== 'MARKED' && boardCell.state !== 'COMPLETED') {
+          return {
+            isValid: false,
+            reason: `Cell [${patternCoord.row},${patternCoord.col}] has not been marked.`,
+          };
+        }
       }
 
-      // Verify number was legitimately drawn by authoritative caller
-      if (!calledNumbersSet.has(boardCell.value)) {
-        return {
-          isValid: false,
-          reason: `Cell [${patternCoord.row},${patternCoord.col}] with number ${boardCell.value} has not been called!`,
-        };
-      }
+      return {
+        isValid: true,
+        validatedPatterns: [targetPattern],
+        lineCount: 1,
+      };
+    }
 
-      // Verify player actually marked the cell
-      if (boardCell.state !== 'MARKED' && boardCell.state !== 'COMPLETED') {
-        return {
-          isValid: false,
-          reason: `Cell [${patternCoord.row},${patternCoord.col}] has not been marked.`,
-        };
+    // Auto-detect all completed and legitimate patterns on the board
+    const legitimatelyCompleted: WinningPattern[] = [];
+
+    for (const pattern of WINNING_PATTERNS_5X5) {
+      const isPatternValid = pattern.coords.every(({ row, col }) => {
+        const cell = playerBoard.matrix[row]?.[col];
+        if (!cell) return false;
+        if (cell.isFreeSpace) return true;
+        const isCalled = calledNumbersSet.has(cell.value);
+        const isMarked = cell.state === 'MARKED' || cell.state === 'COMPLETED';
+        return isCalled && isMarked;
+      });
+
+      if (isPatternValid) {
+        legitimatelyCompleted.push(pattern);
       }
     }
 
-    return { isValid: true };
+    if (legitimatelyCompleted.length === 0) {
+      return {
+        isValid: false,
+        reason: 'Your card does not currently match a verified winning pattern with called numbers.',
+      };
+    }
+
+    return {
+      isValid: true,
+      validatedPatterns: legitimatelyCompleted,
+      lineCount: legitimatelyCompleted.length,
+    };
   }
 
   /**
@@ -74,6 +120,7 @@ export class AntiCheatValidator {
     cellValue: number,
     authoritativeCalledNumbers: number[]
   ): boolean {
+    if (cellValue <= 0 || cellValue > 25) return false;
     const calledSet = new Set(authoritativeCalledNumbers);
     return calledSet.has(cellValue);
   }

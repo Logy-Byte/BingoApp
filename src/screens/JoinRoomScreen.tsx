@@ -124,7 +124,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
 
           <GameButton
             title="Join room"
-            icon={<JoinRoomIcon size={18} color={theme.textDark} />}
+            icon={<JoinRoomIcon size={18} color={COLORS.lunarShadow} />}
             variant="primary"
             size="lg"
             loading={isJoining}

@@ -12,6 +12,8 @@ interface ResultsScreenProps {
   matchDurationSec: number;
   isRanked?: boolean;
   ratingDelta?: number;
+  winnerName?: string;
+  isMultiplayer?: boolean;
   onPlayAgain: () => void;
   onReturnHome: () => void;
 }
@@ -24,6 +26,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   matchDurationSec,
   isRanked = false,
   ratingDelta = 25,
+  winnerName,
+  isMultiplayer = false,
   onPlayAgain,
   onReturnHome,
 }) => {
@@ -77,7 +81,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
         <Text style={[styles.resultSubtitle, { color: theme.textSecondary }]}>
           {hasWon
-            ? 'Winning lines completed! Excellent match performance.'
+            ? isMultiplayer && winnerName
+              ? `Congratulations ${winnerName}! You claimed Bingo first.`
+              : 'Winning lines completed! Excellent match performance.'
+            : isMultiplayer && winnerName
+            ? `${winnerName} claimed Bingo and won this match.`
             : 'Line completion not secured before drawn balls concluded.'}
         </Text>
 
@@ -138,12 +146,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 { color: hasWon ? '#8A6724' : theme.textMuted },
               ]}
             >
-              Lines completed
+              Lines verified
             </Text>
             <Text
               style={[
                 styles.statValue,
-                { color: hasWon ? '#8A6724' : COLORS.gentleOlive },
+                { color: hasWon ? '#8A6724' : theme.textPrimary },
               ]}
             >
               {linesCompletedCount} / 5
@@ -159,9 +167,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
               },
             ]}
           >
-            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Balls drawn</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>Calls drawn</Text>
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>
-              {totalCallsCount} / 25
+              {totalCallsCount}
             </Text>
           </View>
 
@@ -194,9 +202,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             onPress={onPlayAgain}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Play Again"
+            accessibilityLabel={isMultiplayer ? 'Rematch with opponent' : 'Play Again'}
           >
-            <Text style={styles.primaryActionText}>Play again ↗</Text>
+            <Text style={styles.primaryActionText}>
+              {isMultiplayer ? 'Rematch with opponent ↗' : 'Play again ↗'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -227,14 +237,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.lg, // 16px
+    padding: SPACING.lg,
   },
   resultCard: {
     width: '100%',
     maxWidth: 360,
     alignItems: 'center',
-    padding: SPACING.xl, // 20px
-    borderRadius: RADIUS.hero, // 24px
+    padding: SPACING.xl,
+    borderRadius: RADIUS.hero,
     borderWidth: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
@@ -262,7 +272,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.md, // 12px
+    marginBottom: SPACING.md,
     borderWidth: 2,
   },
   resultTitle: {
@@ -275,73 +285,83 @@ const styles = StyleSheet.create({
   resultSubtitle: {
     fontSize: 12,
     textAlign: 'center',
-    marginTop: SPACING.xs, // 4px
-    marginBottom: SPACING.md, // 12px
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
     lineHeight: 18,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   ratingImpactBox: {
-    paddingHorizontal: SPACING.lg, // 16px
-    paddingVertical: SPACING.sm, // 8px
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
     borderRadius: RADIUS.pill,
-    marginBottom: SPACING.md, // 12px
     borderWidth: 1,
+    marginBottom: SPACING.lg,
   },
   ratingText: {
     fontSize: 12,
     fontWeight: '800',
+    letterSpacing: 0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm, // 8px
+    gap: SPACING.sm,
     width: '100%',
-    marginBottom: SPACING.xl, // 20px
+    marginBottom: SPACING.xl,
   },
   statBox: {
     flex: 1,
     minWidth: '45%',
-    borderRadius: RADIUS.surface, // 16px
-    padding: SPACING.md, // 12px
-    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: RADIUS.card,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   statValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 2,
-    fontFamily: TYPOGRAPHY.monoFamily,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   actions: {
     width: '100%',
-    gap: SPACING.sm, // 8px
+    gap: SPACING.sm,
   },
   actionBtn: {
     width: '100%',
     paddingVertical: 14,
-    borderRadius: RADIUS.sheet, // 28px
+    borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
   },
   primaryActionText: {
+    color: COLORS.lunarShadow,
     fontSize: 14,
     fontWeight: '800',
-    color: COLORS.lunarShadow,
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  secondaryBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   secondaryActionText: {
     fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
 });

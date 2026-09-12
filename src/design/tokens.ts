@@ -182,6 +182,7 @@ export const RADIUS = {
   md: 8,
   lg: 12,
   xl: 16,
+  card: 16,
   navBar: 28,
   full: 9999,
 };

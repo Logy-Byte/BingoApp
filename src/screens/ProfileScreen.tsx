@@ -322,7 +322,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
                 ]}
               >
                 <Icon
-                  name={ach.icon}
+                  name={ach.icon as IconName}
                   size={20}
                   color={ach.unlocked ? COLORS.lunarShadow : theme.textMuted}
                 />

@@ -1,9 +1,10 @@
 /**
  * Main Application Root
- * Premium 5x5 Multiplayer Number Game (React Native Android)
+ * Premium 5x5 Multiplayer Number Game (React Native Android & Web)
  * Product + UX + UI + Game Engine + Security + Performance
  * Features:
  * - Fixed 5x5 board (numbers 1-25)
+ * - Server-Authoritative Realtime Multiplayer with Cross-Client Synchronization
  * - 3-tab Floating Bottom Navigation (Play, Leaderboard, Profile)
  * - Home Hierarchy: Play ranked hero, Me vs robot, Play a friend, Daily puzzles, Online Telemetry
  * - Local AI Robot opponent with 3 difficulties
@@ -18,7 +19,6 @@ import {
   View,
   StatusBar,
   BackHandler,
-  Alert,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -38,11 +38,11 @@ import {
   evaluate5x5Wins,
 } from './src/domain/engine/gridGameEngine';
 import { RobotOpponent } from './src/domain/engine/robotOpponent';
-import { globalRoomManager } from './src/domain/multiplayer/roomManager';
 import { AntiCheatValidator } from './src/domain/multiplayer/antiCheatValidator';
 import { SoundEngine } from './src/audio/soundEngine';
 import { COLORS } from './src/design/tokens';
 import { ThemeProvider, useTheme } from './src/design/theme';
+import { useMultiplayerRoom } from './src/domain/state/useMultiplayerRoom';
 
 import { BottomNavBar } from './src/components/navigation/BottomNavBar';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -77,8 +77,7 @@ function MainApp() {
     tier: 'Platinum',
   });
 
-  // Active Game State
-  const [activeRoom, setActiveRoom] = useState<PublicRoom | null>(null);
+  // Solo / Local / Robot Active Game State
   const [board, setBoard] = useState<Board5x5 | null>(null);
   const [numberPool, setNumberPool] = useState<number[]>([]);
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
@@ -88,7 +87,6 @@ function MainApp() {
   const [lastCompletedPatternName, setLastCompletedPatternName] = useState<string | undefined>();
   const [isGameActive, setIsGameActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [joinError, setJoinError] = useState<string | undefined>();
   const [claimFeedback, setClaimFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [matchStartTime, setMatchStartTime] = useState<number>(Date.now());
   const [matchDuration, setMatchDuration] = useState<number>(0);
@@ -99,18 +97,27 @@ function MainApp() {
 
   const callerIntervalRef = useRef<any>(null);
 
+  // Authoritative Realtime Multiplayer Room Controller
+  const multiplayer = useMultiplayerRoom({
+    player,
+    onNavigateToScreen: (screen) => setScreenState(screen),
+  });
+
   // Android Back Button Lifecycle
   useEffect(() => {
     const onBackPress = () => {
       if (screenState === 'GAMEPLAY') {
-        // Confirmation dialog for leaving match in progress
         const shouldQuit = window.confirm
           ? window.confirm('Are you sure you want to quit the current match?')
           : true;
         if (shouldQuit) {
-          setIsGameActive(false);
-          if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
-          setScreenState('TAB_NAV');
+          if (gameMode === 'FRIEND') {
+            multiplayer.leaveRoom();
+          } else {
+            setIsGameActive(false);
+            if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
+            setScreenState('TAB_NAV');
+          }
         }
         return true;
       }
@@ -122,12 +129,17 @@ function MainApp() {
         screenState === 'SETTINGS' ||
         screenState === 'RESULTS'
       ) {
+        if (gameMode === 'FRIEND') {
+          multiplayer.leaveRoom();
+        }
         setScreenState('TAB_NAV');
         return true;
       }
 
       if (screenState === 'LOBBY') {
-        setActiveRoom(null);
+        if (gameMode === 'FRIEND') {
+          multiplayer.leaveRoom();
+        }
         setScreenState('TAB_NAV');
         return true;
       }
@@ -137,7 +149,6 @@ function MainApp() {
           setCurrentTab('PLAY');
           return true;
         }
-        // At root play tab, allow default Android back
         return false;
       }
 
@@ -146,9 +157,9 @@ function MainApp() {
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subscription.remove();
-  }, [screenState, currentTab]);
+  }, [screenState, currentTab, gameMode, multiplayer]);
 
-  // Setup game board and pools
+  // Setup game board and pools for Local / Solo / Robot
   const initGame = useCallback((mode: GameModeType, customSeed?: string) => {
     const seed = customSeed || `game-${Date.now()}`;
     const newBoard = generate5x5Board(`b-${player.id}`, seed, false);
@@ -218,38 +229,26 @@ function MainApp() {
   };
 
   const handlePlayFriend = () => {
+    setGameMode('FRIEND');
     setScreenState('CREATE_ROOM');
   };
 
   const handleCreateRoom = (name: string, privacy: RoomPrivacy, password?: string) => {
-    const room = globalRoomManager.createRoom(name, player, privacy, password);
-    setActiveRoom(room);
-    setScreenState('LOBBY');
+    setGameMode('FRIEND');
+    multiplayer.createRoom(name, privacy, password);
   };
 
   const handleJoinRoom = (roomId: string, password?: string) => {
-    setJoinError(undefined);
-    const res = globalRoomManager.joinRoom(roomId, player, password);
-    if (res.success && res.room) {
-      setActiveRoom(res.room);
-      setScreenState('LOBBY');
-    } else {
-      setJoinError(res.error || 'Failed to join room.');
-      SoundEngine.playError();
-    }
+    setGameMode('FRIEND');
+    multiplayer.joinRoom(roomId, password);
   };
 
-  const handleStartMatch = () => {
-    initGame('FRIEND');
-  };
-
-  // Cell Press Handler with Anti-Cheat Check
+  // Solo Cell Press Handler with Anti-Cheat Check
   const handleCellPress = useCallback(
     (cell: GridCell5x5) => {
       if (!board || !isGameActive) return;
       if (cell.state === 'MARKED' || cell.state === 'COMPLETED') return;
 
-      // Authoritative Anti-Cheat validation
       const isLegitCalled = AntiCheatValidator.validateDaub(cell.value, drawnNumbers);
       if (!isLegitCalled) {
         SoundEngine.playError();
@@ -261,7 +260,6 @@ function MainApp() {
         return;
       }
 
-      // Mark cell
       const newMatrix = board.matrix.map((row) =>
         row.map((c) => {
           if (c.id === cell.id) {
@@ -282,7 +280,6 @@ function MainApp() {
 
       SoundEngine.playDaub();
 
-      // Check winning lines
       const winResult = evaluate5x5Wins(updatedBoard, completedPatternIds);
       if (winResult.newlyCompletedPatterns.length > 0) {
         SoundEngine.playLineCompleted();
@@ -294,7 +291,6 @@ function MainApp() {
         setLastCompletedPatternName(lastPattern.name);
         setScore((prev) => prev + winResult.newlyCompletedPatterns.length * 500);
 
-        // Highlight winning cells
         winResult.winningCoords.forEach(({ row, col }) => {
           updatedBoard.matrix[row][col].isWinningCell = true;
           updatedBoard.matrix[row][col].state = 'COMPLETED';
@@ -308,7 +304,7 @@ function MainApp() {
     [board, isGameActive, drawnNumbers, completedPatternIds]
   );
 
-  // Claim Bingo
+  // Solo Claim Bingo
   const handleClaimBingo = useCallback(() => {
     if (!board || !isGameActive) return;
 
@@ -321,7 +317,6 @@ function MainApp() {
       return;
     }
 
-    // Authoritative verification of claim
     const firstPatternId = completedPatternIds[0] || 'ROW_0';
     const validation = AntiCheatValidator.validateClaim(
       { playerId: player.id, boardId: board.id, patternId: firstPatternId },
@@ -353,9 +348,9 @@ function MainApp() {
     }
   }, [board, isGameActive, linesCompletedCount, completedPatternIds, player.id, drawnNumbers, matchStartTime, gameMode, score]);
 
-  // Automated Ball Caller Loop
+  // Automated Solo Ball Caller Loop
   useEffect(() => {
-    if (screenState === 'GAMEPLAY' && isGameActive && !isPaused) {
+    if (gameMode !== 'FRIEND' && screenState === 'GAMEPLAY' && isGameActive && !isPaused) {
       callerIntervalRef.current = setInterval(() => {
         setNumberPool((prevPool) => {
           if (prevPool.length === 0) {
@@ -370,7 +365,6 @@ function MainApp() {
           SoundEngine.playBallDrawn();
           SoundEngine.speakNumber(nextNumber);
 
-          // Trigger AI Robot response if in Robot mode
           if (robotRef.current) {
             robotRef.current.onNumberCalled(nextNumber, (_r, _c, robotLinesCount) => {
               setRobotLines(robotLinesCount);
@@ -397,11 +391,11 @@ function MainApp() {
         clearInterval(callerIntervalRef.current);
       }
     };
-  }, [screenState, isGameActive, isPaused, matchStartTime]);
+  }, [gameMode, screenState, isGameActive, isPaused, matchStartTime]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.bgCanvas} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
           {screenState === 'TAB_NAV' && (
             <>
@@ -440,7 +434,7 @@ function MainApp() {
             <JoinRoomScreen
               onJoin={handleJoinRoom}
               onBack={() => setScreenState('TAB_NAV')}
-              errorMessage={joinError}
+              errorMessage={multiplayer.joinError}
             />
           )}
 
@@ -455,52 +449,87 @@ function MainApp() {
             <SettingsScreen onBack={() => setScreenState('TAB_NAV')} />
           )}
 
-          {screenState === 'LOBBY' && activeRoom && (
-            <LobbyScreen
-              room={activeRoom}
-              player={player}
-              onStartMatch={handleStartMatch}
-              onLeaveLobby={() => {
-                setActiveRoom(null);
-                setScreenState('TAB_NAV');
-              }}
-            />
+          {screenState === 'LOBBY' && (
+            gameMode === 'FRIEND' && multiplayer.room ? (
+              <LobbyScreen
+                room={multiplayer.room}
+                player={player}
+                players={multiplayer.players}
+                countdownSeconds={multiplayer.countdownSeconds}
+                onStartMatch={multiplayer.startMatch}
+                onLeaveLobby={multiplayer.leaveRoom}
+                onToggleReady={multiplayer.toggleReady}
+              />
+            ) : null
           )}
 
-          {screenState === 'GAMEPLAY' && board && (
-            <GameplayScreen
-              board={board}
-              drawnNumbers={drawnNumbers}
-              score={score}
-              linesCompletedCount={linesCompletedCount}
-              isGameActive={isGameActive}
-              isPaused={isPaused}
-              onCellPress={handleCellPress}
-              onClaimBingo={handleClaimBingo}
-              onTogglePause={() => setIsPaused(!isPaused)}
-              onLeaveGame={() => {
-                setIsGameActive(false);
-                setScreenState('TAB_NAV');
-              }}
-              lastCompletedPatternName={lastCompletedPatternName}
-              claimFeedback={claimFeedback}
-              opponentLines={gameMode === 'ROBOT' ? robotLines : undefined}
-              opponentName={gameMode === 'ROBOT' ? 'Robot AI' : undefined}
-            />
+          {screenState === 'GAMEPLAY' && (
+            gameMode === 'FRIEND' && multiplayer.board ? (
+              <GameplayScreen
+                board={multiplayer.board}
+                drawnNumbers={multiplayer.drawnNumbers}
+                score={multiplayer.score}
+                linesCompletedCount={multiplayer.linesCompletedCount}
+                isGameActive={multiplayer.isGameActive}
+                isPaused={multiplayer.isPaused}
+                onCellPress={multiplayer.daubCell}
+                onClaimBingo={multiplayer.claimBingo}
+                onTogglePause={multiplayer.togglePause}
+                onLeaveGame={multiplayer.leaveRoom}
+                lastCompletedPatternName={multiplayer.lastCompletedPatternName}
+                claimFeedback={multiplayer.claimFeedback}
+                opponentLines={multiplayer.opponentLines}
+                opponentName={multiplayer.opponentName}
+              />
+            ) : board ? (
+              <GameplayScreen
+                board={board}
+                drawnNumbers={drawnNumbers}
+                score={score}
+                linesCompletedCount={linesCompletedCount}
+                isGameActive={isGameActive}
+                isPaused={isPaused}
+                onCellPress={handleCellPress}
+                onClaimBingo={handleClaimBingo}
+                onTogglePause={() => setIsPaused(!isPaused)}
+                onLeaveGame={() => {
+                  setIsGameActive(false);
+                  setScreenState('TAB_NAV');
+                }}
+                lastCompletedPatternName={lastCompletedPatternName}
+                claimFeedback={claimFeedback}
+                opponentLines={gameMode === 'ROBOT' ? robotLines : undefined}
+                opponentName={gameMode === 'ROBOT' ? 'Robot AI' : undefined}
+              />
+            ) : null
           )}
 
           {screenState === 'RESULTS' && (
-            <ResultsScreen
-              hasWon={linesCompletedCount > 0}
-              score={score}
-              linesCompletedCount={linesCompletedCount}
-              totalCallsCount={drawnNumbers.length}
-              matchDurationSec={matchDuration}
-              isRanked={gameMode === 'RANKED'}
-              ratingDelta={25}
-              onPlayAgain={() => initGame(gameMode)}
-              onReturnHome={() => setScreenState('TAB_NAV')}
-            />
+            gameMode === 'FRIEND' ? (
+              <ResultsScreen
+                hasWon={multiplayer.winner?.id === player.id}
+                score={multiplayer.score}
+                linesCompletedCount={multiplayer.linesCompletedCount}
+                totalCallsCount={multiplayer.drawnNumbers.length}
+                matchDurationSec={multiplayer.matchDuration}
+                isMultiplayer={true}
+                winnerName={multiplayer.winner?.name}
+                onPlayAgain={multiplayer.requestRematch}
+                onReturnHome={multiplayer.leaveRoom}
+              />
+            ) : (
+              <ResultsScreen
+                hasWon={linesCompletedCount > 0}
+                score={score}
+                linesCompletedCount={linesCompletedCount}
+                totalCallsCount={drawnNumbers.length}
+                matchDurationSec={matchDuration}
+                isRanked={gameMode === 'RANKED'}
+                ratingDelta={25}
+                onPlayAgain={() => initGame(gameMode)}
+                onReturnHome={() => setScreenState('TAB_NAV')}
+              />
+            )
           )}
         </View>
       </SafeAreaView>
