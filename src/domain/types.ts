@@ -4,10 +4,14 @@
  * deterministic daily puzzles, AI robot, and anti-cheat validation.
  */
 
-export type TabDestination = 'PLAY' | 'LEADERBOARD' | 'PROFILE';
+export type TabDestination = 'PLAY' | 'LEADERBOARD' | 'PROFILE' | 'SHOP';
 
 export type ScreenState = 
+  | 'SPLASH'
+  | 'SIGN_IN'
   | 'TAB_NAV'
+  | 'ROOM_SELECTION'
+  | 'PRE_GAME'
   | 'MATCHMAKING'
   | 'LOBBY'
   | 'GAMEPLAY'
@@ -15,7 +19,8 @@ export type ScreenState =
   | 'CREATE_ROOM'
   | 'JOIN_ROOM'
   | 'DAILY_PUZZLE'
-  | 'SETTINGS';
+  | 'SETTINGS'
+  | 'SHOP';
 
 export type GameModeType = 'RANKED' | 'ROBOT' | 'FRIEND' | 'DAILY' | 'LOCAL';
 
@@ -39,6 +44,7 @@ export interface Board5x5 {
   seed: string;
   matrix: GridCell5x5[][];
   completedLineIds: string[];
+  cardIndex?: number;
 }
 
 export type PatternType = 
@@ -68,6 +74,30 @@ export interface DrawnNumber {
   callOrder: number;
 }
 
+// Power-Up Types
+export type PowerUpType = 'FREE_DAUB' | 'INSTANT_BINGO' | 'DOUBLE_PAYOUT' | 'EXTRA_TIME';
+
+export interface PowerUp {
+  id: PowerUpType;
+  name: string;
+  icon: string;
+  count: number;
+  costCoins: number;
+  description: string;
+}
+
+// Store Items
+export interface StoreItem {
+  id: string;
+  category: 'COINS' | 'GEMS' | 'POWERUPS' | 'AVATARS';
+  title: string;
+  amountText: string;
+  priceText: string;
+  costInGems?: number;
+  icon: string;
+  badgeText?: string;
+}
+
 // Room & Multiplayer Types
 export type RoomPrivacy = 'open' | 'password';
 export type MatchStatus = 
@@ -89,6 +119,8 @@ export interface Player {
   hasWon: boolean;
   rating: number;         // e.g. 1450 MMR
   tier: string;           // "Bronze", "Silver", "Gold", "Diamond"
+  coins: number;
+  gems: number;
 }
 
 export interface PublicRoom {
@@ -102,6 +134,9 @@ export interface PublicRoom {
   maxPlayers: number;
   status: MatchStatus;
   createdAt: number;
+  ticketPrice: number;
+  jackpotAmount: number;
+  recommendedTickets: number[];
 }
 
 // Daily Puzzle
@@ -156,3 +191,4 @@ export interface PlayerProfile {
     date: string;
   }>;
 }
+

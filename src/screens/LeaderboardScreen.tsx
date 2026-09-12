@@ -5,15 +5,14 @@ import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { TrophyIcon, RankIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
 
-type PeriodFilter = 'Today' | 'This Week' | 'All Season';
+type PeriodFilter = 'Daily' | 'Weekly' | 'All Time';
 
 /**
- * Leaderboard Screen with Reference 3 Podium & Ranking Structure
- * Directly translates Reference 3 podium hierarchy and Reference 2 diagonal hatch active row.
+ * Leaderboard Screen matching Storyboard Screen 10 (Daily, Weekly, All Time tabs)
  */
 export const LeaderboardScreen: React.FC = () => {
   const { theme } = useTheme();
-  const [period, setPeriod] = useState<PeriodFilter>('This Week');
+  const [period, setPeriod] = useState<PeriodFilter>('Weekly');
 
   // Authentic Season Leaderboard Seed (Ref 3 hierarchy)
   const [rankedPlayers] = useState<LeaderboardEntry[]>([
@@ -118,7 +117,7 @@ export const LeaderboardScreen: React.FC = () => {
             { backgroundColor: theme.dockBg, borderColor: theme.dockBorder },
           ]}
         >
-          {(['Today', 'This Week', 'All Season'] as PeriodFilter[]).map((tab) => (
+          {(['Daily', 'Weekly', 'All Time'] as PeriodFilter[]).map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[styles.filterTab, period === tab && styles.filterTabActive]}

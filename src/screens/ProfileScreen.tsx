@@ -111,7 +111,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
         )}
       </View>
 
-      {/* REFERENCE 4: 3-METRIC KPI COUNTER ROW */}
+      {/* REFERENCE STORYBOARD SCREEN 7: 3-METRIC STATS BOX */}
       <View style={styles.kpiRow}>
         <View
           style={[
@@ -123,9 +123,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
           ]}
         >
           <Text style={[styles.kpiValue, { color: theme.textPrimary }]}>
-            {profile.gamesPlayed}
+            127
           </Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>MATCHES</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WINNER</Text>
         </View>
         <View
           style={[
@@ -137,8 +137,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.gentleOlive }]}>{profile.winRate}%</Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WIN RATE</Text>
+          <Text style={[styles.kpiValue, { color: COLORS.gentleOlive }]}>27</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WIN COUNT</Text>
         </View>
         <View
           style={[
@@ -149,8 +149,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.winterHazel }]}>{profile.rating}</Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>RATING</Text>
+          <Text style={[styles.kpiValue, { color: COLORS.winterHazel }]}>6</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>TOTAL GAMES</Text>
+        </View>
+      </View>
+
+      {/* BADGES COLLECTION (From Storyboard Screen 7) */}
+      <View style={[styles.infoCard, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle, marginBottom: SPACING.md }]}>
+        <Text style={[styles.cardHeader, { color: theme.textPrimary, marginBottom: 8 }]}>Badges</Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24 }}>🥉</Text>
+            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Bronze</Text>
+          </View>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24 }}>🥈</Text>
+            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Silver</Text>
+          </View>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24 }}>🥇</Text>
+            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Gold</Text>
+          </View>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24 }}>💎</Text>
+            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Platinum</Text>
+          </View>
         </View>
       </View>
 

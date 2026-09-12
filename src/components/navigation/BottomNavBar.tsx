@@ -68,7 +68,29 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
           )}
         </TouchableOpacity>
 
-        {/* 3. PROFILE TAB */}
+        {/* 3. SHOP TAB */}
+        <TouchableOpacity
+          style={[styles.dockItem, currentTab === 'SHOP' && styles.dockItemActive]}
+          onPress={() => onSelectTab('SHOP')}
+          activeOpacity={0.85}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          accessibilityRole="tab"
+          accessibilityLabel="Shop tab"
+          accessibilityState={{ selected: currentTab === 'SHOP' }}
+        >
+          {currentTab === 'SHOP' ? (
+            <View style={styles.activePill}>
+              <Text style={{ fontSize: 14 }}>🛍️</Text>
+              <Text style={styles.activeLabel}>Shop</Text>
+            </View>
+          ) : (
+            <View style={styles.inactivePill}>
+              <Text style={{ fontSize: 16 }}>🛍️</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* 4. PROFILE TAB */}
         <TouchableOpacity
           style={[styles.dockItem, currentTab === 'PROFILE' && styles.dockItemActive]}
           onPress={() => onSelectTab('PROFILE')}
