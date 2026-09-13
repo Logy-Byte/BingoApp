@@ -23,6 +23,8 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       hasWon: false,
       rating: 1500,
       tier: 'Diamond',
+      coins: 1000,
+      gems: 50,
     };
 
     beforeEach(() => {

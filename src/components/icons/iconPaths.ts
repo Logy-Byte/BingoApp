@@ -1070,4 +1070,275 @@ export const ICON_DEFINITIONS: Record<IconName, IconDefinition> = {
       },
     ],
   },
+
+  ticket: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M3 7 C3 5.9 3.9 5 5 5 H19 C20.1 5 21 5.9 21 7 C19.9 7 19 7.9 19 9 C19 10.1 19.9 11 21 11 C21 12.1 21 13 21 13 C19.9 13 19 13.9 19 15 C19 16.1 19.9 17 21 17 C21 18.1 20.1 19 19 19 H5 C3.9 19 3 18.1 3 17 C4.1 17 5 16.1 5 15 C5 13.9 4.1 13 3 13 V11 C4.1 11 5 10.1 5 9 C5 7.9 4.1 7 3 7 Z',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      {
+        d: 'M12 8 V16',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M3 7 C3 5.9 3.9 5 5 5 H19 C20.1 5 21 5.9 21 7 C19.9 7 19 7.9 19 9 C19 10.1 19.9 11 21 11 V13 C19.9 13 19 13.9 19 15 C19 16.1 19.9 17 21 17 C21 18.1 20.1 19 19 19 H5 C3.9 19 3 18.1 3 17 C4.1 17 5 16.1 5 15 C5 13.9 4.1 13 3 13 V11 C4.1 11 5 10.1 5 9 C5 7.9 4.1 7 3 7 Z',
+      },
+    ],
+  },
+
+  coin_stack: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      // Top coin ellipse
+      {
+        d: 'M12 3 C16.4 3 20 4.1 20 5.5 C20 6.9 16.4 8 12 8 C7.6 8 4 6.9 4 5.5 C4 4.1 7.6 3 12 3 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Middle coin curve
+      {
+        d: 'M4 9.5 C4 10.9 7.6 12 12 12 C16.4 12 20 10.9 20 9.5',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Third coin curve
+      {
+        d: 'M4 13.5 C4 14.9 7.6 16 12 16 C16.4 16 20 14.9 20 13.5',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Base coin curve
+      {
+        d: 'M4 17.5 C4 18.9 7.6 20 12 20 C16.4 20 20 18.9 20 17.5',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Left and right pillars
+      {
+        d: 'M4 5.5 V17.5 M20 5.5 V17.5',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 3 C16.4 3 20 4.1 20 5.5 V17.5 C20 18.9 16.4 20 12 20 C7.6 20 4 18.9 4 17.5 V5.5 C4 4.1 7.6 3 12 3 Z',
+      },
+    ],
+  },
+
+  gemstone: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      // Outer perimeter
+      {
+        d: 'M6 3 H18 L22 9 L12 21 L2 9 L6 3 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Inner facet girdle
+      {
+        d: 'M2 9 H22',
+        strokeWidth: 1.6,
+        strokeLinecap: 'round',
+      },
+      // Table to girdle facets
+      {
+        d: 'M6 3 L9 9 L12 21 M18 3 L15 9 L12 21 M9 9 L12 3 L15 9',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M6 3 H18 L22 9 L12 21 L2 9 L6 3 Z',
+      },
+    ],
+  },
+
+  lightning: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M13 2 L4 13 H11 L9 22 L20 10 H13 L15 2 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M13 2 L4 13 H11 L9 22 L20 10 H13 L15 2 Z',
+      },
+    ],
+  },
+
+  daub_star: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M12 2 L14.4 7.6 L20.5 8.2 L15.8 12.3 L17.2 18.2 L12 15.1 L6.8 18.2 L8.2 12.3 L3.5 8.2 L9.6 7.6 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 2 L14.4 7.6 L20.5 8.2 L15.8 12.3 L17.2 18.2 L12 15.1 L6.8 18.2 L8.2 12.3 L3.5 8.2 L9.6 7.6 Z',
+      },
+    ],
+  },
+
+  wifi_off: {
+    family: 'state',
+    viewBox: '0 0 24 24',
+    paths: [
+      // Diagonal cancel slash
+      {
+        d: 'M2 2 L22 22',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+      },
+      // Waves broken by slash
+      {
+        d: 'M8.5 16.5 A4 4 0 0 1 12 15 A4 4 0 0 1 15.5 16.5',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+      },
+      {
+        d: 'M5 12.5 A9 9 0 0 1 12 10 A9 9 0 0 1 17 11.5',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+      },
+      {
+        d: 'M1.5 8.5 A14 14 0 0 1 12 5 A14 14 0 0 1 20 7.5',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+      },
+      {
+        d: 'M12 20 H12.01',
+        strokeWidth: 2.5,
+        strokeLinecap: 'round',
+      },
+    ],
+  },
+
+  target: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M12 3 A9 9 0 1 0 21 12 A9 9 0 0 0 12 3 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+      },
+      {
+        d: 'M12 8 A4 4 0 1 0 16 12 A4 4 0 0 0 12 8 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+      },
+      {
+        d: 'M12 2 V5 M12 19 V22 M2 12 H5 M19 12 H22',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 2 C6.5 2 2 6.5 2 12 C2 17.5 6.5 22 12 22 C17.5 22 22 17.5 22 12 C22 6.5 17.5 2 12 2 Z M12 16 C9.8 16 8 14.2 8 12 C8 9.8 9.8 8 12 8 C14.2 8 16 9.8 16 12 C16 14.2 14.2 16 12 16 Z',
+      },
+    ],
+  },
+
+  shield: {
+    family: 'utility',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M12 2 L20 5.5 V11 C20 16.5 16.5 21 12 22 C7.5 21 4 16.5 4 11 V5.5 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      {
+        d: 'M12 7 V16 M9 11 H15',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 2 L20 5.5 V11 C20 16.5 16.5 21 12 22 C7.5 21 4 16.5 4 11 V5.5 Z',
+      },
+    ],
+  },
+
+  fire: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      {
+        d: 'M12 22 C16.5 22 19 18 19 13.5 C19 9 14.5 5 13.5 2 C12 6 9 8 7 11 C5 14 5 17 6.5 19.5 C8 21.5 10 22 12 22 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      {
+        d: 'M12 22 C14 22 15 20 15 18 C15 15.5 13 14 12 12 C11 14 9.5 15.5 9.5 18 C9.5 20 10.5 22 12 22 Z',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 22 C16.5 22 19 18 19 13.5 C19 9 14.5 5 13.5 2 C12 6 9 8 7 11 C5 14 5 17 6.5 19.5 C8 21.5 10 22 12 22 Z',
+      },
+    ],
+  },
+
+  sparkles: {
+    family: 'gameplay',
+    viewBox: '0 0 24 24',
+    paths: [
+      // Primary 4-point star
+      {
+        d: 'M12 3 C12 7.5 8.5 11 4 11 C8.5 11 12 14.5 12 19 C12 14.5 15.5 11 20 11 C15.5 11 12 7.5 12 3 Z',
+        strokeWidth: 1.8,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      // Small offset star
+      {
+        d: 'M19 3 C19 4.8 17.8 6 16 6 C17.8 6 19 7.2 19 9 C19 7.2 20.2 6 22 6 C20.2 6 19 4.8 19 3 Z',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    ],
+    filledPaths: [
+      {
+        d: 'M12 3 C12 7.5 8.5 11 4 11 C8.5 11 12 14.5 12 19 C12 14.5 15.5 11 20 11 C15.5 11 12 7.5 12 3 Z M19 3 C19 4.8 17.8 6 16 6 C17.8 6 19 7.2 19 9 C19 7.2 20.2 6 22 6 C20.2 6 19 4.8 19 3 Z',
+      },
+    ],
+  },
 };

@@ -3,12 +3,12 @@ import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-nati
 import { SoundEngine } from '../audio/soundEngine';
 import { GameCard } from '../components/common/GameCard';
 import { RouteHeader } from '../components/common/RouteHeader';
+import { SettingsRow } from '../components/common/SettingsRow';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import {
   VolumeIcon,
   SpeechIcon,
   VibrationIcon,
-  BingoIdentityIcon,
   ChevronIcon,
   IconSpecimenSheet,
   SunIcon,
@@ -16,12 +16,20 @@ import {
   WarningIcon,
   InfoIcon,
 } from '../components/icons';
+import { AppIconVector } from '../components/icons/AppIconVector';
 import { useTheme, REFERENCE_PALETTE } from '../design/theme';
 
 interface SettingsScreenProps {
   onBack: () => void;
 }
 
+/**
+ * SettingsScreen
+ * Professional Mobile Information Architecture (WhatsApp & Apple Settings standard).
+ * Strictly removes custom launcher-style decorative icon tiles from settings rows.
+ * Uses clean Title + Supporting Description + Affordance hierarchy.
+ * Brand iconography is reserved exclusively for the App Identity section.
+ */
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const { theme, mode, setMode } = useTheme();
   const [isMuted, setIsMuted] = useState(SoundEngine.isAudioMuted());
@@ -50,12 +58,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
     SoundEngine.playDaub();
   };
 
+  const handleConfirmReset = () => {
+    setConfirmDelete(false);
+    setAccountResetDone(true);
+    SoundEngine.playError();
+  };
+
   return (
     <View style={[styles.screenContainer, { backgroundColor: theme.bgCanvas }]}>
       <RouteHeader title="Settings" onBack={onBack} />
 
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* APPEARANCE & THEME MODE (Reference 3 Spec) */}
+        {/* BRAND IDENTITY BANNER (Quarantined to top identity mark - never in rows) */}
+        <View style={styles.brandHeroBanner}>
+          <AppIconVector size={48} />
+          <View style={styles.brandTextGroup}>
+            <Text style={[styles.brandTitle, { color: theme.textPrimary }]}>
+              Bingo Clash Pro
+            </Text>
+            <Text style={[styles.brandVersion, { color: theme.textMuted }]}>
+              Version 1.0.0 Enterprise Build • Numbers 1–25
+            </Text>
+          </View>
+        </View>
+
+        {/* 1. APPEARANCE & THEME */}
         <GameCard
           style={[
             styles.card,
@@ -63,13 +90,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           ]}
         >
           <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
-            Theme & Appearance
+            Appearance & Theme
           </Text>
-          <Text style={[styles.specimenIntro, { color: theme.textSecondary }]}>
-            Reference-driven palette with Sora typography and dual light/dark aesthetics.
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            High-contrast dual theme engine with Plus Jakarta Sans typography.
           </Text>
 
-          {/* Theme Mode Selector Buttons */}
+          {/* Theme Selector Segmented Pills */}
           <View style={styles.themeToggleRow}>
             <TouchableOpacity
               style={[
@@ -85,15 +112,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               accessibilityRole="button"
               accessibilityLabel="Switch to Light Theme"
             >
-              <View style={styles.themeIconWrap}>
-                <SunIcon
-                  size={22}
-                  color={mode === 'light' ? COLORS.winterHazel : theme.textMuted}
-                />
-              </View>
+              <SunIcon
+                size={18}
+                color={mode === 'light' ? COLORS.winterHazel : theme.textMuted}
+              />
               <View>
                 <Text style={[styles.themeModeTitle, { color: COLORS.lunarShadow }]}>
-                  Light Theme
+                  Light Mode
                 </Text>
                 <Text style={[styles.themeModeSub, { color: '#6E737B' }]}>
                   Gray Whisper & Clean White
@@ -115,12 +140,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               accessibilityRole="button"
               accessibilityLabel="Switch to Dark Theme"
             >
-              <View style={styles.themeIconWrap}>
-                <MoonIcon
-                  size={22}
-                  color={mode === 'dark' ? COLORS.cleanWhite : theme.textMuted}
-                />
-              </View>
+              <MoonIcon
+                size={18}
+                color={mode === 'dark' ? COLORS.cleanWhite : theme.textMuted}
+              />
               <View>
                 <Text
                   style={[
@@ -128,7 +151,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                     { color: mode === 'dark' ? COLORS.cleanWhite : theme.textPrimary },
                   ]}
                 >
-                  Dark Theme
+                  Dark Mode
                 </Text>
                 <Text style={[styles.themeModeSub, { color: '#A0A5AD' }]}>
                   Lunar Shadow (#282828)
@@ -137,10 +160,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Palette Color Swatches (Reference Image 3) */}
+          {/* Palette Color Swatches */}
           <View style={styles.paletteHeaderRow}>
             <Text style={[styles.paletteLabel, { color: theme.textMuted }]}>
-              EXTRACTED REFERENCE PALETTE
+              CORE PALETTE
             </Text>
           </View>
           <View style={styles.paletteRow}>
@@ -166,7 +189,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           </View>
         </GameCard>
 
-        {/* AUDIO & TACTILE */}
+        {/* 2. AUDIO & TACTILE CONTROLS (Clean SettingsRow Pattern) */}
         <GameCard
           style={[
             styles.card,
@@ -174,134 +197,113 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           ]}
         >
           <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
-            Audio & effects
+            Audio & Tactile
           </Text>
 
-          <View style={[styles.settingRow, { borderBottomColor: theme.borderSubtle }]}>
-            <View style={styles.iconPrefix}>
-              <VolumeIcon
-                size={20}
-                color={isMuted ? theme.textMuted : COLORS.gentleOlive}
-                muted={isMuted}
-              />
-            </View>
-            <View style={styles.settingTextGroup}>
-              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>Sound effects</Text>
-              <Text style={[styles.rowDesc, { color: theme.textMuted }]}>
-                Tactile dauber pop, ball call, victory fanfare
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleToggleMute}
-              style={[
-                styles.togglePill,
-                !isMuted && styles.togglePillActive,
-                {
-                  backgroundColor: !isMuted ? COLORS.cleanWhite : theme.bgRecessed,
-                  borderColor: !isMuted ? COLORS.gentleOlive : theme.borderSubtle,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Sound effects toggle"
-            >
-              <Text
+          <SettingsRow
+            title="Sound Effects"
+            description="Tactile dauber pop, ball call chime, victory fanfare"
+            icon={<VolumeIcon size={18} color={isMuted ? theme.textMuted : COLORS.gentleOlive} muted={isMuted} />}
+            rightElement={
+              <TouchableOpacity
+                onPress={handleToggleMute}
                 style={[
-                  styles.toggleText,
-                  { color: !isMuted ? COLORS.lunarShadow : theme.textMuted },
+                  styles.togglePill,
+                  !isMuted && styles.togglePillActive,
+                  {
+                    backgroundColor: !isMuted ? COLORS.cleanWhite : theme.bgRecessed,
+                    borderColor: !isMuted ? COLORS.gentleOlive : theme.borderSubtle,
+                  },
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel="Sound effects toggle"
               >
-                {isMuted ? 'Off' : 'On'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: theme.borderSubtle }]}>
-            <View style={styles.iconPrefix}>
-              <SpeechIcon
-                size={20}
-                color={voiceCaller ? COLORS.gentleOlive : theme.textMuted}
-                active={voiceCaller}
-              />
-            </View>
-            <View style={styles.settingTextGroup}>
-              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>
-                Voice speech caller
-              </Text>
-              <Text style={[styles.rowDesc, { color: theme.textMuted }]}>
-                Spoken announcements ("Twenty one", "Four")
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={handleToggleVoice}
-              style={[
-                styles.togglePill,
-                voiceCaller && styles.togglePillActive,
-                {
-                  backgroundColor: voiceCaller ? COLORS.cleanWhite : theme.bgRecessed,
-                  borderColor: voiceCaller ? COLORS.gentleOlive : theme.borderSubtle,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Voice caller toggle"
-            >
-              <Text
-                style={[
-                  styles.toggleText,
-                  { color: voiceCaller ? COLORS.lunarShadow : theme.textMuted },
-                ]}
-              >
-                {voiceCaller ? 'On' : 'Off'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.settingRow}>
-            <View style={styles.iconPrefix}>
-              <VibrationIcon size={20} color={COLORS.winterHazel} />
-            </View>
-            <View style={styles.settingTextGroup}>
-              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>Master volume</Text>
-              <Text style={[styles.rowDesc, { color: theme.textMuted }]}>
-                Audio output gain & haptic response
-              </Text>
-            </View>
-            <View style={styles.volRow}>
-              {(['low', 'med', 'high'] as const).map((lvl) => (
-                <TouchableOpacity
-                  key={lvl}
-                  onPress={() => handleChangeVolume(lvl)}
+                <Text
                   style={[
-                    styles.volBtn,
-                    volumeLevel === lvl && styles.volBtnActive,
-                    {
-                      backgroundColor:
-                        volumeLevel === lvl ? COLORS.cleanWhite : theme.bgRecessed,
-                      borderColor:
-                        volumeLevel === lvl ? COLORS.gentleOlive : theme.borderSubtle,
-                    },
+                    styles.toggleText,
+                    { color: !isMuted ? COLORS.lunarShadow : theme.textMuted },
                   ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Set volume ${lvl}`}
                 >
-                  <Text
+                  {isMuted ? 'Off' : 'On'}
+                </Text>
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingsRow
+            title="Voice Speech Caller"
+            description="Spoken number announcements ('Number 21', 'B-4')"
+            icon={<SpeechIcon size={18} color={voiceCaller ? COLORS.gentleOlive : theme.textMuted} active={voiceCaller} />}
+            rightElement={
+              <TouchableOpacity
+                onPress={handleToggleVoice}
+                style={[
+                  styles.togglePill,
+                  voiceCaller && styles.togglePillActive,
+                  {
+                    backgroundColor: voiceCaller ? COLORS.cleanWhite : theme.bgRecessed,
+                    borderColor: voiceCaller ? COLORS.gentleOlive : theme.borderSubtle,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Voice caller toggle"
+              >
+                <Text
+                  style={[
+                    styles.toggleText,
+                    { color: voiceCaller ? COLORS.lunarShadow : theme.textMuted },
+                  ]}
+                >
+                  {voiceCaller ? 'On' : 'Off'}
+                </Text>
+              </TouchableOpacity>
+            }
+          />
+
+          <SettingsRow
+            title="Master Volume"
+            description="Audio output gain and haptic vibration level"
+            icon={<VibrationIcon size={18} color={COLORS.winterHazel} />}
+            showDivider={false}
+            rightElement={
+              <View style={styles.volRow}>
+                {(['low', 'med', 'high'] as const).map((lvl) => (
+                  <TouchableOpacity
+                    key={lvl}
+                    onPress={() => handleChangeVolume(lvl)}
                     style={[
-                      styles.volBtnText,
+                      styles.volBtn,
+                      volumeLevel === lvl && styles.volBtnActive,
                       {
-                        color:
-                          volumeLevel === lvl ? COLORS.lunarShadow : theme.textMuted,
-                        fontWeight: volumeLevel === lvl ? '800' : '500',
+                        backgroundColor:
+                          volumeLevel === lvl ? COLORS.cleanWhite : theme.bgRecessed,
+                        borderColor:
+                          volumeLevel === lvl ? COLORS.gentleOlive : theme.borderSubtle,
                       },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set volume ${lvl}`}
                   >
-                    {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+                    <Text
+                      style={[
+                        styles.volBtnText,
+                        {
+                          color:
+                            volumeLevel === lvl ? COLORS.lunarShadow : theme.textMuted,
+                          fontWeight: volumeLevel === lvl ? '800' : '500',
+                        },
+                      ]}
+                    >
+                      {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            }
+          />
         </GameCard>
 
-        {/* DESIGN SYSTEM & ICON SPECIMEN QA */}
+        {/* 3. DESIGN SYSTEM & ICON SPECIMEN QA (Clean Row Link) */}
         <GameCard
           style={[
             styles.card,
@@ -309,49 +311,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           ]}
         >
           <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
-            Design System & Icon Architecture
-          </Text>
-          <Text style={[styles.specimenIntro, { color: theme.textSecondary }]}>
-            Original vector SVG icon family with 2.0px optical stroke, continuous Bézier
-            transitions, and event-driven micro-interactions.
+            Design Architecture
           </Text>
 
-          <TouchableOpacity
-            style={[
-              styles.specimenButton,
-              {
-                backgroundColor: theme.bgRecessed,
-                borderColor: COLORS.winterHazel,
-              },
-            ]}
+          <SettingsRow
+            title="Icon Specimen Sheet & QA"
+            description="Inspect 45+ bespoke vector icons, states, and 400% zoom grid"
+            icon={<InfoIcon size={18} color={COLORS.winterHazel} />}
             onPress={() => setShowSpecimenSheet(true)}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Open Icon Specimen Sheet & 400% Zoom QA"
-          >
-            <View style={styles.specimenBtnLeft}>
-              <View
-                style={[
-                  styles.specimenIconSphere,
-                  { backgroundColor: theme.accentHazelTint },
-                ]}
-              >
-                <BingoIdentityIcon size={18} color={COLORS.winterHazel} variant="filled" />
-              </View>
-              <View>
-                <Text style={[styles.specimenBtnTitle, { color: theme.textPrimary }]}>
-                  Open Icon Specimen Sheet & QA
-                </Text>
-                <Text style={[styles.specimenBtnSub, { color: theme.textMuted }]}>
-                  45+ icons • 4 states • 400% Zoom inspector
-                </Text>
-              </View>
-            </View>
-            <ChevronIcon direction="right" size={16} color={COLORS.winterHazel} />
-          </TouchableOpacity>
+            showDivider={false}
+          />
         </GameCard>
 
-        {/* ACCOUNT & PRIVACY (Apple App Store Guideline 5.1.1(v) Compliant) */}
+        {/* 4. ACCOUNT & DATA PRIVACY (Apple App Store 5.1.1(v) Compliant) */}
         <GameCard
           style={[
             styles.card,
@@ -359,23 +331,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
           ]}
         >
           <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
-            Account & Privacy
-          </Text>
-          <Text style={[styles.specimenIntro, { color: theme.textSecondary }]}>
-            Zero third-party trackers. All telemetry and player records remain locally sovereign or verified via game server.
+            Account & Sovereignty
           </Text>
 
-          <View style={[styles.settingRow, { borderBottomColor: theme.borderSubtle }]}>
-            <View style={styles.iconPrefix}>
-              <InfoIcon size={18} color={theme.textMuted} />
-            </View>
-            <View style={styles.settingTextGroup}>
-              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>Account ID</Text>
-              <Text style={[styles.rowDesc, { color: theme.textMuted }]}>
-                UID-8842-BNGO • Guest Sovereign Profile
-              </Text>
-            </View>
-          </View>
+          <SettingsRow
+            title="Account Identity"
+            description="UID-8842-BNGO • Guest Sovereign Profile"
+            icon={<InfoIcon size={18} color={theme.textMuted} />}
+          />
 
           {accountResetDone ? (
             <View
@@ -415,10 +378,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.confirmDeleteBtn, { backgroundColor: COLORS.dangerRed }]}
-                  onPress={() => {
-                    setConfirmDelete(false);
-                    setAccountResetDone(true);
-                  }}
+                  onPress={handleConfirmReset}
                   accessibilityRole="button"
                   accessibilityLabel="Permanently Delete Account"
                 >
@@ -427,42 +387,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               </View>
             </View>
           ) : (
-            <TouchableOpacity
-              style={[
-                styles.deleteAccountTrigger,
-                { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
-              ]}
+            <SettingsRow
+              title="Delete Account & Reset Data"
+              description="Permanently erase match history, MMR, and achievements"
+              isDestructive={true}
+              showDivider={false}
               onPress={() => setConfirmDelete(true)}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Delete Account and Data"
-            >
-              <Text style={[styles.deleteAccountTriggerText, { color: COLORS.dangerRed }]}>
-                Delete Account & Reset Progression
-              </Text>
-            </TouchableOpacity>
+              rightElement={
+                <ChevronIcon direction="right" size={16} color={COLORS.dangerRed} />
+              }
+            />
           )}
-        </GameCard>
-
-        {/* SYSTEM INFORMATION */}
-        <GameCard
-          style={[
-            styles.card,
-            { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle },
-          ]}
-        >
-          <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
-            Game information
-          </Text>
-          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-            Version: 1.0.0 (Commercial 5×5 build)
-          </Text>
-          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-            Engine: Fixed 5×5 GridGameEngine (Numbers 1–25)
-          </Text>
-          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
-            Design: Reference-Driven System (Sora typography, Gentle Olive & Winter Hazel)
-          </Text>
         </GameCard>
       </ScrollView>
 
@@ -484,6 +419,27 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
     gap: SPACING.md, // 12px
   },
+  brandHeroBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  },
+  brandTextGroup: {
+    flex: 1,
+  },
+  brandTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  brandVersion: {
+    fontSize: 11,
+    marginTop: 2,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
   card: {
     padding: SPACING.lg, // 16px
     borderRadius: RADIUS.hero, // 24px
@@ -497,8 +453,14 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: SPACING.xs,
+    marginBottom: 2,
     letterSpacing: -0.2,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    marginBottom: SPACING.sm,
+    lineHeight: 16,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   themeToggleRow: {
@@ -515,11 +477,6 @@ const styles = StyleSheet.create({
   },
   themeModeBtnActive: {
     borderWidth: 2,
-  },
-  themeIconWrap: {
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   themeModeTitle: {
     fontSize: 14,
@@ -552,36 +509,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   swatchCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 1,
   },
   swatchText: {
     fontSize: 9,
     fontFamily: TYPOGRAPHY.fontFamily,
     textAlign: 'center',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.md, // 12px
-    borderBottomWidth: 1,
-  },
-  settingTextGroup: {
-    flex: 1,
-    paddingRight: SPACING.md, // 12px
-  },
-  rowTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  rowDesc: {
-    fontSize: 11,
-    marginTop: 2,
-    fontFamily: TYPOGRAPHY.fontFamily,
   },
   togglePill: {
     paddingHorizontal: SPACING.lg, // 16px
@@ -623,67 +559,6 @@ const styles = StyleSheet.create({
   },
   volBtnText: {
     fontSize: 11,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  infoText: {
-    fontSize: 12,
-    marginBottom: SPACING.xs,
-    lineHeight: 18,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  iconPrefix: {
-    marginRight: SPACING.sm,
-    width: 28,
-    alignItems: 'center',
-  },
-  specimenIntro: {
-    fontSize: 12,
-    marginBottom: SPACING.sm,
-    lineHeight: 18,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  specimenButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: RADIUS.surface,
-    padding: SPACING.md,
-    borderWidth: 1,
-  },
-  specimenBtnLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  specimenIconSphere: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  specimenBtnTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  specimenBtnSub: {
-    fontSize: 11,
-    marginTop: 2,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  deleteAccountTrigger: {
-    marginTop: SPACING.sm,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.control,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  deleteAccountTriggerText: {
-    fontSize: 12,
-    fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   deleteConfirmCard: {

@@ -1,35 +1,31 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../design/tokens';
-import { SettingsIcon, VolumeIcon, SpeechIcon, RankIcon, SunIcon, MoonIcon } from '../icons/CustomIcons';
+import { RankIcon, SunIcon, MoonIcon, VolumeIcon } from '../icons/CustomIcons';
 import { useTheme } from '../../design/theme';
 
 interface PlayerStageBarProps {
   playerName: string;
-  tier: string;
+  tier?: string;
   rating: number;
-  soundEnabled: boolean;
-  voiceEnabled: boolean;
-  onToggleSound: () => void;
-  onToggleVoice: () => void;
+  soundEnabled?: boolean;
+  voiceEnabled?: boolean;
+  onToggleSound?: () => void;
+  onToggleVoice?: () => void;
   onOpenSettings?: () => void;
 }
 
 export const PlayerStageBar: React.FC<PlayerStageBarProps> = ({
   playerName,
-  tier,
   rating,
-  soundEnabled,
-  voiceEnabled,
+  soundEnabled = true,
   onToggleSound,
-  onToggleVoice,
-  onOpenSettings,
 }) => {
   const { theme, isDark, toggleTheme } = useTheme();
 
   return (
     <View style={styles.container}>
-      {/* Player Identity Badge */}
+      {/* Player Identity Badge (Clean, Minimalist, Luxury) */}
       <View style={styles.playerIdentity}>
         <View
           style={[
@@ -47,24 +43,11 @@ export const PlayerStageBar: React.FC<PlayerStageBarProps> = ({
         </View>
 
         <View style={styles.identityTextGroup}>
-          <View style={styles.nameRow}>
-            <Text style={[styles.playerName, { color: theme.textPrimary }]}>
-              {playerName}
-            </Text>
-            <View
-              style={[
-                styles.tierChip,
-                {
-                  backgroundColor: theme.accentHazelTint,
-                  borderColor: COLORS.winterHazel,
-                },
-              ]}
-            >
-              <Text style={styles.tierText}>{tier}</Text>
-            </View>
-          </View>
+          <Text style={[styles.playerName, { color: theme.textPrimary }]}>
+            {playerName}
+          </Text>
           <View style={styles.ratingRow}>
-            <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 3 }} />
+            <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
             <Text style={[styles.ratingValue, { color: theme.textPrimary }]}>
               {rating.toLocaleString()}
             </Text>
@@ -73,43 +56,22 @@ export const PlayerStageBar: React.FC<PlayerStageBarProps> = ({
         </View>
       </View>
 
-      {/* Quick Audio, Theme & Settings Controls */}
+      {/* Sleek Theme Toggle & Game Sound Button */}
       <View style={styles.quickControls}>
-        {/* Theme Toggle Button (Light/Dark mode) */}
         <TouchableOpacity
           style={[
-            styles.iconBtn,
+            styles.controlBtn,
+            styles.soundBtn,
             {
               backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={toggleTheme}
-          activeOpacity={0.8}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} theme`}
-        >
-          {isDark ? (
-            <SunIcon size={18} color={COLORS.winterHazel} />
-          ) : (
-            <MoonIcon size={18} color={COLORS.lunarShadow} />
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.iconBtn,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
+              borderColor: soundEnabled ? COLORS.gentleOlive : theme.borderSubtle,
             },
           ]}
           onPress={onToggleSound}
-          activeOpacity={0.8}
+          activeOpacity={0.75}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel="Toggle sound effects"
+          accessibilityLabel={soundEnabled ? 'Mute game sound' : 'Enable game sound'}
         >
           <VolumeIcon
             size={18}
@@ -120,43 +82,25 @@ export const PlayerStageBar: React.FC<PlayerStageBarProps> = ({
 
         <TouchableOpacity
           style={[
-            styles.iconBtn,
+            styles.controlBtn,
+            styles.themeBtn,
             {
               backgroundColor: theme.bgCard,
               borderColor: theme.borderSubtle,
             },
           ]}
-          onPress={onToggleVoice}
-          activeOpacity={0.8}
+          onPress={toggleTheme}
+          activeOpacity={0.75}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel="Toggle voice caller"
+          accessibilityLabel={`Switch to ${isDark ? 'Light' : 'Dark'} theme`}
         >
-          <SpeechIcon
-            size={18}
-            color={voiceEnabled ? COLORS.gentleOlive : theme.textMuted}
-            active={voiceEnabled}
-          />
+          {isDark ? (
+            <SunIcon size={18} color={COLORS.winterHazel} />
+          ) : (
+            <MoonIcon size={18} color={COLORS.lunarShadow} />
+          )}
         </TouchableOpacity>
-
-        {onOpenSettings && (
-          <TouchableOpacity
-            style={[
-              styles.iconBtn,
-              {
-                backgroundColor: theme.bgCard,
-                borderColor: theme.borderSubtle,
-              },
-            ]}
-            onPress={onOpenSettings}
-            activeOpacity={0.8}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Open settings"
-          >
-            <SettingsIcon size={18} color={theme.textSecondary} />
-          </TouchableOpacity>
-        )}
       </View>
     </View>
   );
@@ -193,6 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: -0.5,
   },
   onlinePip: {
     position: 'absolute',
@@ -208,65 +153,48 @@ const styles = StyleSheet.create({
   identityTextGroup: {
     gap: 2,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm, // 8px
-  },
   playerName: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  tierChip: {
-    paddingHorizontal: SPACING.sm, // 8px
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-  },
-  tierText: {
-    fontSize: 10,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#8A6724',
-    letterSpacing: 0.6,
+    letterSpacing: -0.3,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs, // 4px
   },
   ratingValue: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.monoFamily,
+    marginRight: 4,
   },
   ratingLabel: {
     fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   quickControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  iconBtn: {
-    width: 38,
-    height: 38,
+  controlBtn: {
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.pill,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.08,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
   },
-  themeIconEmoji: {
-    fontSize: 14,
+  soundBtn: {
+    marginRight: 2,
   },
+  themeBtn: {},
 });

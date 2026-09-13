@@ -168,16 +168,26 @@ Transform the classic 5×5 number game into a fast, tactile, premium mobile titl
   - Achievement badge collection (First Bingo, 10 Wins, 5-Day Streak, etc.).
   - Secondary entry to Settings modal.
 
-### G. Results Screen
-- **Answers Immediate Questions**: "Did I win?", "What did I score?", "What changed?".
-- **Components**:
-  - Celebratory victory crest or honorable defeat badge.
-  - Match statistics breakdown: Completed lines, calls needed, match duration, score.
-  - MMR Rating Delta banner (`+25 MMR`).
-  - Primary Action: **"PLAY AGAIN"** (launches immediate rematch).
-  - Secondary Action: **"RETURN TO LOBBY"**.
+### H. Settings Screen Architecture (Clean Mobile Ergonomics)
+- **Primary Objective**: Practical, fast-scanning system utility — NOT a decorative icon gallery.
+- **Rule of Restraint**:
+  - REMOVE all custom circular app-launcher style icon tiles from individual settings rows.
+  - Separate brand identity: The app icon (`AppIconVector`) is reserved for app identity, branding, launcher, and about info—never inside functional row items.
+- **Standard Row Hierarchy**:
+  ```
+  ROW
+  ┌──────────────────────────────────────────────────┐
+  │ Title                                            │
+  │ Supporting descriptive subtext                   │
+  │                         [Toggle / Value / Chevron]
+  └──────────────────────────────────────────────────┘
+  ```
+- **Semantic Groupings**:
+  1. **Appearance & Theme**: Clean segmented pills for Light Mode (Gray Whisper) and Dark Mode (Lunar Shadow).
+  2. **Audio & Tactile**: Sound effects toggle, Voice caller toggle, Master volume stepper (`Low`, `Med`, `High`).
+  3. **Account & Sovereignty**: Player UID, Clear match records, Irreversible two-step account deletion.
+  4. **Specifications & About**: Commercial 5×5 engine specs, version info.
 
----
 
 ## 5. Security & Trust Architecture
 

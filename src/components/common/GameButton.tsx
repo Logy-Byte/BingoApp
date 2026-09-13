@@ -4,15 +4,17 @@ import { COLORS, RADIUS, SPACING, TOUCH_TARGET, TYPOGRAPHY } from '../../design/
 import { InlineLoader } from './InlineLoader';
 import { useTheme } from '../../design/theme';
 
-interface GameButtonProps {
+export interface GameButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'success' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'success' | 'outline' | 'danger' | 'pill';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export const GameButton: React.FC<GameButtonProps> = ({
@@ -22,14 +24,18 @@ export const GameButton: React.FC<GameButtonProps> = ({
   size = 'md',
   disabled = false,
   loading = false,
+  fullWidth = false,
   icon,
   style,
+  testID,
 }) => {
   const { theme, isDark } = useTheme();
 
   const getBgColor = () => {
     if (disabled) return theme.bgRecessed;
     switch (variant) {
+      case 'pill':
+        return COLORS.cleanWhite;
       case 'secondary':
         return theme.bgCard;
       case 'success':
@@ -47,26 +53,28 @@ export const GameButton: React.FC<GameButtonProps> = ({
   const getTextColor = () => {
     if (disabled) return theme.textMuted;
     if (variant === 'primary' || variant === 'success') return COLORS.lunarShadow;
+    if (variant === 'pill') return COLORS.lunarShadow;
     if (variant === 'outline') return theme.textPrimary;
     if (variant === 'danger') return '#FFFFFF';
     return theme.textPrimary;
   };
 
   const getDimensions = () => {
+    const isPill = variant === 'pill';
     switch (size) {
       case 'sm':
         return {
           paddingVertical: SPACING.sm, // 8px
           paddingHorizontal: SPACING.md, // 12px
           minHeight: 36,
-          borderRadius: RADIUS.compact,
+          borderRadius: isPill ? RADIUS.pill : RADIUS.compact,
         };
       case 'lg':
         return {
           paddingVertical: SPACING.lg, // 16px
           paddingHorizontal: SPACING.xl, // 20px
           minHeight: 52,
-          borderRadius: RADIUS.control,
+          borderRadius: isPill ? RADIUS.pill : RADIUS.control,
         };
       case 'md':
       default:
@@ -74,7 +82,7 @@ export const GameButton: React.FC<GameButtonProps> = ({
           paddingVertical: SPACING.md, // 12px
           paddingHorizontal: SPACING.lg, // 16px
           minHeight: TOUCH_TARGET.minSize, // 44px
-          borderRadius: RADIUS.control,
+          borderRadius: isPill ? RADIUS.pill : RADIUS.control,
         };
     }
   };
@@ -86,6 +94,7 @@ export const GameButton: React.FC<GameButtonProps> = ({
       activeOpacity={0.85}
       onPress={onPress}
       disabled={disabled || loading}
+      testID={testID}
       style={[
         styles.buttonBase,
         {
@@ -99,23 +108,35 @@ export const GameButton: React.FC<GameButtonProps> = ({
               ? theme.borderSubtle
               : variant === 'secondary'
               ? theme.borderSubtle
+              : variant === 'pill'
+              ? theme.borderSubtle
               : 'transparent',
-          borderWidth: variant === 'outline' || variant === 'secondary' ? 1 : 0,
+          borderWidth: variant === 'outline' || variant === 'secondary' || variant === 'pill' ? 1 : 0,
+          width: fullWidth ? '100%' : undefined,
         },
         style,
       ]}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading }}
     >
-      {/* Top Specular Bevel for Secondary and Primary */}
-      {(variant === 'primary' || variant === 'secondary') && !disabled && (
-        <View style={[styles.topBevel, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.4)' }]} />
+      {/* Top Specular Bevel for Secondary, Primary, and Pill */}
+      {(variant === 'primary' || variant === 'secondary' || variant === 'pill') && !disabled && (
+        <View
+          style={[
+            styles.topBevel,
+            {
+              backgroundColor: isDark
+                ? 'rgba(255, 255, 255, 0.16)'
+                : 'rgba(255, 255, 255, 0.4)',
+            },
+          ]}
+        />
       )}
 
       {loading ? (
         <InlineLoader
           size={size === 'lg' ? 20 : 16}
-          color={variant === 'primary' || variant === 'success' ? COLORS.lunarShadow : theme.textPrimary}
+          color={variant === 'primary' || variant === 'success' || variant === 'pill' ? COLORS.lunarShadow : theme.textPrimary}
         />
       ) : (
         <View style={styles.contentRow}>
@@ -153,7 +174,6 @@ const styles = StyleSheet.create({
     left: 8,
     right: 8,
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   contentRow: {
     flexDirection: 'row',

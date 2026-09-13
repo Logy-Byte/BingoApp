@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { GameButton } from '../components/common/GameButton';
 import { GameCard } from '../components/common/GameCard';
+import { GameInput } from '../components/common/GameInput';
 import { RouteHeader } from '../components/common/RouteHeader';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { LockIcon, JoinRoomIcon } from '../components/icons/CustomIcons';
@@ -47,7 +48,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
-      <RouteHeader title="Join room" onBack={onBack} />
+      <RouteHeader title="Join Room" onBack={onBack} />
 
       <View style={styles.contentWrap}>
         <GameCard
@@ -60,73 +61,50 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
           ]}
         >
           <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-            Enter the 6-character room code provided by the host.
+            Enter the 6-character room code provided by your match host.
           </Text>
 
           {errorMessage && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+            <View style={[styles.errorBox, { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: COLORS.dangerRed }]}>
+              <Text style={[styles.errorText, { color: COLORS.dangerRed }]}>{errorMessage}</Text>
             </View>
           )}
 
-          <View style={styles.fieldGroup}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Room code</Text>
+          <GameInput
+            label="ROOM CODE"
+            value={roomId}
+            onChangeText={(txt) => setRoomId(sanitizeRoomCode(txt))}
+            placeholder="e.g. K9X2P7"
+            autoCapitalize="characters"
+            maxLength={6}
+            rightAction={
               <TouchableOpacity
                 onPress={handlePaste}
                 style={[styles.pasteBadge, { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle }]}
                 accessibilityRole="button"
-                accessibilityLabel="Paste Room Code"
+                accessibilityLabel="Paste room code from clipboard"
               >
-                <Text style={[styles.pasteBadgeText, { color: COLORS.gentleOlive }]}>Paste code</Text>
+                <Text style={[styles.pasteBadgeText, { color: COLORS.gentleOlive }]}>Paste</Text>
               </TouchableOpacity>
-            </View>
-            <TextInput
-              style={[
-                styles.codeInput,
-                {
-                  backgroundColor: theme.bgRecessed,
-                  borderColor: theme.accentOlive,
-                  color: theme.textPrimary,
-                },
-              ]}
-              placeholder="e.g. K9X2P7"
-              placeholderTextColor={theme.textMuted}
-              value={roomId}
-              onChangeText={(txt) => setRoomId(sanitizeRoomCode(txt))}
-              autoCapitalize="characters"
-              maxLength={6}
-            />
-          </View>
+            }
+          />
 
-          <View style={styles.fieldGroup}>
-            <View style={styles.passLabelRow}>
-              <LockIcon size={14} color={theme.textSecondary} />
-              <Text style={[styles.label, { color: theme.textSecondary }]}>Passcode (if private)</Text>
-            </View>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.bgRecessed,
-                  borderColor: theme.borderSubtle,
-                  color: theme.textPrimary,
-                },
-              ]}
-              placeholder="Passcode"
-              placeholderTextColor={theme.textMuted}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              maxLength={12}
-            />
-          </View>
+          <GameInput
+            label="PASSCODE (IF PRIVATE)"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter 4-digit code"
+            secureTextEntry
+            maxLength={12}
+            icon={<LockIcon size={16} color={theme.textMuted} />}
+          />
 
           <GameButton
-            title="Join room"
+            title="Join Match ↗"
             icon={<JoinRoomIcon size={18} color={COLORS.lunarShadow} />}
             variant="primary"
             size="lg"
+            fullWidth
             loading={isJoining}
             disabled={roomId.trim().length < 6}
             onPress={handleJoin}
@@ -141,58 +119,36 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bgDark,
   },
   contentWrap: {
     padding: SPACING.lg, // 16px
   },
   card: {
     padding: SPACING.lg, // 16px
-    backgroundColor: COLORS.surfaceDeep,
-    borderColor: COLORS.floatingDockBorder,
+    borderRadius: RADIUS.hero,
+    borderWidth: 1,
+    gap: SPACING.sm,
   },
   cardDesc: {
     fontSize: 13,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.lg, // 16px
+    marginBottom: SPACING.md,
     lineHeight: 18,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   errorBox: {
-    backgroundColor: 'rgba(215, 100, 100, 0.12)',
+    padding: SPACING.md,
+    borderRadius: RADIUS.control,
     borderWidth: 1,
-    borderColor: COLORS.dangerRed,
-    borderRadius: RADIUS.control, // 12px
-    padding: SPACING.sm, // 8px
-    marginBottom: SPACING.md, // 12px
+    marginBottom: SPACING.sm,
   },
   errorText: {
-    color: COLORS.dangerRed,
     fontSize: 12,
     fontWeight: '600',
-  },
-  fieldGroup: {
-    marginBottom: SPACING.md, // 12px
-  },
-  passLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs, // 4px
-    marginBottom: SPACING.xs, // 4px
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xs, // 4px
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   pasteBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
     borderRadius: RADIUS.compact,
     borderWidth: 1,
   },
@@ -201,31 +157,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  codeInput: {
-    backgroundColor: COLORS.surfaceRaised,
-    borderWidth: 1.5,
-    borderColor: COLORS.playEmerald,
-    borderRadius: RADIUS.control, // 12px
-    paddingHorizontal: SPACING.md, // 12px
-    paddingVertical: SPACING.md, // 12px
-    color: COLORS.textPrimary,
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 4,
-    textAlign: 'center',
-    fontFamily: TYPOGRAPHY.monoFamily,
-  },
-  input: {
-    backgroundColor: COLORS.surfaceRaised,
-    borderWidth: 1,
-    borderColor: COLORS.floatingDockBorder,
-    borderRadius: RADIUS.control, // 12px
-    paddingHorizontal: SPACING.lg, // 16px
-    paddingVertical: SPACING.md, // 12px
-    color: COLORS.textPrimary,
-    fontSize: 14,
-  },
   joinBtn: {
-    marginTop: SPACING.md, // 12px
+    marginTop: SPACING.sm,
   },
 });

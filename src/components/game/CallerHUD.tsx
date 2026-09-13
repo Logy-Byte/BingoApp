@@ -1,7 +1,7 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../design/tokens';
-import { BingoIdentityIcon } from '../icons/CustomIcons';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, Animated } from 'react-native';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY, SPRING_CONFIGS } from '../../design/tokens';
+import { BingoIdentityIcon, IconSparkles } from '../icons/CustomIcons';
 import { useTheme } from '../../design/theme';
 
 interface CallerHUDProps {
@@ -12,7 +12,7 @@ interface CallerHUDProps {
 }
 
 /**
- * Caller HUD with Concentric Dial Sphere & Reference 2 Timeline Ribbon
+ * Caller HUD with Concentric Dial Sphere, Physics Drop Entrance & Timeline Ribbon
  */
 export const CallerHUD: React.FC<CallerHUDProps> = ({
   currentCall,
@@ -21,6 +21,29 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
   recentCalls,
 }) => {
   const { theme } = useTheme();
+  const dropAnim = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Trigger Kowalski-standard spring drop whenever currentCall changes
+  useEffect(() => {
+    if (currentCall !== undefined) {
+      dropAnim.setValue(0.7);
+      pulseAnim.setValue(1.15);
+      Animated.parallel([
+        Animated.spring(dropAnim, {
+          toValue: 1,
+          tension: SPRING_CONFIGS.ballDrop.tension,
+          friction: SPRING_CONFIGS.ballDrop.friction,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [currentCall, dropAnim, pulseAnim]);
 
   return (
     <View
@@ -31,6 +54,8 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
           borderColor: theme.borderSubtle,
         },
       ]}
+      accessibilityRole="region"
+      accessibilityLabel={`Caller broadcast: current ball ${currentCall ?? 'none'}, ball ${totalCalls} of ${maxCalls}`}
     >
       {/* Top Specular Hairline */}
       <View style={styles.topBevel} />
@@ -41,7 +66,7 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
           <BingoIdentityIcon size={12} color={COLORS.gentleOlive} variant="filled" style={{ marginRight: 4 }} />
           <View style={[styles.livePulsePip, { backgroundColor: COLORS.gentleOlive }]} />
           <Text style={[styles.liveBadgeText, { color: theme.textPrimary }]}>
-            CALLER BROADCAST
+            LIVE BROADCAST CALLER
           </Text>
         </View>
         <Text style={[styles.drawCounter, { color: theme.textMuted }]}>
@@ -49,11 +74,10 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
         </Text>
       </View>
 
-      {/* Hero Caller Sphere with Reference 2 Concentric Dial Accent */}
+      {/* Hero Caller Sphere with Concentric Dial Accent */}
       <View style={styles.broadcastBody}>
         {/* Concentric Dial Sphere */}
         <View style={styles.sphereShadowWrap}>
-          {/* Outer Concentric Ring with Gentle Olive Perimeter Dot (Ref 2 Climate Dial) */}
           <View
             style={[
               styles.concentricOuterRing,
@@ -61,12 +85,13 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
             ]}
           >
             <View style={styles.perimeterDot} />
-            <View
+            <Animated.View
               style={[
                 styles.callerSphere,
                 {
                   backgroundColor: COLORS.cleanWhite,
                   borderColor: theme.borderSubtle,
+                  transform: [{ scale: dropAnim }],
                 },
               ]}
             >
@@ -81,15 +106,23 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
                   {currentCall !== undefined ? String(currentCall).padStart(2, '0') : '--'}
                 </Text>
               </View>
-            </View>
+            </Animated.View>
           </View>
         </View>
 
-        {/* Timeline Ribbon (Reference 2 Date Track) */}
+        {/* Timeline Ribbon */}
         <View style={styles.recentTray}>
-          <Text style={[styles.recentTrayLabel, { color: theme.textMuted }]}>
-            RECENT DRAWS
-          </Text>
+          <View style={styles.recentHeaderRow}>
+            <Text style={[styles.recentTrayLabel, { color: theme.textMuted }]}>
+              PREVIOUS CALLS
+            </Text>
+            {recentCalls.length > 0 && (
+              <View style={styles.reelLiveBadge}>
+                <IconSparkles size={10} color={COLORS.winterHazel} />
+                <Text style={[styles.reelLiveText, { color: COLORS.winterHazel }]}>RECENT</Text>
+              </View>
+            )}
+          </View>
           <View
             style={[
               styles.timelineRibbon,
@@ -104,7 +137,7 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
                 Awaiting first call...
               </Text>
             ) : (
-              recentCalls.slice(0, 4).map((num, idx) => {
+              recentCalls.slice(0, 5).map((num, idx) => {
                 const isActive = idx === 0;
                 return (
                   <View
@@ -250,6 +283,27 @@ const styles = StyleSheet.create({
   recentTray: {
     flex: 1,
     gap: 4,
+  },
+  recentHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  reelLiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(230, 202, 154, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: RADIUS.pill,
+  },
+  reelLiveText: {
+    fontSize: 8,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: 0.5,
   },
   recentTrayLabel: {
     fontSize: 10,

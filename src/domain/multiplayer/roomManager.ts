@@ -105,6 +105,9 @@ export class RoomManager {
       maxPlayers: 2,
       status: 'WAITING',
       createdAt: Date.now(),
+      ticketPrice: 2.0,
+      jackpotAmount: 50000,
+      recommendedTickets: [1, 2, 4, 8],
     };
 
     this.rooms.set(roomId, room);

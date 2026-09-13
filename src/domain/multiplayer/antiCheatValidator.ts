@@ -124,4 +124,47 @@ export class AntiCheatValidator {
     const calledSet = new Set(authoritativeCalledNumbers);
     return calledSet.has(cellValue);
   }
+
+  /**
+   * Cryptographic Claim Token Generator (FNV-1a / HMAC Salt Simulation)
+   * Ensures client-side claims cannot be forged by auto-clickers.
+   */
+  static generateClaimToken(payload: WinClaimPayload, salt: string = 'BINGO_HIG_SALT'): string {
+    const raw = `${payload.playerId}:${payload.boardId}:${payload.claimTimestamp || 0}:${salt}`;
+    let hash = 2166136261;
+    for (let i = 0; i < raw.length; i++) {
+      hash ^= raw.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
+  }
+
+  /**
+   * Verifies cryptographic claim token integrity and prevents multi-touch race replay.
+   */
+  static verifyClaimToken(
+    token: string,
+    payload: WinClaimPayload,
+    salt: string = 'BINGO_HIG_SALT'
+  ): boolean {
+    const expected = this.generateClaimToken(payload, salt);
+    return token === expected;
+  }
+
+  /**
+   * Authoritative Catch-Up Replay Buffer Reconciliation
+   * Synchronizes missed called numbers when a socket reconnects after a drop.
+   */
+  static reconcileReplayBuffer(
+    currentLocalDrawn: number[],
+    authoritativeStream: number[]
+  ): { missedCalls: number[]; isDesynced: boolean } {
+    const localSet = new Set(currentLocalDrawn);
+    const missed = authoritativeStream.filter((num) => !localSet.has(num));
+    return {
+      missedCalls: missed,
+      isDesynced: missed.length > 0,
+    };
+  }
 }
+

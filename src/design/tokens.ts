@@ -29,6 +29,9 @@ export const COLORS = {
   borderSubtle: '#2E333C',    // Hairline separation
   borderStrong: '#3E4552',    // Frame edges
   borderGold: '#E6CA9A',      // Winter Hazel highlight
+  borderSpecular: 'rgba(255, 255, 255, 0.08)',       // Apple HIG 1px micro-border
+  borderSpecularStrong: 'rgba(255, 255, 255, 0.16)', // Specular glint highlight
+  glassHighlight: 'rgba(255, 255, 255, 0.12)',       // Top edge illumination
 
   // Reference 3: Signature Floating Console Dock
   floatingDockBg: '#282828',     // Lunar Shadow capsule dock
@@ -140,12 +143,12 @@ export const SURFACES = {
 
 export const TYPOGRAPHY = {
   brandFamily:
-    "'Poppins', 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   fontFamily:
-    "'Sora', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   // Monospaced tabular numerals for game numbers and timers
   monoFamily:
-    "'Sora', 'Menlo', 'JetBrains Mono', monospace",
+    "'JetBrains Mono', 'Inter', -apple-system, monospace",
   weights: {
     regular: '400' as const,
     medium: '500' as const,
@@ -281,4 +284,90 @@ export const ICON_SIZES = {
   xxl: 40,
   hero: 48,
 };
+
+/**
+ * Concentric Corner Geometry Helper (Apple HIG Rule)
+ * R_inner = max(R_outer - Padding, minRadius)
+ */
+export function calcConcentricRadius(outerRadius: number, padding: number, minRadius: number = 4): number {
+  return Math.max(outerRadius - padding, minRadius);
+}
+
+/**
+ * Emil Kowalski Standard Spring Physics Tokens
+ */
+export const SPRING_CONFIGS = {
+  // Card Press & Cell Touch
+  cardPress: {
+    tension: 340,
+    friction: 28,
+    mass: 0.8,
+    scaleDown: 0.97,
+  },
+  // Broadcast Ball Drop Entrance
+  ballDrop: {
+    tension: 220,
+    friction: 18,
+    damping: 0.82,
+  },
+  // iOS Spring Modal / Sheet Presentation
+  sheetModal: {
+    damping: 0.85,
+    initialVelocity: 4,
+    stiffness: 300,
+  },
+  // Radial Meter & Progress Charge
+  radialEnergy: {
+    tension: 180,
+    friction: 12,
+  },
+  // Micro haptic spring feedback
+  hapticFeedback: {
+    tension: 400,
+    friction: 30,
+    mass: 0.5,
+  },
+};
+
+/**
+ * Layered Apple HIG Glass Surface Materials
+ */
+export const SURFACE_MATERIALS = {
+  primaryGlass: {
+    backgroundColor: 'rgba(35, 38, 43, 0.82)',
+    borderColor: COLORS.borderSpecular,
+    borderWidth: 1,
+  },
+  elevatedCard: {
+    backgroundColor: COLORS.surfaceRaised,
+    borderColor: COLORS.borderSpecular,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+  activeSelected: {
+    backgroundColor: COLORS.daubWell,
+    borderColor: COLORS.daubBorder,
+    borderWidth: 1,
+    shadowColor: COLORS.daubBorder,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  dockCapsule: {
+    backgroundColor: COLORS.floatingDockBg,
+    borderColor: COLORS.floatingDockBorder,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+};
+
 

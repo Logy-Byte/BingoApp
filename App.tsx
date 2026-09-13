@@ -251,8 +251,11 @@ function MainApp() {
     multiplayer.joinRoom(roomId, password);
   };
 
-  const handleSelectRoom = (room: PublicRoom) => {
+  const handleSelectRoom = (room: PublicRoom, ticketCount?: number) => {
     setSelectedRoom(room);
+    if (ticketCount) {
+      setPurchasedCardsCount(ticketCount);
+    }
     setScreenState('PRE_GAME');
   };
 
@@ -462,7 +465,11 @@ function MainApp() {
             {currentTab === 'LEADERBOARD' && <LeaderboardScreen />}
 
             {currentTab === 'PROFILE' && (
-              <ProfileScreen onOpenSettings={() => setScreenState('SETTINGS')} />
+              <ProfileScreen
+                playerName={player.name}
+                onUpdateName={(name) => setPlayer((prev) => ({ ...prev, name }))}
+                onOpenSettings={() => setScreenState('SETTINGS')}
+              />
             )}
 
             {currentTab === 'SHOP' && (

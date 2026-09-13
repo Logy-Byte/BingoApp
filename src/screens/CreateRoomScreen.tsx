@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { RouteHeader } from '../components/common/RouteHeader';
+import { GameButton } from '../components/common/GameButton';
+import { GameInput } from '../components/common/GameInput';
+import { GameCard } from '../components/common/GameCard';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { RoomPrivacy } from '../domain/types';
-import { LockIcon, UnlockIcon, CreateRoomIcon } from '../components/icons/CustomIcons';
+import { LockIcon, UnlockIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
 
 interface CreateRoomScreenProps {
@@ -24,17 +27,17 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
   const handleCreate = () => {
     setIsSubmitting(true);
     setTimeout(() => {
-      onCreateRoom(roomName || 'Invitational Match', privacy, password);
+      onCreateRoom(roomName.trim() || 'Friendly Arena', privacy, password.trim());
       setIsSubmitting(false);
     }, 200);
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
-      <RouteHeader title="Create room" onBack={onBack} />
+      <RouteHeader title="Create Room" onBack={onBack} />
 
       <View style={styles.contentWrap}>
-        <View
+        <GameCard
           style={[
             styles.formCard,
             {
@@ -43,27 +46,16 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
             },
           ]}
         >
-          {/* ROOM NAME */}
-          <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Room name</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.bgRecessed,
-                  borderColor: theme.borderSubtle,
-                  color: theme.textPrimary,
-                },
-              ]}
-              placeholder="e.g. Friendly Arena"
-              placeholderTextColor={theme.textMuted}
-              value={roomName}
-              onChangeText={setRoomName}
-              maxLength={24}
-            />
-          </View>
+          {/* ROOM NAME INPUT */}
+          <GameInput
+            label="ROOM NAME"
+            value={roomName}
+            onChangeText={setRoomName}
+            placeholder="e.g. Friendly Arena"
+            maxLength={24}
+          />
 
-          {/* BOARD RULES INFO */}
+          {/* FIXED 5x5 BOARD RULES SPECS */}
           <View
             style={[
               styles.rulesLockedBox,
@@ -74,22 +66,22 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
             ]}
           >
             <Text style={[styles.rulesLockedTitle, { color: theme.textPrimary }]}>
-              Game specifications
+              Match Specifications
             </Text>
             <Text style={[styles.rulesLockedText, { color: theme.textSecondary }]}>
-              • 5×5 grid (25 cells)
+              • 5×5 Grid (25 Cells, Numbers 1–25)
             </Text>
             <Text style={[styles.rulesLockedText, { color: theme.textSecondary }]}>
-              • Numbers 1 through 25
+              • 2–4 Players Supported
             </Text>
             <Text style={[styles.rulesLockedText, { color: theme.textSecondary }]}>
-              • 2 player capacity
+              • Authoritative Anti-Cheat Validation
             </Text>
           </View>
 
-          {/* PRIVACY TOGGLE */}
+          {/* PRIVACY TOGGLE (Segmented Capsule Pill derived from Dock grammar) */}
           <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.textSecondary }]}>Access control</Text>
+            <Text style={[styles.label, { color: theme.textSecondary }]}>ACCESS CONTROL</Text>
             <View
               style={[
                 styles.privacySelector,
@@ -117,7 +109,7 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
                     { color: privacy === 'open' ? COLORS.lunarShadow : theme.textMuted },
                   ]}
                 >
-                  Public
+                  Public Room
                 </Text>
               </TouchableOpacity>
 
@@ -150,45 +142,28 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
 
           {/* PASSWORD INPUT (IF PRIVATE) */}
           {privacy === 'password' && (
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: theme.textSecondary }]}>4-digit passcode</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.bgRecessed,
-                    borderColor: theme.borderSubtle,
-                    color: theme.textPrimary,
-                  },
-                ]}
-                placeholder="e.g. 1234"
-                placeholderTextColor={theme.textMuted}
-                value={password}
-                onChangeText={setPassword}
-                keyboardType="numeric"
-                maxLength={4}
-                secureTextEntry
-              />
-            </View>
+            <GameInput
+              label="4-DIGIT PASSCODE"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="e.g. 1234"
+              keyboardType="numeric"
+              maxLength={4}
+              secureTextEntry
+              icon={<LockIcon size={16} color={theme.textMuted} />}
+            />
           )}
 
-          <TouchableOpacity
-            style={[
-              styles.createSubmitBtn,
-              {
-                backgroundColor: COLORS.gentleOlive,
-                borderColor: '#D7E28E',
-              },
-            ]}
+          <GameButton
+            title="Create & Host Match ↗"
             onPress={handleCreate}
-            disabled={isSubmitting}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel="Create Room"
-          >
-            <Text style={styles.createSubmitBtnText}>Create room ↗</Text>
-          </TouchableOpacity>
-        </View>
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={isSubmitting}
+            style={styles.submitBtn}
+          />
+        </GameCard>
       </View>
     </View>
   );
@@ -206,27 +181,17 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.hero, // 24px
     borderWidth: 1,
     gap: SPACING.md, // 12px
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
     elevation: 2,
   },
   fieldGroup: {
     gap: SPACING.xs, // 4px
+    marginBottom: SPACING.xs,
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  input: {
-    borderRadius: RADIUS.control, // 12px
-    paddingVertical: SPACING.md, // 12px
-    paddingHorizontal: SPACING.md, // 12px
-    fontSize: 14,
-    borderWidth: 1,
-    fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: -0.1,
   },
   rulesLockedBox: {
     borderRadius: RADIUS.control, // 12px
@@ -272,25 +237,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  createSubmitBtn: {
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: RADIUS.sheet, // 28px
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    shadowColor: COLORS.gentleOlive,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
+  submitBtn: {
     marginTop: SPACING.xs,
-  },
-  createSubmitBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.lunarShadow,
-    letterSpacing: 0.5,
-    fontFamily: TYPOGRAPHY.fontFamily,
   },
 });

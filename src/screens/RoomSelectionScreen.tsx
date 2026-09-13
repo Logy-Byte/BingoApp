@@ -1,4 +1,11 @@
-import React from 'react';
+/**
+ * RoomSelectionScreen
+ * Apple HIG-Grade Staking Room Discovery Screen
+ * Features TactileRoomCards with integrated ticket selectors,
+ * zero emojis (100% SVG vector currency), and PremiumEmptyState fallback.
+ */
+
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,19 +16,26 @@ import {
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
 import { PublicRoom } from '../domain/types';
-import { ChevronIcon, LockIcon, BingoIdentityIcon } from '../components/icons/CustomIcons';
+import {
+  ChevronIcon,
+  IconCoinStack,
+  IconGemstone,
+  IconSparkles,
+} from '../components/icons/CustomIcons';
+import { TactileRoomCard } from '../components/room/TactileRoomCard';
+import { PremiumEmptyState } from '../components/common/PremiumEmptyState';
 
 interface RoomSelectionScreenProps {
   coins: number;
   gems: number;
-  onSelectRoom: (room: PublicRoom) => void;
+  onSelectRoom: (room: PublicRoom, ticketCount?: number) => void;
   onBack: () => void;
 }
 
 const DEFAULT_ROOMS: PublicRoom[] = [
   {
     id: 'R101',
-    name: 'Namen 1',
+    name: 'Emerald Lounge',
     privacy: 'open',
     hostId: 'system',
     hostName: 'System',
@@ -29,13 +43,13 @@ const DEFAULT_ROOMS: PublicRoom[] = [
     maxPlayers: 50,
     status: 'ACTIVE',
     createdAt: Date.now(),
-    ticketPrice: 2.00,
+    ticketPrice: 2.0,
     jackpotAmount: 235000,
     recommendedTickets: [1, 2, 4, 8],
   },
   {
     id: 'R102',
-    name: 'Namen 2',
+    name: 'Silver Suite',
     privacy: 'open',
     hostId: 'system',
     hostName: 'System',
@@ -43,13 +57,13 @@ const DEFAULT_ROOMS: PublicRoom[] = [
     maxPlayers: 50,
     status: 'ACTIVE',
     createdAt: Date.now(),
-    ticketPrice: 3.00,
+    ticketPrice: 3.0,
     jackpotAmount: 150000,
     recommendedTickets: [1, 2, 4, 8],
   },
   {
     id: 'R103',
-    name: 'Namen 3',
+    name: 'Golden Arena',
     privacy: 'open',
     hostId: 'system',
     hostName: 'System',
@@ -57,13 +71,13 @@ const DEFAULT_ROOMS: PublicRoom[] = [
     maxPlayers: 50,
     status: 'WAITING',
     createdAt: Date.now(),
-    ticketPrice: 5.00,
+    ticketPrice: 5.0,
     jackpotAmount: 500000,
     recommendedTickets: [1, 2, 4, 8],
   },
   {
     id: 'R104',
-    name: 'Namen 4',
+    name: 'Penny Rush',
     privacy: 'open',
     hostId: 'system',
     hostName: 'System',
@@ -71,13 +85,13 @@ const DEFAULT_ROOMS: PublicRoom[] = [
     maxPlayers: 50,
     status: 'ACTIVE',
     createdAt: Date.now(),
-    ticketPrice: 1.00,
+    ticketPrice: 1.0,
     jackpotAmount: 75000,
     recommendedTickets: [1, 2, 4, 8],
   },
   {
     id: 'R105',
-    name: 'Namen 5',
+    name: 'High Roller Salon',
     privacy: 'open',
     hostId: 'system',
     hostName: 'System',
@@ -85,7 +99,7 @@ const DEFAULT_ROOMS: PublicRoom[] = [
     maxPlayers: 50,
     status: 'ACTIVE',
     createdAt: Date.now(),
-    ticketPrice: 10.00,
+    ticketPrice: 10.0,
     jackpotAmount: 1000000,
     recommendedTickets: [1, 2, 4, 8],
   },
@@ -98,85 +112,73 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
   onBack,
 }) => {
   const { theme } = useTheme();
+  const [rooms] = useState<PublicRoom[]>(DEFAULT_ROOMS);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
-      {/* Top Header Bar matching Storyboard */}
+      {/* Top Header Bar strictly preserving navigation height & layout */}
       <View style={[styles.header, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+        <TouchableOpacity onPress={onBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
           <ChevronIcon direction="left" size={20} color={theme.textPrimary} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Bingo Room</Text>
+        <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Bingo Rooms</Text>
 
+        {/* 100% Vector Currency Status Badges */}
         <View style={styles.currencyGroup}>
           <View style={[styles.currencyPill, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-            <Text style={styles.coinIcon}>🪙</Text>
+            <IconCoinStack size={14} color="#D97706" />
             <Text style={[styles.currencyText, { color: '#D97706' }]}>{coins.toLocaleString()}</Text>
           </View>
           <View style={[styles.currencyPill, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
-            <Text style={styles.gemIcon}>💎</Text>
+            <IconGemstone size={14} color="#2563EB" />
             <Text style={[styles.currencyText, { color: '#2563EB' }]}>{gems.toLocaleString()}</Text>
           </View>
         </View>
       </View>
 
-      {/* Featured Banner Info */}
+      {/* Featured Jackpot Banner with Specular Rim */}
       <View style={[styles.infoBanner, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}>
+        <View style={styles.bannerBevel} />
         <View style={styles.infoCol}>
-          <Text style={styles.infoLabel}>Ticket price</Text>
+          <Text style={styles.infoLabel}>STANDARD ENTRY</Text>
           <Text style={styles.infoValue}>$2.00</Text>
         </View>
         <View style={styles.infoDivider} />
         <View style={styles.infoCol}>
-          <Text style={styles.infoLabel}>Grand Jackpot</Text>
-          <Text style={styles.infoValueGold}>$235,000</Text>
+          <View style={styles.jackpotTitleRow}>
+            <IconSparkles size={13} color="#8A6724" />
+            <Text style={styles.infoLabel}>GRAND JACKPOT</Text>
+          </View>
+          <Text style={styles.infoValueGold}>$1,000,000</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollList} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>AVAILABLE ROOMS</Text>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
+            AVAILABLE TABLES ({rooms.length})
+          </Text>
+          <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+            Instant seat allocation
+          </Text>
+        </View>
 
-        {DEFAULT_ROOMS.map((room) => (
-          <TouchableOpacity
-            key={room.id}
-            style={[styles.roomCard, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}
-            onPress={() => onSelectRoom(room)}
-            activeOpacity={0.85}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.roomIdentity}>
-                <View style={styles.roomIcon}>
-                  <BingoIdentityIcon size={18} color="#FFFFFF" />
-                </View>
-                <View>
-                  <Text style={[styles.roomName, { color: theme.textPrimary }]}>{room.name}</Text>
-                  <Text style={[styles.roomSubtitle, { color: theme.textSecondary }]}>
-                    {room.playerCount} Players • Jackpot ${room.jackpotAmount.toLocaleString()}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.priceBadge}>
-                <Text style={styles.priceBadgeText}>${room.ticketPrice.toFixed(2)}</Text>
-              </View>
-            </View>
-
-            {/* Ticket Selector Pills (1, 2, 4, 8 Tickets) matching storyboard */}
-            <View style={styles.ticketPillsRow}>
-              {room.recommendedTickets.map((tCount, idx) => (
-                <View
-                  key={tCount}
-                  style={[
-                    styles.ticketPill,
-                    { backgroundColor: idx % 2 === 0 ? '#F59E0B' : '#EF4444' },
-                  ]}
-                >
-                  <Text style={styles.ticketPillText}>{tCount} Ticket{tCount > 1 ? 's' : ''}</Text>
-                </View>
-              ))}
-            </View>
-          </TouchableOpacity>
-        ))}
+        {rooms.length === 0 ? (
+          <PremiumEmptyState
+            variant="NO_ACTIVE_ROOMS"
+            onAction={onBack}
+            actionLabel="Return to Play"
+          />
+        ) : (
+          rooms.map((room) => (
+            <TactileRoomCard
+              key={room.id}
+              room={room}
+              userBalanceCoins={coins}
+              onSelectRoom={(r, count) => onSelectRoom(r, count)}
+            />
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -214,12 +216,10 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
     gap: 4,
   },
-  coinIcon: { fontSize: 12 },
-  gemIcon: { fontSize: 12 },
   currencyText: {
     fontSize: 12,
     fontWeight: '800',
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.monoFamily,
   },
   infoBanner: {
     flexDirection: 'row',
@@ -229,105 +229,70 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderRadius: RADIUS.surface,
     borderWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bannerBevel: {
+    position: 'absolute',
+    top: 0,
+    left: 8,
+    right: 8,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   infoCol: {
     alignItems: 'center',
   },
+  jackpotTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   infoLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
     color: '#475569',
     textTransform: 'uppercase',
     fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: 0.5,
   },
   infoValue: {
     fontSize: 18,
     fontWeight: '900',
     color: '#0F172A',
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.monoFamily,
   },
   infoValueGold: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#B45309',
-    fontFamily: TYPOGRAPHY.fontFamily,
+    color: '#8A6724',
+    fontFamily: TYPOGRAPHY.monoFamily,
   },
   infoDivider: {
     width: 1,
-    height: 28,
-    backgroundColor: '#CBD5E1',
+    height: 32,
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
   },
   scrollList: {
     paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xl * 2,
+    paddingBottom: 40,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.xs,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1.2,
-    marginBottom: SPACING.sm,
+    letterSpacing: 0.8,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  roomCard: {
-    borderRadius: RADIUS.hero,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  roomIdentity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  roomIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#3B82F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roomName: {
-    fontSize: 16,
-    fontWeight: '800',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  roomSubtitle: {
-    fontSize: 12,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  priceBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-  },
-  priceBadgeText: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 13,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  ticketPillsRow: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    marginTop: SPACING.md,
-  },
-  ticketPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.pill,
-  },
-  ticketPillText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '800',
+  sectionSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
 });

@@ -13,10 +13,7 @@ import { Player, PublicRoom, RobotDifficulty } from '../domain/types';
 import { globalRoomManager } from '../domain/multiplayer/roomManager';
 import { SoundEngine } from '../audio/soundEngine';
 import { PlayerStageBar } from '../components/lobby/PlayerStageBar';
-import { IntercomCalloutBanner } from '../components/lobby/IntercomCalloutBanner';
-import { LobbyStageHero } from '../components/lobby/LobbyStageHero';
-import { PrimaryActionButton } from '../components/lobby/PrimaryActionButton';
-import { GameModeShelf } from '../components/lobby/GameModeShelf';
+import { LobbyGallery } from '../components/lobby/LobbyGallery';
 import {
   RefreshIcon,
   LockIcon,
@@ -24,6 +21,7 @@ import {
   CloseIcon,
   UsersIcon,
   BingoIdentityIcon,
+  IconTicket,
 } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
 
@@ -115,50 +113,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenSettings={onOpenSettings}
       />
 
-      {/* 2. INTERCOM CALLOUT BANNER (Extracted directly from Reference Image 1) */}
-      <IntercomCalloutBanner
-        title="Live Blitz Matchmaking"
-        subtitle="1,240 Online • Instant Table"
-        onlineCount={onlineCount}
-        onPress={onPlayRanked}
-      />
-
-      {/* DAILY BONUS HERO CARD (From Storyboard Screen 3) */}
-      <View style={[styles.dailyBonusBanner, { backgroundColor: '#1E3A8A', borderColor: '#3B82F6' }]}>
-        <View style={styles.dailyBonusLeft}>
-          <Text style={styles.dailyBonusTitle}>Daily Bonus</Text>
-          <Text style={styles.dailyBonusSub}>Claim 500 Coins & 10 Gems daily!</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.collectBtn}
-          onPress={onOpenDailyBonusModal}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.collectBtnText}>Collect</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* BINGO ROOM SELECTION BUTTON (Storyboard Screen 4 Trigger) */}
-      {onOpenRoomSelection && (
-        <TouchableOpacity
-          style={[styles.roomSelectionBanner, { backgroundColor: '#F59E0B' }]}
-          onPress={onOpenRoomSelection}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.roomSelectionText}>🏰 Select Bingo Room & Tickets</Text>
-          <ChevronIcon direction="right" size={16} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
-
-      {/* 4. PRIMARY ACTION TRIGGER (Gentle Olive High-Contrast Action - Ref 1 & 3) */}
-      <PrimaryActionButton onPress={onPlayRanked} />
-
-      {/* 5. GAME MODE SHELF (Heterogeneous Tailored Mode Tiles - Ref 1, 2, 4) */}
-      <GameModeShelf
+      {/* 2. LOBBY EXPERIENCE GALLERY (Clean Rectangular Boxes & Gallery Grid) */}
+      <LobbyGallery
+        onPlayRanked={onPlayRanked}
+        onOpenDailyBonusModal={onOpenDailyBonusModal}
+        onOpenRoomSelection={onOpenRoomSelection}
         onSoloPress={() => setShowRobotModal(true)}
         onFriendPress={onPlayFriend}
         onDailyPress={onDailyPuzzle}
-        onLocalPress={onLocalPlay}
+        onlineCount={onlineCount}
       />
 
       {/* 6. LIVE LOBBIES & ROOMS (Clean Status Chips & Rows - Ref 1 & 2) */}
@@ -637,34 +600,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  dailyBonusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: SPACING.md,
-    borderRadius: RADIUS.hero,
-    borderWidth: 1.5,
-    marginVertical: SPACING.xs,
-    elevation: 3,
-  },
-  dailyBonusLeft: { flex: 1 },
-  dailyBonusTitle: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
-  dailyBonusSub: { fontSize: 12, color: '#93C5FD' },
-  collectBtn: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: RADIUS.pill,
-  },
-  collectBtnText: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
-  roomSelectionBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: SPACING.md,
-    borderRadius: RADIUS.hero,
-    marginVertical: SPACING.xs,
-    elevation: 3,
-  },
-  roomSelectionText: { fontSize: 15, fontWeight: '900', color: '#FFFFFF' },
 });

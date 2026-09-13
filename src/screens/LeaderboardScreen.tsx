@@ -7,14 +7,12 @@ import { useTheme } from '../design/theme';
 
 type PeriodFilter = 'Daily' | 'Weekly' | 'All Time';
 
-/**
- * Leaderboard Screen matching Storyboard Screen 10 (Daily, Weekly, All Time tabs)
- */
 export const LeaderboardScreen: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [period, setPeriod] = useState<PeriodFilter>('Weekly');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>('p-top-4');
 
-  // Authentic Season Leaderboard Seed (Ref 3 hierarchy)
+  // Authentic Season Leaderboard Seed
   const [rankedPlayers] = useState<LeaderboardEntry[]>([
     {
       id: 'p-top-1',
@@ -82,6 +80,17 @@ export const LeaderboardScreen: React.FC = () => {
       tier: 'Gold',
       isCurrentUser: false,
     },
+    {
+      id: 'p-top-7',
+      name: 'NovaStriker',
+      avatar: 'NS',
+      rank: 7,
+      rating: 1120,
+      wins: 18,
+      winRate: 61,
+      tier: 'Gold',
+      isCurrentUser: false,
+    },
   ]);
 
   const topThree = rankedPlayers.slice(0, 3);
@@ -89,7 +98,7 @@ export const LeaderboardScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
-      {/* HEADER & FILTER (Ref 3 Filter Tabs) */}
+      {/* HEADER & FILTER */}
       <View style={[styles.header, { borderBottomColor: theme.borderSubtle }]}>
         <View style={styles.titleRow}>
           <View
@@ -98,49 +107,59 @@ export const LeaderboardScreen: React.FC = () => {
               { backgroundColor: theme.accentHazelTint },
             ]}
           >
-            <TrophyIcon size={20} color={COLORS.winterHazel} />
+            <TrophyIcon size={22} color={COLORS.winterHazel} />
           </View>
           <View>
             <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>
-              Season Leaderboards
+              Season Leaderboard
             </Text>
             <Text style={[styles.screenSubtitle, { color: theme.textSecondary }]}>
-              Verified Competitive Standings
+              Official Global Competitive Rankings
             </Text>
           </View>
         </View>
 
-        {/* Reference 3 Segmented Period Filter */}
+        {/* Tactile Segmented Period Filter */}
         <View
           style={[
             styles.filterRow,
             { backgroundColor: theme.dockBg, borderColor: theme.dockBorder },
           ]}
         >
-          {(['Daily', 'Weekly', 'All Time'] as PeriodFilter[]).map((tab) => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.filterTab, period === tab && styles.filterTabActive]}
-              onPress={() => setPeriod(tab)}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: period === tab }}
-            >
-              <Text
+          {(['Daily', 'Weekly', 'All Time'] as PeriodFilter[]).map((tab) => {
+            const isActive = period === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
                 style={[
-                  styles.filterLabel,
-                  period === tab && styles.filterLabelActive,
+                  styles.filterTab,
+                  isActive && styles.filterTabActive,
                 ]}
+                onPress={() => setPeriod(tab)}
+                activeOpacity={0.8}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
               >
-                {tab}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text
+                  style={[
+                    styles.filterLabel,
+                    isActive && styles.filterLabelActive,
+                  ]}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* REFERENCE 3 TOP 3 PODIUM CLUSTER */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ARCHITECTURAL 3-STEP SEASON PODIUM */}
         {topThree.length >= 3 && (
           <View
             style={[
@@ -151,62 +170,89 @@ export const LeaderboardScreen: React.FC = () => {
               },
             ]}
           >
-            <Text style={[styles.podiumHeader, { color: theme.textMuted }]}>
-              SEASON PODIUM
-            </Text>
-            <View style={styles.podiumRow}>
-              {/* Rank 2 (Silver - Left) */}
-              <View style={[styles.podiumColumn, styles.podiumColSilver]}>
-                <View style={[styles.podiumAvatar, styles.avatarSilver]}>
-                  <Text style={[styles.avatarInitials, { color: theme.textPrimary }]}>
-                    {topThree[1].name.slice(0, 2).toUpperCase()}
-                  </Text>
-                  <View style={[styles.rankCrownBadge, styles.badgeSilver]}>
-                    <Text style={styles.rankCrownText}>2</Text>
+            <View style={styles.podiumHeaderRow}>
+              <Text style={[styles.podiumHeader, { color: theme.textMuted }]}>
+                SEASON PODIUM
+              </Text>
+              <View
+                style={[
+                  styles.liveIndicator,
+                  { backgroundColor: theme.accentOliveTint },
+                ]}
+              >
+                <View style={styles.livePip} />
+                <Text style={styles.liveText}>TIER 1 ELITE</Text>
+              </View>
+            </View>
+
+            <View style={styles.podiumStage}>
+              {/* RANK 2 - SILVER (LEFT) */}
+              <TouchableOpacity
+                style={styles.podiumColWrapper}
+                onPress={() => setSelectedPlayerId(topThree[1].id)}
+                activeOpacity={0.85}
+              >
+                {/* Avatar & Floating Crown */}
+                <View style={styles.avatarHolder}>
+                  <View style={[styles.avatarSilverRing, { backgroundColor: theme.bgRecessed }]}>
+                    <Text style={[styles.avatarInitials, { color: theme.textPrimary }]}>
+                      {topThree[1].avatar}
+                    </Text>
+                  </View>
+                  <View style={styles.silverBadge}>
+                    <Text style={styles.badgeNumber}>2</Text>
                   </View>
                 </View>
-                <Text style={[styles.podiumName, { color: theme.textPrimary }]} numberOfLines={1}>
+
+                {/* Player Name & Score */}
+                <Text style={[styles.podiumPlayerName, { color: theme.textPrimary }]} numberOfLines={1}>
                   {topThree[1].name}
                 </Text>
-                <View
-                  style={[
-                    styles.ratingPill,
-                    { backgroundColor: theme.bgRecessed },
-                  ]}
-                >
+                <View style={[styles.ratingPill, { backgroundColor: theme.bgRecessed }]}>
                   <RankIcon size={11} color={COLORS.winterHazel} style={{ marginRight: 3 }} />
-                  <Text style={[styles.ratingText, { color: theme.textPrimary }]}>
+                  <Text style={[styles.ratingPillScore, { color: theme.textPrimary }]}>
                     {topThree[1].rating}
                   </Text>
                 </View>
-              </View>
 
-              {/* Rank 1 (Gold - Center Hero) */}
-              <View style={[styles.podiumColumn, styles.podiumColGold]}>
+                {/* Pedestal Step Column */}
                 <View
                   style={[
-                    styles.podiumAvatar,
-                    styles.avatarGold,
-                    { borderColor: COLORS.winterHazel },
+                    styles.pedestalStep,
+                    styles.pedestalSilver,
+                    {
+                      backgroundColor: isDark ? '#2D323B' : '#E2E8F0',
+                      borderColor: '#94A3B8',
+                    },
                   ]}
                 >
-                  <Text style={[styles.avatarInitials, { color: COLORS.winterHazel }]}>
-                    {topThree[0].name.slice(0, 2).toUpperCase()}
+                  <Text style={styles.pedestalRoman}>II</Text>
+                  <Text style={[styles.pedestalWinRate, { color: theme.textMuted }]}>
+                    {topThree[1].winRate}% WR
                   </Text>
-                  <View
-                    style={[
-                      styles.rankCrownBadge,
-                      styles.badgeGold,
-                      { backgroundColor: COLORS.winterHazel },
-                    ]}
-                  >
-                    <Text style={[styles.rankCrownText, { color: COLORS.lunarShadow }]}>1</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* RANK 1 - GOLD (CENTER CHAMPION) */}
+              <TouchableOpacity
+                style={[styles.podiumColWrapper, styles.podiumCenterWrapper]}
+                onPress={() => setSelectedPlayerId(topThree[0].id)}
+                activeOpacity={0.85}
+              >
+                {/* Avatar & Floating Gold Crown */}
+                <View style={styles.avatarHolder}>
+                  <View style={[styles.avatarGoldRing, { backgroundColor: theme.bgRecessed }]}>
+                    <Text style={[styles.avatarInitialsGold, { color: COLORS.winterHazel }]}>
+                      {topThree[0].avatar}
+                    </Text>
+                  </View>
+                  <View style={styles.goldBadge}>
+                    <Text style={styles.goldBadgeNumber}>1</Text>
                   </View>
                 </View>
-                <Text
-                  style={[styles.podiumName, styles.goldName, { color: COLORS.winterHazel }]}
-                  numberOfLines={1}
-                >
+
+                {/* Player Name & Score */}
+                <Text style={[styles.podiumPlayerName, styles.goldPlayerName]} numberOfLines={1}>
                   {topThree[0].name}
                 </Text>
                 <View
@@ -216,145 +262,317 @@ export const LeaderboardScreen: React.FC = () => {
                     { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel },
                   ]}
                 >
-                  <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 3 }} />
-                  <Text style={[styles.ratingText, { color: '#8A6724' }]}>
+                  <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
+                  <Text style={[styles.ratingPillScore, { color: '#8A6724' }]}>
                     {topThree[0].rating}
                   </Text>
                 </View>
-              </View>
 
-              {/* Rank 3 (Bronze - Right) */}
-              <View style={[styles.podiumColumn, styles.podiumColBronze]}>
-                <View style={[styles.podiumAvatar, styles.avatarBronze]}>
-                  <Text style={[styles.avatarInitials, { color: theme.textPrimary }]}>
-                    {topThree[2].name.slice(0, 2).toUpperCase()}
-                  </Text>
-                  <View style={[styles.rankCrownBadge, styles.badgeBronze]}>
-                    <Text style={styles.rankCrownText}>3</Text>
-                  </View>
-                </View>
-                <Text style={[styles.podiumName, { color: theme.textPrimary }]} numberOfLines={1}>
-                  {topThree[2].name}
-                </Text>
+                {/* Pedestal Step Column - Elevated Tallest */}
                 <View
                   style={[
-                    styles.ratingPill,
-                    { backgroundColor: theme.bgRecessed },
+                    styles.pedestalStep,
+                    styles.pedestalGold,
+                    {
+                      backgroundColor: isDark ? '#3D3425' : '#FEF3C7',
+                      borderColor: COLORS.winterHazel,
+                    },
                   ]}
                 >
+                  <View style={styles.pedestalShine} />
+                  <Text style={[styles.pedestalRoman, { color: '#B45309' }]}>I</Text>
+                  <Text style={[styles.pedestalWinRate, { color: '#92400E' }]}>
+                    {topThree[0].winRate}% WR
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* RANK 3 - BRONZE (RIGHT) */}
+              <TouchableOpacity
+                style={styles.podiumColWrapper}
+                onPress={() => setSelectedPlayerId(topThree[2].id)}
+                activeOpacity={0.85}
+              >
+                {/* Avatar & Floating Bronze Crown */}
+                <View style={styles.avatarHolder}>
+                  <View style={[styles.avatarBronzeRing, { backgroundColor: theme.bgRecessed }]}>
+                    <Text style={[styles.avatarInitials, { color: theme.textPrimary }]}>
+                      {topThree[2].avatar}
+                    </Text>
+                  </View>
+                  <View style={styles.bronzeBadge}>
+                    <Text style={styles.badgeNumber}>3</Text>
+                  </View>
+                </View>
+
+                {/* Player Name & Score */}
+                <Text style={[styles.podiumPlayerName, { color: theme.textPrimary }]} numberOfLines={1}>
+                  {topThree[2].name}
+                </Text>
+                <View style={[styles.ratingPill, { backgroundColor: theme.bgRecessed }]}>
                   <RankIcon size={11} color={COLORS.winterHazel} style={{ marginRight: 3 }} />
-                  <Text style={[styles.ratingText, { color: theme.textPrimary }]}>
+                  <Text style={[styles.ratingPillScore, { color: theme.textPrimary }]}>
                     {topThree[2].rating}
                   </Text>
                 </View>
-              </View>
+
+                {/* Pedestal Step Column */}
+                <View
+                  style={[
+                    styles.pedestalStep,
+                    styles.pedestalBronze,
+                    {
+                      backgroundColor: isDark ? '#332720' : '#FFEDD5',
+                      borderColor: '#B45309',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.pedestalRoman, { color: '#9A3412' }]}>III</Text>
+                  <Text style={[styles.pedestalWinRate, { color: theme.textMuted }]}>
+                    {topThree[2].winRate}% WR
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* RANKED LIST ROWS (Ref 3 & Ref 2 Diagonal Hatch Highlight) */}
+        {/* CONTINUING RANKINGS */}
         <View style={styles.listContainer}>
-          <Text style={[styles.listSectionTitle, { color: theme.textMuted }]}>
-            CONTINUING RANKINGS
-          </Text>
-          {remainingPlayers.map((item) => (
-            <View
-              key={item.id}
-              style={[
-                styles.listItem,
-                {
-                  backgroundColor: item.isCurrentUser
-                    ? theme.isDark
-                      ? '#2A2E24'
-                      : '#F2F6DB'
-                    : theme.bgCard,
-                  borderColor: item.isCurrentUser
-                    ? COLORS.gentleOlive
-                    : theme.borderSubtle,
-                },
-              ]}
-            >
-              {/* If current user, render subtle diagonal hatch stripes (Ref 2 active row) */}
-              {item.isCurrentUser && (
-                <View style={styles.userRowHatchWrap} pointerEvents="none">
-                  {[...Array(10)].map((_, i) => (
-                    <View
-                      key={`hatch-${i}`}
-                      style={[
-                        styles.userRowHatchStripe,
-                        { left: i * 36 - 20 },
-                      ]}
-                    />
-                  ))}
-                </View>
-              )}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.listSectionTitle, { color: theme.textMuted }]}>
+              CONTINUING RANKINGS
+            </Text>
+            <Text style={[styles.tierHeaderSubtitle, { color: theme.textMuted }]}>
+              UPDATED LIVE
+            </Text>
+          </View>
 
-              <Text
-                style={[
-                  styles.listRank,
-                  {
-                    color: item.isCurrentUser ? COLORS.lunarShadow : theme.textMuted,
-                  },
-                ]}
-              >
-                {String(item.rank).padStart(2, '0')}
-              </Text>
+          {remainingPlayers.map((item) => {
+            const isSelected = selectedPlayerId === item.id;
+            const isSelf = item.isCurrentUser;
 
-              <View
+            return (
+              <TouchableOpacity
+                key={item.id}
                 style={[
-                  styles.listAvatar,
+                  styles.listItem,
                   {
-                    backgroundColor: item.isCurrentUser
+                    backgroundColor: isSelf
+                      ? isDark
+                        ? '#22281E'
+                        : '#F3F8E4'
+                      : isSelected
+                      ? theme.bgRecessed
+                      : theme.bgCard,
+                    borderColor: isSelf
                       ? COLORS.gentleOlive
-                      : theme.bgRecessed,
+                      : isSelected
+                      ? COLORS.winterHazel
+                      : theme.borderSubtle,
+                    borderWidth: isSelf || isSelected ? 1.5 : 1,
                   },
                 ]}
+                onPress={() => setSelectedPlayerId(item.id)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Rank ${item.rank}, ${item.name}, ${item.rating} points`}
               >
-                <Text
+                {/* Rank Number Capsule */}
+                <View
                   style={[
-                    styles.listAvatarInitials,
+                    styles.rankBox,
                     {
-                      color: item.isCurrentUser ? COLORS.lunarShadow : theme.textPrimary,
+                      backgroundColor: isSelf
+                        ? COLORS.gentleOlive
+                        : theme.bgRecessed,
                     },
                   ]}
                 >
-                  {item.name.slice(0, 2).toUpperCase()}
-                </Text>
-              </View>
+                  <Text
+                    style={[
+                      styles.listRankText,
+                      {
+                        color: isSelf ? COLORS.lunarShadow : theme.textMuted,
+                      },
+                    ]}
+                  >
+                    {String(item.rank).padStart(2, '0')}
+                  </Text>
+                </View>
 
-              <View style={styles.listMeta}>
-                <Text
+                {/* Avatar */}
+                <View
                   style={[
-                    styles.listName,
-                    { color: theme.textPrimary },
-                    item.isCurrentUser && styles.currentUserName,
+                    styles.listAvatar,
+                    {
+                      backgroundColor: isSelf ? COLORS.gentleOlive : theme.bgRecessed,
+                      borderColor: isSelf ? COLORS.winterHazel : theme.borderSubtle,
+                    },
                   ]}
                 >
-                  {item.name} {item.isCurrentUser && ' (You)'}
-                </Text>
-                <Text style={[styles.listTier, { color: theme.textSecondary }]}>
-                  {item.tier} • {item.wins} Wins
+                  <Text
+                    style={[
+                      styles.listAvatarInitials,
+                      {
+                        color: isSelf ? COLORS.lunarShadow : theme.textPrimary,
+                      },
+                    ]}
+                  >
+                    {item.avatar}
+                  </Text>
+                </View>
+
+                {/* Player Metadata */}
+                <View style={styles.listMeta}>
+                  <View style={styles.nameContainer}>
+                    <Text
+                      style={[
+                        styles.listName,
+                        { color: theme.textPrimary },
+                        isSelf && styles.currentUserName,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    {isSelf && (
+                      <View style={[styles.youTag, { backgroundColor: COLORS.gentleOlive }]}>
+                        <Text style={styles.youTagText}>YOU</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.listTier, { color: theme.textSecondary }]}>
+                    {item.tier} • {item.wins} Wins • {item.winRate}% WR
+                  </Text>
+                </View>
+
+                {/* Rating Score Pill */}
+                <View
+                  style={[
+                    styles.listScorePill,
+                    {
+                      backgroundColor: isSelf
+                        ? 'rgba(203, 215, 126, 0.35)'
+                        : theme.bgRecessed,
+                      borderColor: isSelf ? COLORS.gentleOlive : theme.borderSubtle,
+                    },
+                  ]}
+                >
+                  <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
+                  <Text style={[styles.listRating, { color: theme.textPrimary }]}>
+                    {item.rating.toLocaleString()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* FREE FIRE STYLE ESPORTS COMBAT DOSSIER */}
+        {(() => {
+          const selectedPlayer =
+            rankedPlayers.find((p) => p.id === selectedPlayerId) || rankedPlayers[0];
+          if (!selectedPlayer) return null;
+
+          return (
+            <View
+              style={[
+                styles.dossierCard,
+                {
+                  backgroundColor: theme.bgCard,
+                  borderColor:
+                    selectedPlayer.rank === 1
+                      ? COLORS.winterHazel
+                      : selectedPlayer.isCurrentUser
+                      ? COLORS.gentleOlive
+                      : theme.borderSubtle,
+                },
+              ]}
+            >
+              <View style={styles.dossierHeader}>
+                <View
+                  style={[
+                    styles.dossierBadge,
+                    {
+                      backgroundColor:
+                        selectedPlayer.rank === 1
+                          ? COLORS.winterHazel
+                          : COLORS.gentleOlive,
+                    },
+                  ]}
+                >
+                  <Text style={styles.dossierRankTag}>
+                    RANK #{selectedPlayer.rank} • {selectedPlayer.tier.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={[styles.dossierLiveText, { color: theme.textMuted }]}>
+                  HEROIC COMBAT INSPECTOR
                 </Text>
               </View>
 
-              <View
-                style={[
-                  styles.listScorePill,
-                  {
-                    backgroundColor: item.isCurrentUser
-                      ? 'rgba(203, 215, 126, 0.35)'
-                      : theme.bgRecessed,
-                  },
-                ]}
-              >
-                <RankIcon size={11} color={COLORS.winterHazel} style={{ marginRight: 3 }} />
-                <Text style={[styles.listRating, { color: theme.textPrimary }]}>
-                  {item.rating}
-                </Text>
+              <View style={styles.dossierProfileRow}>
+                <View
+                  style={[
+                    styles.dossierAvatarSphere,
+                    {
+                      backgroundColor: theme.bgRecessed,
+                      borderColor:
+                        selectedPlayer.rank === 1
+                          ? COLORS.winterHazel
+                          : COLORS.gentleOlive,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.dossierAvatarText, { color: theme.textPrimary }]}>
+                    {selectedPlayer.avatar}
+                  </Text>
+                </View>
+
+                <View style={styles.dossierIdentity}>
+                  <Text style={[styles.dossierName, { color: theme.textPrimary }]}>
+                    {selectedPlayer.name}
+                  </Text>
+                  <Text style={[styles.dossierSubtitle, { color: theme.textSecondary }]}>
+                    Division Elite • Grandmaster League
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.dossierRatingBadge,
+                    { backgroundColor: theme.accentHazelTint },
+                  ]}
+                >
+                  <RankIcon size={14} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
+                  <Text style={styles.dossierRatingValue}>
+                    {selectedPlayer.rating.toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.dossierStatsGrid}>
+                <View style={[styles.dossierStatBox, { backgroundColor: theme.bgRecessed }]}>
+                  <Text style={[styles.dossierStatVal, { color: COLORS.gentleOlive }]}>
+                    {selectedPlayer.winRate}%
+                  </Text>
+                  <Text style={[styles.dossierStatLabel, { color: theme.textMuted }]}>WIN RATE</Text>
+                </View>
+                <View style={[styles.dossierStatBox, { backgroundColor: theme.bgRecessed }]}>
+                  <Text style={[styles.dossierStatVal, { color: theme.textPrimary }]}>
+                    {selectedPlayer.wins}
+                  </Text>
+                  <Text style={[styles.dossierStatLabel, { color: theme.textMuted }]}>VICTORIES</Text>
+                </View>
+                <View style={[styles.dossierStatBox, { backgroundColor: theme.bgRecessed }]}>
+                  <Text style={[styles.dossierStatVal, { color: COLORS.winterHazel }]}>
+                    {selectedPlayer.rank === 1 ? '12 WINS' : '6 WINS'}
+                  </Text>
+                  <Text style={[styles.dossierStatLabel, { color: theme.textMuted }]}>BEST STREAK</Text>
+                </View>
               </View>
             </View>
-          ))}
-        </View>
+          );
+        })()}
       </ScrollView>
     </View>
   );
@@ -377,20 +595,23 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   trophyIconWrap: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(230, 202, 154, 0.4)',
   },
   screenTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.4,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   screenSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   filterRow: {
@@ -401,7 +622,7 @@ const styles = StyleSheet.create({
   },
   filterTab: {
     flex: 1,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 9,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RADIUS.pill,
@@ -410,7 +631,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cleanWhite,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.18,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -419,10 +640,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#8E94A0',
     fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: 0.2,
   },
   filterLabelActive: {
     color: COLORS.lunarShadow,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   scrollContent: {
@@ -436,123 +658,226 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 2,
+  },
+  podiumHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
   },
   podiumHeader: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
-    textAlign: 'center',
-    marginBottom: SPACING.md,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  podiumRow: {
+  liveIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.pill,
+    gap: 5,
+  },
+  livePip: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.gentleOlive,
+  },
+  liveText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.lunarShadow,
+    letterSpacing: 0.5,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  podiumStage: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: SPACING.md,
-    height: 180,
+    gap: SPACING.sm,
   },
-  podiumColumn: {
+  podiumColWrapper: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
   },
-  podiumColSilver: {
-    height: 140,
+  podiumCenterWrapper: {
+    marginBottom: 4,
   },
-  podiumColGold: {
-    height: 175,
-  },
-  podiumColBronze: {
-    height: 125,
-  },
-  podiumAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.pill,
-    backgroundColor: '#EAEAEA',
+  avatarHolder: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    position: 'relative',
-    marginBottom: SPACING.sm,
+    marginBottom: 6,
   },
-  avatarGold: {
-    width: 60,
-    height: 60,
+  avatarGoldRing: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
+    borderColor: COLORS.winterHazel,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarSilverRing: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 2.5,
-  },
-  avatarSilver: {
     borderColor: '#94A3B8',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  avatarBronze: {
+  avatarBronzeRing: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2.5,
     borderColor: '#B45309',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarInitials: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  rankCrownBadge: {
+  avatarInitialsGold: {
+    fontSize: 18,
+    fontWeight: '900',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  goldBadge: {
     position: 'absolute',
     bottom: -6,
-    paddingHorizontal: 6,
+    backgroundColor: COLORS.winterHazel,
+    paddingHorizontal: 9,
     paddingVertical: 1,
     borderRadius: RADIUS.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
-  badgeGold: {
-    paddingHorizontal: 8,
+  goldBadgeNumber: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: COLORS.lunarShadow,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
-  badgeSilver: {
+  silverBadge: {
+    position: 'absolute',
+    bottom: -5,
     backgroundColor: '#94A3B8',
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: RADIUS.pill,
   },
-  badgeBronze: {
+  bronzeBadge: {
+    position: 'absolute',
+    bottom: -5,
     backgroundColor: '#B45309',
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: RADIUS.pill,
   },
-  rankCrownText: {
+  badgeNumber: {
     fontSize: 10,
     fontWeight: '900',
     color: '#FFFFFF',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  podiumName: {
+  podiumPlayerName: {
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 4,
+    textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  goldName: {
-    fontSize: 13,
+  goldPlayerName: {
+    fontSize: 14,
     fontWeight: '800',
+    color: COLORS.winterHazel,
   },
   ratingPill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: RADIUS.pill,
+    marginBottom: 8,
   },
   ratingPillGold: {
     borderWidth: 1,
   },
-  ratingText: {
-    fontSize: 10,
+  ratingPillScore: {
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.monoFamily,
+  },
+  pedestalStep: {
+    width: '100%',
+    borderTopLeftRadius: RADIUS.control,
+    borderTopRightRadius: RADIUS.control,
+    borderTopWidth: 2,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  pedestalGold: {
+    height: 100,
+  },
+  pedestalSilver: {
+    height: 75,
+  },
+  pedestalBronze: {
+    height: 60,
+  },
+  pedestalShine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  pedestalRoman: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 1,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    marginBottom: 2,
+    color: '#64748B',
+  },
+  pedestalWinRate: {
+    fontSize: 9,
     fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   listContainer: {
     gap: SPACING.sm,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   listSectionTitle: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1.2,
-    marginBottom: 2,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  tierHeaderSubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   listItem: {
@@ -560,53 +885,49 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
     position: 'relative',
     overflow: 'hidden',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  userRowHatchWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    overflow: 'hidden',
+  rankBox: {
+    width: 28,
+    height: 28,
+    borderRadius: RADIUS.compact,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.sm,
   },
-  userRowHatchStripe: {
-    position: 'absolute',
-    top: -20,
-    bottom: -20,
-    width: 12,
-    backgroundColor: 'rgba(203, 215, 126, 0.15)',
-    transform: [{ rotate: '45deg' }],
-  },
-  listRank: {
+  listRankText: {
     fontSize: 12,
     fontWeight: '800',
-    width: 24,
     fontFamily: TYPOGRAPHY.monoFamily,
   },
   listAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.md,
+    borderWidth: 1,
   },
   listAvatarInitials: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   listMeta: {
     flex: 1,
     gap: 2,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   listName: {
     fontSize: 14,
@@ -616,20 +937,137 @@ const styles = StyleSheet.create({
   currentUserName: {
     fontWeight: '800',
   },
+  youTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: RADIUS.pill,
+  },
+  youTagText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.lunarShadow,
+    letterSpacing: 0.5,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
   listTier: {
     fontSize: 11,
+    fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   listScorePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+  },
+  listRating: {
+    fontSize: 12,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.monoFamily,
+  },
+  dossierCard: {
+    borderRadius: RADIUS.hero,
+    padding: SPACING.md + 2,
+    borderWidth: 1.5,
+    marginTop: SPACING.xs,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dossierHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  dossierBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.pill,
+  },
+  dossierRankTag: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.lunarShadow,
+    letterSpacing: 0.5,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  dossierLiveText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  dossierProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  dossierAvatarSphere: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    marginRight: SPACING.sm,
+  },
+  dossierAvatarText: {
+    fontSize: 16,
+    fontWeight: '900',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  dossierIdentity: {
+    flex: 1,
+  },
+  dossierName: {
+    fontSize: 15,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  dossierSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  dossierRatingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: RADIUS.pill,
   },
-  listRating: {
+  dossierRatingValue: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#8A6724',
+    fontFamily: TYPOGRAPHY.monoFamily,
+  },
+  dossierStatsGrid: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  dossierStatBox: {
+    flex: 1,
+    borderRadius: RADIUS.compact,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+  },
+  dossierStatVal: {
+    fontSize: 14,
+    fontWeight: '900',
+    fontFamily: TYPOGRAPHY.fontFamily,
+    marginBottom: 2,
+  },
+  dossierStatLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.6,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
 });

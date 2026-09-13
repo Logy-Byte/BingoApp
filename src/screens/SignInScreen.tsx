@@ -3,12 +3,14 @@ import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
 } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
-import { ProfileIcon as UserIcon } from '../components/icons/CustomIcons';
+import { AppIconVector } from '../components/icons/AppIconVector';
+import { GameButton } from '../components/common/GameButton';
+import { GameInput } from '../components/common/GameInput';
+import { ProfileIcon as UserIcon, GoogleIcon, FacebookIcon } from '../components/icons/CustomIcons';
 
 interface SignInScreenProps {
   currentName: string;
@@ -29,67 +31,88 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
+      {/* Brand Identity & Header Section */}
       <View style={styles.headerSection}>
-        <View style={styles.avatarCircle}>
-          <UserIcon size={56} color="#FFFFFF" />
+        <View style={styles.logoWrap}>
+          <AppIconVector size={80} />
         </View>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Enter name and Login</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Clash Pro</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Sign in to track seasonal MMR & rankings
+        </Text>
       </View>
 
       <View style={styles.formContainer}>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.bgCard,
-              color: theme.textPrimary,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
+        <GameInput
+          label="PLAYER USERNAME"
           value={username}
           onChangeText={setUsername}
-          placeholder="Enter Username"
-          placeholderTextColor={theme.textMuted}
+          placeholder="Enter username"
           autoCapitalize="words"
+          maxLength={20}
+          icon={<UserIcon size={18} color={theme.textMuted} />}
         />
 
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: COLORS.gentleOlive }]}
+        <GameButton
+          title="Continue as Guest"
           onPress={handleGuestSubmit}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.primaryButtonText}>Continue</Text>
-        </TouchableOpacity>
+          variant="primary"
+          size="lg"
+          fullWidth
+          style={styles.actionBtn}
+        />
 
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: theme.borderSubtle }]} />
-          <Text style={[styles.dividerText, { color: theme.textMuted }]}>or sign in with</Text>
+          <Text style={[styles.dividerText, { color: theme.textMuted }]}>or connect with</Text>
           <View style={[styles.dividerLine, { backgroundColor: theme.borderSubtle }]} />
         </View>
 
-        {/* Social Buttons matching storyboard (Google Red, Facebook Blue) */}
-        <TouchableOpacity
-          style={[styles.socialButton, { backgroundColor: '#EA4335' }]}
-          onPress={() => onLogin('Google_User')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.socialButtonText}>Google</Text>
-        </TouchableOpacity>
+        {/* Social Authentication with Authentic Branded Vector Icons */}
+        <View style={styles.socialRow}>
+          <TouchableOpacity
+            style={[
+              styles.socialBrandBtn,
+              {
+                backgroundColor: theme.bgCard,
+                borderColor: theme.borderSubtle,
+              },
+            ]}
+            onPress={() => onLogin('Alex (Google)')}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Google"
+          >
+            <GoogleIcon size={20} />
+            <Text style={[styles.socialBtnText, { color: theme.textPrimary }]}>Google</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.socialButton, { backgroundColor: '#1877F2' }]}
-          onPress={() => onLogin('FB_User')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.socialButtonText}>Facebook</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.socialBrandBtn,
+              {
+                backgroundColor: theme.bgCard,
+                borderColor: theme.borderSubtle,
+              },
+            ]}
+            onPress={() => onLogin('Jordan (Facebook)')}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in with Facebook"
+          >
+            <FacebookIcon size={20} />
+            <Text style={[styles.socialBtnText, { color: theme.textPrimary }]}>Facebook</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           style={styles.guestLink}
           onPress={handleGuestSubmit}
+          accessibilityRole="button"
+          accessibilityLabel="Quick guest play"
         >
           <Text style={[styles.guestLinkText, { color: theme.textSecondary }]}>
-            Login with email / Guest
+            Skip for now • Instant Play
           </Text>
         </TouchableOpacity>
       </View>
@@ -106,86 +129,81 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: SPACING.xl * 1.5,
+    marginBottom: SPACING.xxl,
   },
-  avatarCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#3B82F6',
+  logoWrap: {
+    marginBottom: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.md,
-    borderWidth: 4,
-    borderColor: '#93C5FD',
-    elevation: 4,
   },
   title: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
+    letterSpacing: -0.4,
     fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  subtitle: {
+    fontSize: 13,
+    marginTop: 4,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    textAlign: 'center',
   },
   formContainer: {
     width: '100%',
     maxWidth: 340,
-    gap: SPACING.md,
   },
-  input: {
-    height: 52,
-    borderRadius: RADIUS.surface,
-    borderWidth: 1.5,
-    paddingHorizontal: SPACING.md,
-    fontSize: 15,
-    fontWeight: '600',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  primaryButton: {
-    height: 52,
-    borderRadius: RADIUS.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0F172A',
-    fontFamily: TYPOGRAPHY.fontFamily,
+  actionBtn: {
+    marginTop: SPACING.xs,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: SPACING.xs,
+    marginVertical: SPACING.lg,
   },
   dividerLine: {
     flex: 1,
     height: 1,
   },
   dividerText: {
-    fontSize: 12,
+    fontSize: 11,
     marginHorizontal: SPACING.sm,
+    fontWeight: '600',
+    letterSpacing: 0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  socialButton: {
-    height: 48,
-    borderRadius: RADIUS.pill,
+  socialRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    width: '100%',
+  },
+  socialBrandBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
     elevation: 2,
   },
-  socialButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+  socialBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
   guestLink: {
     alignItems: 'center',
-    marginTop: SPACING.sm,
+    marginTop: SPACING.lg,
     padding: SPACING.xs,
   },
   guestLinkText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     textDecorationLine: 'underline',
     fontFamily: TYPOGRAPHY.fontFamily,

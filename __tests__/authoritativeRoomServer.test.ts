@@ -19,6 +19,8 @@ describe('AuthoritativeRoomServer Controller Suite', () => {
     hasWon: false,
     rating: 1500,
     tier: 'Platinum',
+    coins: 1000,
+    gems: 50,
   };
 
   const guestPlayer: Player = {
@@ -32,6 +34,8 @@ describe('AuthoritativeRoomServer Controller Suite', () => {
     hasWon: false,
     rating: 1400,
     tier: 'Gold',
+    coins: 500,
+    gems: 20,
   };
 
   const roomConfig: PublicRoom = {
@@ -44,6 +48,9 @@ describe('AuthoritativeRoomServer Controller Suite', () => {
     maxPlayers: 2,
     status: 'WAITING',
     createdAt: Date.now(),
+    ticketPrice: 2,
+    jackpotAmount: 50000,
+    recommendedTickets: [1, 2, 4, 8],
   };
 
   beforeEach(() => {

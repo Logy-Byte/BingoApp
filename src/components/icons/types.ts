@@ -73,14 +73,24 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'heart'
-  // State
+  // State & Game Systems
   | 'success'
   | 'warning'
   | 'error'
   | 'locked'
   | 'unlocked'
   | 'loading'
-  | 'refresh';
+  | 'refresh'
+  | 'ticket'
+  | 'coin_stack'
+  | 'gemstone'
+  | 'lightning'
+  | 'daub_star'
+  | 'wifi_off'
+  | 'target'
+  | 'shield'
+  | 'fire'
+  | 'sparkles';
 
 export interface SvgElementPath {
   d: string;

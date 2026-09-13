@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { TabDestination } from '../../domain/types';
 import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from '../../design/tokens';
-import { HomeIcon, LeaderboardIcon, ProfileIcon } from '../icons/CustomIcons';
+import { HomeIcon, LeaderboardIcon, ProfileIcon, IconCoinStack } from '../icons/CustomIcons';
 
 interface BottomNavBarProps {
   currentTab: TabDestination;
@@ -80,12 +80,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
         >
           {currentTab === 'SHOP' ? (
             <View style={styles.activePill}>
-              <Text style={{ fontSize: 14 }}>🛍️</Text>
+              <IconCoinStack size={14} color={COLORS.activeTabIcon} />
               <Text style={styles.activeLabel}>Shop</Text>
             </View>
           ) : (
             <View style={styles.inactivePill}>
-              <Text style={{ fontSize: 16 }}>🛍️</Text>
+              <IconCoinStack size={16} color={COLORS.inactiveTabIcon} />
             </View>
           )}
         </TouchableOpacity>
@@ -127,12 +127,14 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   consoleDock: {
+    width: '90%',
+    maxWidth: 440,
+    height: 50,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-around',
     backgroundColor: COLORS.floatingDockBg,
-    borderRadius: RADIUS.dock,
-    paddingVertical: 5,
+    borderRadius: 33,
     paddingHorizontal: 8,
     borderWidth: 1,
     borderColor: COLORS.floatingDockBorder,
@@ -143,19 +145,19 @@ const styles = StyleSheet.create({
     elevation: 10,
     position: 'relative',
     overflow: 'hidden',
-    gap: 4,
   },
   dockTopBevel: {
     position: 'absolute',
     top: 0,
-    left: 12,
-    right: 12,
+    left: 20,
+    right: 20,
     height: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   dockItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    height: 50,
   },
   dockItemActive: {
     transform: [{ scale: 1 }],
@@ -166,12 +168,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.activeTabBg,
     borderRadius: RADIUS.pill,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 9,
     gap: 6,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 3,
     position: 'relative',
   },
@@ -186,13 +188,15 @@ const styles = StyleSheet.create({
   },
   activeLabel: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.activeTabText,
     letterSpacing: -0.2,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   inactivePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,29 +1,42 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { PlayerProfile } from '../domain/types';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../src/design/tokens';
-import { CheckIcon, SettingsIcon, TrophyIcon, Icon, IconName } from '../components/icons/CustomIcons';
+import { CheckIcon, TrophyIcon, Icon, IconName, RankIcon, EditPencilIcon } from '../components/icons/CustomIcons';
 import { StreakBarChart } from '../components/common/StreakBarChart';
 import { useTheme } from '../design/theme';
 
 type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 
 interface ProfileScreenProps {
+  playerName?: string;
+  onUpdateName?: (name: string) => void;
   onOpenSettings?: () => void;
 }
 
-/**
- * Profile Screen with Reference 4 3-Metric KPI Shelf & Reference 2 Activity Bar Chart
- */
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) => {
-  const { theme } = useTheme();
+export const ProfileScreen: React.FC<ProfileScreenProps> = ({
+  playerName = 'Player_One',
+  onUpdateName,
+}) => {
+  const { theme, isDark } = useTheme();
   const [activeSection, setActiveSection] = useState<ProfileSection>('Overview');
+  const [selectedAchievementId, setSelectedAchievementId] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(playerName);
 
-  // Real local player identity state
+  const handleSaveName = () => {
+    const trimmed = nameInput.trim();
+    if (trimmed) {
+      onUpdateName?.(trimmed);
+      setIsEditingName(false);
+    }
+  };
+
+  // Authentic local player identity state
   const profile: PlayerProfile = {
     id: 'player-local',
-    name: 'Player_One',
-    avatar: 'PO',
+    name: playerName,
+    avatar: playerName.slice(0, 2).toUpperCase(),
     tier: 'Platinum',
     rating: 1450,
     gamesPlayed: 48,
@@ -49,7 +62,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
       contentContainerStyle={[styles.container, { backgroundColor: theme.bgCanvas }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* PLAYER CREST & LEVEL BANNER (Ref 2 floating top island principles) */}
+      {/* PLAYER CREST (Clean, High-Craft, De-cluttered with Editable Name) */}
       <View
         style={[
           styles.crestCard,
@@ -75,43 +88,74 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
         </View>
 
         <View style={styles.identityDetails}>
-          <Text style={[styles.playerName, { color: theme.textPrimary }]}>{profile.name}</Text>
-          <View
-            style={[
-              styles.tierPill,
-              {
-                backgroundColor: theme.accentHazelTint,
-                borderColor: COLORS.winterHazel,
-              },
-            ]}
-          >
-            <TrophyIcon size={12} color={COLORS.winterHazel} />
-            <Text style={styles.tierPillText}>
-              {profile.tier} • {profile.rating} Rating
+          {isEditingName ? (
+            <View style={styles.editNameRow}>
+              <TextInput
+                style={[
+                  styles.nameInput,
+                  {
+                    color: theme.textPrimary,
+                    backgroundColor: theme.bgRecessed,
+                    borderColor: COLORS.winterHazel,
+                  },
+                ]}
+                value={nameInput}
+                onChangeText={setNameInput}
+                autoFocus
+                maxLength={18}
+              />
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: COLORS.gentleOlive }]}
+                onPress={handleSaveName}
+                accessibilityRole="button"
+                accessibilityLabel="Save player name"
+              >
+                <Text style={styles.saveBtnText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: theme.borderSubtle }]}
+                onPress={() => {
+                  setNameInput(playerName);
+                  setIsEditingName(false);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel name edit"
+              >
+                <Text style={[styles.cancelBtnText, { color: theme.textMuted }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.nameHeaderRow}>
+              <Text style={[styles.playerName, { color: theme.textPrimary }]}>{profile.name}</Text>
+              <TouchableOpacity
+                style={[
+                  styles.editPencilBtn,
+                  { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
+                ]}
+                onPress={() => {
+                  setNameInput(profile.name);
+                  setIsEditingName(true);
+                }}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Edit player profile name"
+              >
+                <EditPencilIcon size={13} color={COLORS.winterHazel} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.ratingRow}>
+            <RankIcon size={13} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
+            <Text style={[styles.ratingValue, { color: theme.textPrimary }]}>
+              {profile.rating.toLocaleString()}
             </Text>
+            <Text style={[styles.ratingLabel, { color: theme.textMuted }]}>COMPETITIVE RATING</Text>
           </View>
         </View>
-
-        {onOpenSettings && (
-          <TouchableOpacity
-            style={[
-              styles.settingsBtn,
-              {
-                backgroundColor: theme.bgSubtle,
-                borderColor: theme.borderSubtle,
-              },
-            ]}
-            onPress={onOpenSettings}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Open settings"
-          >
-            <SettingsIcon size={18} color={theme.textSecondary} />
-          </TouchableOpacity>
-        )}
       </View>
 
-      {/* REFERENCE STORYBOARD SCREEN 7: 3-METRIC STATS BOX */}
+      {/* 3-METRIC STATS KPI SHELF */}
       <View style={styles.kpiRow}>
         <View
           style={[
@@ -123,9 +167,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
           ]}
         >
           <Text style={[styles.kpiValue, { color: theme.textPrimary }]}>
-            127
+            {profile.wins}
           </Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WINNER</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>TOTAL WINS</Text>
         </View>
         <View
           style={[
@@ -137,8 +181,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.gentleOlive }]}>27</Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WIN COUNT</Text>
+          <Text style={[styles.kpiValue, { color: COLORS.gentleOlive }]}>
+            {profile.winRate}%
+          </Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WIN RATE</Text>
         </View>
         <View
           style={[
@@ -149,35 +195,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.winterHazel }]}>6</Text>
-          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>TOTAL GAMES</Text>
+          <Text style={[styles.kpiValue, { color: COLORS.winterHazel }]}>
+            {profile.gamesPlayed}
+          </Text>
+          <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>MATCHES</Text>
         </View>
       </View>
 
-      {/* BADGES COLLECTION (From Storyboard Screen 7) */}
-      <View style={[styles.infoCard, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle, marginBottom: SPACING.md }]}>
-        <Text style={[styles.cardHeader, { color: theme.textPrimary, marginBottom: 8 }]}>Badges</Text>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24 }}>🥉</Text>
-            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Bronze</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24 }}>🥈</Text>
-            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Silver</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24 }}>🥇</Text>
-            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Gold</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24 }}>💎</Text>
-            <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>Platinum</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* REFERENCE 3: SEGMENTED SECTION PILL FILTER */}
+      {/* SEGMENTED SECTION PILL FILTER */}
       <View
         style={[
           styles.sectionTabRow,
@@ -187,34 +212,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
           },
         ]}
       >
-        {(['Overview', 'Achievements', 'Match History'] as ProfileSection[]).map((sec) => (
-          <TouchableOpacity
-            key={sec}
-            style={[styles.sectionTab, activeSection === sec && styles.sectionTabActive]}
-            onPress={() => setActiveSection(sec)}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeSection === sec }}
-          >
-            <Text
-              style={[
-                styles.sectionTabLabel,
-                activeSection === sec && styles.sectionTabLabelActive,
-              ]}
+        {(['Overview', 'Achievements', 'Match History'] as ProfileSection[]).map((sec) => {
+          const isActive = activeSection === sec;
+          return (
+            <TouchableOpacity
+              key={sec}
+              style={[styles.sectionTab, isActive && styles.sectionTabActive]}
+              onPress={() => setActiveSection(sec)}
+              activeOpacity={0.8}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
             >
-              {sec}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.sectionTabLabel,
+                  isActive && styles.sectionTabLabelActive,
+                ]}
+              >
+                {sec}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* TAB CONTENT: OVERVIEW */}
       {activeSection === 'Overview' && (
         <View style={styles.tabContent}>
-          {/* Reference Image 2: 7-Day Activity Bar Chart */}
+          {/* 7-Day Activity Bar Chart */}
           <StreakBarChart currentStreak={profile.bestStreak} totalWeekWins={profile.wins} />
 
-          {/* Season Progression with Ref 3 Track */}
+          {/* Season Progression Track */}
           <View
             style={[
               styles.infoCard,
@@ -235,7 +264,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             <View
               style={[
                 styles.progressTrack,
-                { backgroundColor: theme.isDark ? '#363A42' : '#ECECEC' },
+                { backgroundColor: isDark ? '#363A42' : '#ECECEC' },
               ]}
             >
               <View
@@ -247,7 +276,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             </View>
             <View style={styles.progressLabels}>
               <Text style={[styles.progressSubtext, { color: theme.textSecondary }]}>
-                Platinum Tier II
+                Rank Tier Progress
               </Text>
               <Text style={[styles.progressSubtext, { color: theme.textMuted }]}>
                 1,450 / 2,000 XP
@@ -255,7 +284,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
             </View>
           </View>
 
-          {/* Quick Stats Shelf (Appliance/Device Rows style from Ref 2) */}
+          {/* Career Statistics */}
           <View
             style={[
               styles.infoCard,
@@ -284,7 +313,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
                     Matches Won
                   </Text>
                   <Text style={[styles.statRowSub, { color: theme.textMuted }]}>
-                    Competitive 5×5 wins
+                    Competitive 5×5 victories
                   </Text>
                 </View>
               </View>
@@ -323,67 +352,77 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onOpenSettings }) 
       {/* TAB CONTENT: ACHIEVEMENTS */}
       {activeSection === 'Achievements' && (
         <View style={styles.tabContent}>
-          {profile.achievements.map((ach) => (
-            <View
-              key={ach.id}
-              style={[
-                styles.achievementCard,
-                {
-                  backgroundColor: theme.bgCard,
-                  borderColor: ach.unlocked ? COLORS.gentleOlive : theme.borderSubtle,
-                },
-              ]}
-            >
-              <View
+          {profile.achievements.map((ach) => {
+            const isSelected = selectedAchievementId === ach.id;
+            return (
+              <TouchableOpacity
+                key={ach.id}
                 style={[
-                  styles.achievementIconWrap,
+                  styles.achievementCard,
                   {
-                    backgroundColor: ach.unlocked
-                      ? theme.accentOliveTint
-                      : theme.bgRecessed,
+                    backgroundColor: isSelected ? theme.bgRecessed : theme.bgCard,
+                    borderColor: ach.unlocked
+                      ? COLORS.gentleOlive
+                      : isSelected
+                      ? COLORS.winterHazel
+                      : theme.borderSubtle,
+                    borderWidth: isSelected || ach.unlocked ? 1.5 : 1,
                   },
                 ]}
+                onPress={() => setSelectedAchievementId(ach.id)}
+                activeOpacity={0.8}
               >
-                <Icon
-                  name={ach.icon as IconName}
-                  size={20}
-                  color={ach.unlocked ? COLORS.lunarShadow : theme.textMuted}
-                />
-              </View>
-              <View style={styles.achievementMeta}>
-                <Text style={[styles.achievementTitle, { color: theme.textPrimary }]}>
-                  {ach.title}
-                </Text>
-                <Text style={[styles.achievementDesc, { color: theme.textSecondary }]}>
-                  {ach.description}
-                </Text>
-              </View>
-              {ach.unlocked ? (
                 <View
                   style={[
-                    styles.unlockedBadge,
-                    { backgroundColor: theme.accentOliveTint },
+                    styles.achievementIconWrap,
+                    {
+                      backgroundColor: ach.unlocked
+                        ? theme.accentOliveTint
+                        : theme.bgRecessed,
+                    },
                   ]}
                 >
-                  <CheckIcon size={12} color={COLORS.lunarShadow} />
-                  <Text style={[styles.unlockedText, { color: COLORS.lunarShadow }]}>
-                    DONE
+                  <Icon
+                    name={ach.icon as IconName}
+                    size={20}
+                    color={ach.unlocked ? COLORS.lunarShadow : theme.textMuted}
+                  />
+                </View>
+                <View style={styles.achievementMeta}>
+                  <Text style={[styles.achievementTitle, { color: theme.textPrimary }]}>
+                    {ach.title}
+                  </Text>
+                  <Text style={[styles.achievementDesc, { color: theme.textSecondary }]}>
+                    {ach.description}
                   </Text>
                 </View>
-              ) : (
-                <View
-                  style={[
-                    styles.lockedBadge,
-                    { backgroundColor: theme.bgSubtle },
-                  ]}
-                >
-                  <Text style={[styles.lockedText, { color: theme.textMuted }]}>
-                    LOCKED
-                  </Text>
-                </View>
-              )}
-            </View>
-          ))}
+                {ach.unlocked ? (
+                  <View
+                    style={[
+                      styles.unlockedBadge,
+                      { backgroundColor: theme.accentOliveTint },
+                    ]}
+                  >
+                    <CheckIcon size={12} color={COLORS.lunarShadow} />
+                    <Text style={[styles.unlockedText, { color: COLORS.lunarShadow }]}>
+                      DONE
+                    </Text>
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.lockedBadge,
+                      { backgroundColor: theme.bgSubtle },
+                    ]}
+                  >
+                    <Text style={[styles.lockedText, { color: theme.textMuted }]}>
+                      LOCKED
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       )}
 
@@ -486,37 +525,83 @@ const styles = StyleSheet.create({
   },
   identityDetails: {
     flex: 1,
-    gap: 3,
+    gap: 4,
   },
-  playerName: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  tierPill: {
+  nameHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    alignSelf: 'flex-start',
+    gap: 8,
   },
-  tierPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#8A6724',
+  playerName: {
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: -0.3,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  settingsBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: RADIUS.pill,
+  editPencilBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  editNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  nameInput: {
+    flex: 1,
+    height: 34,
+    borderRadius: RADIUS.compact,
+    borderWidth: 1.5,
+    paddingHorizontal: 8,
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  saveBtn: {
+    paddingHorizontal: 10,
+    height: 34,
+    borderRadius: RADIUS.compact,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: COLORS.lunarShadow,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  cancelBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.compact,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.monoFamily,
+    marginRight: 4,
+  },
+  ratingLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   kpiRow: {
     flexDirection: 'row',
@@ -540,7 +625,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   kpiValue: {
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
     marginBottom: 2,
@@ -583,7 +668,7 @@ const styles = StyleSheet.create({
   },
   sectionTabLabelActive: {
     color: COLORS.lunarShadow, // Bold dark ink
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
@@ -766,7 +851,7 @@ const styles = StyleSheet.create({
   historyScore: {
     fontSize: 13,
     fontWeight: '800',
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.monoFamily,
   },
   ratingDelta: {
     fontSize: 11,

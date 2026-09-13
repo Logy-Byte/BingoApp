@@ -27,10 +27,11 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
 }) => {
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
+  const [extraPlayers, setExtraPlayers] = useState<Player[]>([]);
   const isHost = room.hostId === player.id;
 
-  // Use players array if provided, fallback to host + player
-  const playerList = players.length > 0 ? players : [
+  // Use players array if provided, fallback to host + player + extraPlayers
+  const basePlayers = players.length > 0 ? players : [
     {
       ...player,
       isHost: isHost,
@@ -38,10 +39,39 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
     },
   ];
 
+  const playerList = [...basePlayers, ...extraPlayers];
+
   const nonHostPlayers = playerList.filter((p) => !p.isHost);
   const allNonHostReady = nonHostPlayers.length > 0 && nonHostPlayers.every((p) => p.isReady);
-  const isReadyToStart = playerList.length >= 2 && allNonHostReady;
+  const isReadyToStart = (playerList.length >= 2 && allNonHostReady) || countdownSeconds !== null;
   const isSelfReady = playerList.find((p) => p.id === player.id)?.isReady || isHost;
+
+  const handleAddBot = () => {
+    const botChallenger: Player = {
+      id: `bot-challenger-${Date.now()}`,
+      name: 'CyberAce_Bot (AI)',
+      avatar: 'CA',
+      coins: 2400,
+      gems: 50,
+      rating: 1510,
+      tier: 'Master',
+      score: 0,
+      linesCompleted: 0,
+      hasWon: false,
+      isReady: true,
+      isHost: false,
+    };
+    setExtraPlayers((prev) => [...prev, botChallenger]);
+  };
+
+  const handleHostStart = () => {
+    if (playerList.length < 2) {
+      handleAddBot();
+      setTimeout(() => onStartMatch(), 350);
+    } else {
+      onStartMatch();
+    }
+  };
 
   const handleCopyCode = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -228,35 +258,55 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
           {/* ACTION BUTTONS */}
           <View style={styles.actionGroup}>
             {isHost ? (
-              <TouchableOpacity
-                style={[
-                  styles.startMatchBtn,
-                  {
-                    backgroundColor: isReadyToStart ? COLORS.gentleOlive : theme.bgSubtle,
-                    borderColor: isReadyToStart ? '#D7E28E' : theme.borderSubtle,
-                  },
-                ]}
-                disabled={!isReadyToStart || countdownSeconds !== null}
-                onPress={onStartMatch}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel="Launch Match"
-              >
-                <Text
+              <View style={{ gap: 8, width: '100%' }}>
+                {playerList.length < 2 && (
+                  <TouchableOpacity
+                    style={[
+                      styles.addBotBtn,
+                      {
+                        backgroundColor: theme.accentOliveTint,
+                        borderColor: COLORS.gentleOlive,
+                      },
+                    ]}
+                    onPress={handleAddBot}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add Bot Opponent"
+                  >
+                    <Text style={[styles.addBotBtnText, { color: COLORS.lunarShadow }]}>
+                      + Add AI Bot Challenger
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
                   style={[
-                    styles.startMatchBtnText,
-                    { color: isReadyToStart ? COLORS.lunarShadow : theme.textMuted },
+                    styles.startMatchBtn,
+                    {
+                      backgroundColor: COLORS.gentleOlive,
+                      borderColor: '#D7E28E',
+                    },
                   ]}
+                  disabled={countdownSeconds !== null}
+                  onPress={handleHostStart}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel="Launch Match"
                 >
-                  {countdownSeconds !== null
-                    ? `Starting match in ${countdownSeconds}...`
-                    : isReadyToStart
-                    ? 'Start match ↗'
-                    : playerList.length < 2
-                    ? 'Waiting for opponent to join...'
-                    : 'Waiting for opponent to ready up...'}
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.startMatchBtnText,
+                      { color: COLORS.lunarShadow },
+                    ]}
+                  >
+                    {countdownSeconds !== null
+                      ? `Starting match in ${countdownSeconds}...`
+                      : isReadyToStart
+                      ? 'Start match ↗'
+                      : 'Launch Match with AI Opponent ↗'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <View style={styles.guestControls}>
                 <TouchableOpacity
@@ -455,6 +505,19 @@ const styles = StyleSheet.create({
   },
   actionGroup: {
     marginTop: SPACING.xs,
+  },
+  addBotBtn: {
+    paddingVertical: 12,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  addBotBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+    fontFamily: TYPOGRAPHY.fontFamily,
   },
   startMatchBtn: {
     paddingVertical: 14,
