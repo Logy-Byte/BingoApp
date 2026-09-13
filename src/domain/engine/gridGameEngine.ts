@@ -178,7 +178,7 @@ export function evaluate5x5Wins(
   });
 
   return {
-    hasWon: allCompleted.length > 0,
+    hasWon: allCompleted.length >= 5,
     newlyCompletedPatterns: newlyCompleted,
     allCompletedPatterns: allCompleted,
     winningCoords,

@@ -34,6 +34,7 @@ import { SoundEngine } from './src/audio/soundEngine';
 import { COLORS } from './src/design/tokens';
 import { ThemeProvider, useTheme } from './src/design/theme';
 import { useMultiplayerRoom } from './src/domain/state/useMultiplayerRoom';
+import { supabase } from './src/lib/supabase';
 
 import { BottomNavBar } from './src/components/navigation/BottomNavBar';
 import { SplashScreen } from './src/screens/SplashScreen';
@@ -108,6 +109,53 @@ function MainApp() {
     player,
     onNavigateToScreen: (screen) => setScreenState(screen),
   });
+
+  // Supabase Auth State Listener
+  useEffect(() => {
+    const fetchProfile = async (userId: string, email: string | undefined) => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      if (data && !error) {
+        setPlayer((prev) => ({
+          ...prev,
+          id: data.id,
+          name: data.name,
+          coins: data.coins,
+          gems: data.gems,
+          rating: data.rating,
+          tier: data.tier,
+        }));
+      } else {
+        // Fallback for new accounts before trigger completes
+        setPlayer((prev) => ({ 
+          ...prev, 
+          id: userId, 
+          name: email?.split('@')[0] || 'Player' 
+        }));
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchProfile(session.user.id, session.user.email);
+        if (screenState === 'SPLASH' || screenState === 'SIGN_IN') {
+          setScreenState('TAB_NAV');
+        }
+      }
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchProfile(session.user.id, session.user.email);
+        setScreenState('TAB_NAV');
+      } else {
+        setScreenState('SIGN_IN');
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   // Android Back Button Lifecycle
   useEffect(() => {
@@ -437,8 +485,8 @@ function MainApp() {
         {screenState === 'SIGN_IN' && (
           <SignInScreen
             currentName={player.name}
-            onLogin={(name) => {
-              setPlayer((prev) => ({ ...prev, name }));
+            onLogin={(name, userId) => {
+              setPlayer((prev) => ({ ...prev, name, id: userId || prev.id }));
               setScreenState('TAB_NAV');
             }}
           />
@@ -536,6 +584,10 @@ function MainApp() {
             onStartMatch={multiplayer.startMatch}
             onLeaveLobby={multiplayer.leaveRoom}
             onToggleReady={multiplayer.toggleReady}
+            onLaunchRobotMatch={() => {
+              multiplayer.leaveRoom();
+              handlePlayRobot('MEDIUM');
+            }}
           />
         ) : null}
 

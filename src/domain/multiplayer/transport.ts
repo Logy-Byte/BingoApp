@@ -38,9 +38,12 @@ export interface TransportMessage<T = any> {
 
 export type MessageHandler = (message: TransportMessage) => void;
 
+import { supabase } from '../../lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
+
 export class RoomTransport {
   private channelName: string;
-  private channel: BroadcastChannel | null = null;
+  private supabaseChannel: RealtimeChannel | null = null;
   private handlers: Set<MessageHandler> = new Set();
   private processedMsgIds: Set<string> = new Set();
   private maxProcessedMemory = 500;
@@ -53,33 +56,18 @@ export class RoomTransport {
   }
 
   private initTransport() {
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        this.channel = new BroadcastChannel(this.channelName);
-        this.channel.onmessage = (event: MessageEvent) => {
-          this.handleIncomingMessage(event.data);
-        };
-      } catch (err) {
-        console.warn('BroadcastChannel initialization failed, using storage fallback:', err);
-      }
-    }
-
-    // Storage event fallback for cross-tab sync in environments where BroadcastChannel is constrained
-    if (typeof window !== 'undefined' && window.addEventListener) {
-      window.addEventListener('storage', this.handleStorageEvent);
-    }
+    this.supabaseChannel = supabase.channel(this.channelName);
+    
+    this.supabaseChannel
+      .on('broadcast', { event: 'transport_message' }, (payload) => {
+        this.handleIncomingMessage(payload.payload as TransportMessage);
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`Successfully connected to realtime channel: ${this.channelName}`);
+        }
+      });
   }
-
-  private handleStorageEvent = (event: StorageEvent) => {
-    if (event.key === `transport_${this.channelName}` && event.newValue) {
-      try {
-        const message: TransportMessage = JSON.parse(event.newValue);
-        this.handleIncomingMessage(message);
-      } catch (e) {
-        // ignore malformed storage events
-      }
-    }
-  };
 
   private handleIncomingMessage(message: TransportMessage) {
     if (!message || !message.msgId || this.isClosed) return;
@@ -125,27 +113,13 @@ export class RoomTransport {
     // Mark as processed locally so we don't handle our own broadcast if echoed
     this.processedMsgIds.add(message.msgId);
 
-    // 1. BroadcastChannel dispatch
-    if (this.channel && !this.isClosed) {
-      try {
-        this.channel.postMessage(message);
-      } catch (err) {
-        console.warn('BroadcastChannel postMessage error:', err);
-      }
-    }
-
-    // 2. LocalStorage fallback dispatch
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const key = `transport_${this.channelName}`;
-        window.localStorage.setItem(key, JSON.stringify(message));
-        // Immediately remove or clean up to avoid storage buildup
-        setTimeout(() => {
-          try {
-            window.localStorage.removeItem(key);
-          } catch (e) {}
-        }, 100);
-      } catch (e) {}
+    // Broadcast via Supabase Realtime
+    if (this.supabaseChannel && !this.isClosed) {
+      this.supabaseChannel.send({
+        type: 'broadcast',
+        event: 'transport_message',
+        payload: message,
+      }).catch(err => console.warn('Supabase Realtime postMessage error:', err));
     }
 
     return message;
@@ -161,14 +135,10 @@ export class RoomTransport {
   public close() {
     this.isClosed = true;
     this.handlers.clear();
-    if (this.channel) {
-      try {
-        this.channel.close();
-      } catch (e) {}
-      this.channel = null;
-    }
-    if (typeof window !== 'undefined' && window.removeEventListener) {
-      window.removeEventListener('storage', this.handleStorageEvent);
+    if (this.supabaseChannel) {
+      supabase.removeChannel(this.supabaseChannel);
+      this.supabaseChannel = null;
     }
   }
 }
+

@@ -188,19 +188,21 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
         patternName={lastCompletedPatternName || ''}
       />
 
-      {/* POWER UP USED MODAL */}
+      {/* POWER UP USED MODAL 
       <PowerUpUsedModal
         visible={!!usedPowerUp}
         powerUpName={usedPowerUp || ''}
         onDismiss={() => setUsedPowerUp(null)}
       />
+      */}
 
-      {/* NEXT BALL MONEY MODAL */}
+      {/* NEXT BALL MONEY MODAL 
       <NextBallModal
         visible={showNextBallModal}
         rewardAmount={70}
         onDismiss={() => setShowNextBallModal(false)}
       />
+      */}
 
       {/* CLAIM FEEDBACK BANNER */}
       {claimFeedback && (
@@ -254,12 +256,13 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* POWER-UP DOCK CONSOLE (Zero Raw Emojis) */}
+      {/* POWER-UP DOCK CONSOLE (Zero Raw Emojis) 
       <PowerUpDockWidget
         currentEnergy={currentEnergy}
         onUsePowerUp={handleUsePowerUp}
         onOpenNextBallModal={() => setShowNextBallModal(true)}
       />
+      */}
     </ScrollView>
   );
 };

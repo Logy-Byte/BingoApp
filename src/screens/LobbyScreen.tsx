@@ -14,6 +14,7 @@ interface LobbyScreenProps {
   onStartMatch: () => void;
   onLeaveLobby: () => void;
   onToggleReady?: (isReady: boolean) => void;
+  onLaunchRobotMatch?: () => void;
 }
 
 export const LobbyScreen: React.FC<LobbyScreenProps> = ({
@@ -24,6 +25,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   onStartMatch,
   onLeaveLobby,
   onToggleReady,
+  onLaunchRobotMatch,
 }) => {
   const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
@@ -65,9 +67,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
   };
 
   const handleHostStart = () => {
-    if (playerList.length < 2) {
-      handleAddBot();
-      setTimeout(() => onStartMatch(), 350);
+    if (extraPlayers.length > 0 || playerList.length < 2) {
+      if (onLaunchRobotMatch) {
+        onLaunchRobotMatch();
+      } else {
+        handleAddBot();
+        setTimeout(() => onStartMatch(), 350);
+      }
     } else {
       onStartMatch();
     }

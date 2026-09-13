@@ -41,7 +41,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 1. FEATURED HERO RECTANGLE BOX: RANKED ARENA */}
+      {/* 1. FEATURED HERO RECTANGLE BOX: RANKED ARENA
       <TouchableOpacity
         style={[
           styles.heroCard,
@@ -55,7 +55,6 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
         accessibilityRole="button"
         accessibilityLabel="Play Ranked Match, 5x5 Matrix, ±25 MMR"
       >
-        {/* Top Specular Edge */}
         <View style={styles.specularBevel} />
 
         <View style={styles.heroHeaderRow}>
@@ -97,6 +96,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
           </View>
         </View>
       </TouchableOpacity>
+      */}
 
       {/* 2. GALLERY GRID SECTION HEADER */}
       <View style={styles.sectionHeaderRow}>
@@ -107,7 +107,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
 
       {/* 3. RECTANGULAR GALLERY GRID (Row 1: Live Blitz + Daily Bonus) */}
       <View style={styles.galleryGridRow}>
-        {/* Box 1: Live Blitz Matchmaking */}
+        {/* Box 1: Live Blitz Matchmaking
         <TouchableOpacity
           style={[
             styles.galleryBox,
@@ -148,6 +148,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
             Fast 1v1 Table • Zero Wait
           </Text>
         </TouchableOpacity>
+        */}
 
         {/* Box 2: Daily Bonus Reward Box */}
         <TouchableOpacity
@@ -192,7 +193,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
 
       {/* 4. RECTANGULAR GALLERY GRID (Row 2: Bingo Rooms & Tickets + Solo Practice) */}
       <View style={styles.galleryGridRow}>
-        {/* Box 3: Select Bingo Room & Tickets */}
+        {/* Box 3: Select Bingo Room & Tickets
         <TouchableOpacity
           style={[
             styles.galleryBox,
@@ -233,6 +234,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
             1–4 Cards • Jackpots
           </Text>
         </TouchableOpacity>
+        */}
 
         {/* Box 4: Solo Practice AI Robot */}
         <TouchableOpacity
@@ -279,7 +281,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
 
       {/* 5. RECTANGULAR GALLERY GRID (Row 3: Private Room + Daily Puzzle) */}
       <View style={styles.galleryGridRow}>
-        {/* Box 5: Private Friendly Room */}
+        {/* Box 5: Private Friendly Room
         <TouchableOpacity
           style={[
             styles.galleryBox,
@@ -318,6 +320,7 @@ export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
             Passcode Protected
           </Text>
         </TouchableOpacity>
+        */}
 
         {/* Box 6: Daily Puzzle Challenge */}
         <TouchableOpacity

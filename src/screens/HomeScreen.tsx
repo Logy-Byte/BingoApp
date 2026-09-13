@@ -124,7 +124,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onlineCount={onlineCount}
       />
 
-      {/* 6. LIVE LOBBIES & ROOMS (Clean Status Chips & Rows - Ref 1 & 2) */}
+      {/* 6. LIVE LOBBIES & ROOMS (Clean Status Chips & Rows - Ref 1 & 2) 
       <View style={styles.roomsSection}>
         <View style={styles.roomsHeader}>
           <View style={styles.roomsTitleGroup}>
@@ -242,6 +242,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           ))
         )}
       </View>
+      */}
 
       {/* ROBOT DIFFICULTY MODAL (24px Rounded Card) */}
       <Modal visible={showRobotModal} transparent animationType="fade">

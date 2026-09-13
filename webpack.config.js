@@ -18,6 +18,12 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
         test: /\.(tsx|ts|jsx|js)$/,
         exclude: /node_modules[/\\](?!react-native-safe-area-context)/,
         use: {

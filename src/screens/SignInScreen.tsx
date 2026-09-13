@@ -4,7 +4,10 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { supabase } from '../lib/supabase';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
 import { AppIconVector } from '../components/icons/AppIconVector';
@@ -14,7 +17,7 @@ import { ProfileIcon as UserIcon, GoogleIcon, FacebookIcon } from '../components
 
 interface SignInScreenProps {
   currentName: string;
-  onLogin: (name: string) => void;
+  onLogin: (name: string, userId?: string) => void;
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({
@@ -22,12 +25,49 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   onLogin,
 }) => {
   const { theme } = useTheme();
-  const [username, setUsername] = useState(currentName || 'Jiyer Kame');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleGuestSubmit = () => {
-    const finalName = username.trim() || 'Player_Guest';
-    onLogin(finalName);
-  };
+  async function signInWithEmail() {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
+    setLoading(false);
+
+    if (error) Alert.alert('Sign In Failed', error.message);
+    else if (data.user) {
+      // In a full implementation, we'd fetch the user's name from the profiles table here
+      onLogin(data.user.email?.split('@')[0] || 'Player', data.user.id);
+    }
+  }
+
+  async function signUpWithEmail() {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+    setLoading(false);
+
+    if (error) Alert.alert('Sign Up Failed', error.message);
+    else if (data.user) {
+      Alert.alert('Success', 'Please check your email for the login link!');
+    }
+  }
+
+  async function handleGuestSubmit() {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInAnonymously();
+    setLoading(false);
+
+    if (error) Alert.alert('Guest Login Failed', error.message);
+    else if (data.user) {
+      onLogin('Guest Player', data.user.id);
+    }
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
@@ -38,82 +78,75 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         </View>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Clash Pro</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sign in to track seasonal MMR & rankings
+          Sign in to save your coins, gems, and stats
         </Text>
       </View>
 
       <View style={styles.formContainer}>
         <GameInput
-          label="PLAYER USERNAME"
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Enter username"
-          autoCapitalize="words"
-          maxLength={20}
+          label="EMAIL ADDRESS"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email"
+          autoCapitalize="none"
+          keyboardType="email-address"
           icon={<UserIcon size={18} color={theme.textMuted} />}
         />
+        
+        <View style={{ height: 12 }} />
 
-        <GameButton
-          title="Continue as Guest"
-          onPress={handleGuestSubmit}
-          variant="primary"
-          size="lg"
-          fullWidth
-          style={styles.actionBtn}
+        <GameInput
+          label="PASSWORD"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Enter your password"
+          secureTextEntry
+          autoCapitalize="none"
         />
+
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: SPACING.md }}>
+          <View style={{ flex: 1 }}>
+            <GameButton
+              title="Sign In"
+              onPress={signInWithEmail}
+              variant="primary"
+              size="lg"
+              fullWidth
+              disabled={loading}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <GameButton
+              title="Sign Up"
+              onPress={signUpWithEmail}
+              variant="secondary"
+              size="lg"
+              fullWidth
+              disabled={loading}
+            />
+          </View>
+        </View>
 
         <View style={styles.dividerRow}>
           <View style={[styles.dividerLine, { backgroundColor: theme.borderSubtle }]} />
-          <Text style={[styles.dividerText, { color: theme.textMuted }]}>or connect with</Text>
+          <Text style={[styles.dividerText, { color: theme.textMuted }]}>or</Text>
           <View style={[styles.dividerLine, { backgroundColor: theme.borderSubtle }]} />
-        </View>
-
-        {/* Social Authentication with Authentic Branded Vector Icons */}
-        <View style={styles.socialRow}>
-          <TouchableOpacity
-            style={[
-              styles.socialBrandBtn,
-              {
-                backgroundColor: theme.bgCard,
-                borderColor: theme.borderSubtle,
-              },
-            ]}
-            onPress={() => onLogin('Alex (Google)')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Google"
-          >
-            <GoogleIcon size={20} />
-            <Text style={[styles.socialBtnText, { color: theme.textPrimary }]}>Google</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.socialBrandBtn,
-              {
-                backgroundColor: theme.bgCard,
-                borderColor: theme.borderSubtle,
-              },
-            ]}
-            onPress={() => onLogin('Jordan (Facebook)')}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Sign in with Facebook"
-          >
-            <FacebookIcon size={20} />
-            <Text style={[styles.socialBtnText, { color: theme.textPrimary }]}>Facebook</Text>
-          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
           style={styles.guestLink}
           onPress={handleGuestSubmit}
+          disabled={loading}
           accessibilityRole="button"
           accessibilityLabel="Quick guest play"
         >
-          <Text style={[styles.guestLinkText, { color: theme.textSecondary }]}>
-            Skip for now • Instant Play
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={theme.textPrimary} />
+          ) : (
+            <Text style={[styles.guestLinkText, { color: theme.textSecondary }]}>
+              Continue as Anonymous Guest • Instant Play
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
