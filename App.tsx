@@ -134,7 +134,7 @@ function MainApp() {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       if (session?.user) {
         fetchProfile(session.user.id, session.user.email);
         if (screenState === 'SPLASH' || screenState === 'SIGN_IN') {
@@ -143,7 +143,7 @@ function MainApp() {
       }
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (session?.user) {
         fetchProfile(session.user.id, session.user.email);
         setScreenState('TAB_NAV');

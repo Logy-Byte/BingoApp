@@ -59,10 +59,10 @@ export class RoomTransport {
     this.supabaseChannel = supabase.channel(this.channelName);
     
     this.supabaseChannel
-      .on('broadcast', { event: 'transport_message' }, (payload) => {
+      .on('broadcast', { event: 'transport_message' }, (payload: any) => {
         this.handleIncomingMessage(payload.payload as TransportMessage);
       })
-      .subscribe((status) => {
+      .subscribe((status: any) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Successfully connected to realtime channel: ${this.channelName}`);
         }
@@ -119,7 +119,7 @@ export class RoomTransport {
         type: 'broadcast',
         event: 'transport_message',
         payload: message,
-      }).catch(err => console.warn('Supabase Realtime postMessage error:', err));
+      }).catch((err: any) => console.warn('Supabase Realtime postMessage error:', err));
     }
 
     return message;
