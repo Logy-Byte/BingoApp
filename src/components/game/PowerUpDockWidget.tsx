@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import { Svg, Circle } from 'react-native-svg';
 import {
   COLORS,
   RADIUS,
@@ -123,9 +124,9 @@ export const PowerUpDockWidget: React.FC<PowerUpDockWidgetProps> = ({
       {/* Left: Energy Meter with Radial Progress */}
       <View style={styles.energySection}>
         <View style={styles.radialRingContainer}>
-          <svg width={ringSize} height={ringSize} style={styles.svgRing}>
+          <Svg width={ringSize} height={ringSize} style={styles.svgRing as any}>
             {/* Background track */}
-            <circle
+            <Circle
               cx={ringSize / 2}
               cy={ringSize / 2}
               r={radius}
@@ -134,7 +135,7 @@ export const PowerUpDockWidget: React.FC<PowerUpDockWidgetProps> = ({
               fill="transparent"
             />
             {/* Active progress stroke */}
-            <circle
+            <Circle
               cx={ringSize / 2}
               cy={ringSize / 2}
               r={radius}
@@ -145,9 +146,8 @@ export const PowerUpDockWidget: React.FC<PowerUpDockWidgetProps> = ({
               strokeLinecap="round"
               fill="transparent"
               transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`}
-              style={{ transition: 'stroke-dashoffset 0.35s ease' }}
             />
-          </svg>
+          </Svg>
           <View style={styles.ringCenterBadge}>
             <Text style={[styles.energyPercentText, { color: isFullyCharged ? COLORS.winterHazel : theme.textPrimary }]}>
               {currentEnergy}%

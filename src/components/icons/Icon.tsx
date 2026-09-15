@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
+import { Svg, Path, Circle, Rect } from 'react-native-svg';
 import { BaseIconProps, IconName, IconState, IconVariant } from './types';
 import { ICON_DEFINITIONS } from './iconPaths';
 import { ICON_COLORS, ICON_SIZES } from '../../design/tokens';
@@ -82,23 +83,19 @@ export const Icon: React.FC<IconProps> = ({
   const pathsToRender = hasFilledDefinition ? definition.filledPaths! : definition.paths || [];
 
   const svgContent = (
-    <svg
+    <Svg
       width={size}
       height={size}
       viewBox={definition.viewBox || '0 0 24 24'}
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
       style={{
-        display: 'block',
-        transform: rotationTransform || undefined,
-        transformOrigin: 'center',
-        transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+        transform: rotationTransform ? [{ rotate: rotationTransform.replace('rotate(', '').replace('deg)', 'deg') }] : [],
       }}
       aria-hidden={!accessibilityLabel}
     >
       {/* Rectangles */}
       {definition.rects?.map((rect, idx) => (
-        <rect
+        <Rect
           key={`r-${idx}`}
           x={rect.x}
           y={rect.y}
@@ -119,7 +116,7 @@ export const Icon: React.FC<IconProps> = ({
 
       {/* Circles */}
       {definition.circles?.map((c, idx) => (
-        <circle
+        <Circle
           key={`c-${idx}`}
           cx={c.cx}
           cy={c.cy}
@@ -148,7 +145,7 @@ export const Icon: React.FC<IconProps> = ({
           : p.stroke || primaryColor;
 
         return (
-          <path
+          <Path
             key={`p-${idx}`}
             d={p.d}
             fill={itemFill}
@@ -161,7 +158,7 @@ export const Icon: React.FC<IconProps> = ({
           />
         );
       })}
-    </svg>
+    </Svg>
   );
 
   return (

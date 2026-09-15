@@ -56,6 +56,7 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { MatchmakingScreen } from './src/screens/MatchmakingScreen';
 import { DailyBonusModal } from './src/components/common/DailyBonusModal';
 import { globalMatchmakingService } from './src/domain/multiplayer/matchmakingService';
+import { leaderboardService } from './src/domain/services/leaderboardService';
 import { MatchmakingStatus } from './src/domain/types';
 
 function MainApp() {
@@ -493,12 +494,13 @@ function MainApp() {
   const handleClaimBingo = useCallback(() => {
     if (!board || !isGameActive) return;
 
-    if (linesCompletedCount === 0) {
+    if (linesCompletedCount < 5) {
       SoundEngine.playError();
       setClaimFeedback({
         success: false,
-        message: 'No completed lines to claim yet!',
+        message: 'You need 5 completed lines to claim BINGO!',
       });
+      setTimeout(() => setClaimFeedback(null), 2000);
       return;
     }
 
@@ -507,14 +509,32 @@ function MainApp() {
     setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
     if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
 
-    setPlayer((prev) => ({
-      ...prev,
-      coins: prev.coins + 1500,
-      score: prev.score + score + 1000,
-    }));
+    setPlayer((prev) => {
+      const newRating = (prev.rating || 1000) + 20;
+      let newTier = prev.tier || 'Bronze';
+      if (newRating >= 1200) newTier = 'Silver';
+      if (newRating >= 1600) newTier = 'Gold';
+      if (newRating >= 2000) newTier = 'Platinum';
+      if (newRating >= 2400) newTier = 'Diamond';
+
+      return {
+        ...prev,
+        coins: prev.coins + 1500,
+        score: prev.score + score + 1000,
+        rating: newRating,
+        tier: newTier,
+      };
+    });
 
     setScreenState('RESULTS');
   }, [board, isGameActive, linesCompletedCount, score, matchStartTime]);
+
+  useEffect(() => {
+    // Only upsert if it's an authenticated Supabase user profile
+    if (!player.id.startsWith('player-')) {
+      leaderboardService.upsertPlayer(player);
+    }
+  }, [player.rating, player.tier]);
 
   // Automated Solo Ball Caller Loop
   useEffect(() => {
@@ -608,7 +628,7 @@ function MainApp() {
               />
             )}
 
-            {currentTab === 'LEADERBOARD' && <LeaderboardScreen />}
+            {currentTab === 'LEADERBOARD' && <LeaderboardScreen player={player} />}
 
             {currentTab === 'PROFILE' && (
               <ProfileScreen

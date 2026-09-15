@@ -13,6 +13,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { Svg, Circle } from 'react-native-svg';
 import {
   COLORS,
   RADIUS,
@@ -176,8 +177,8 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           ]}
         >
           <View style={styles.radialWheelWrapper}>
-            <svg width={wheelSize} height={wheelSize}>
-              <circle
+            <Svg width={wheelSize} height={wheelSize}>
+              <Circle
                 cx={wheelSize / 2}
                 cy={wheelSize / 2}
                 r={wheelRadius}
@@ -185,7 +186,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 strokeWidth={wheelStroke}
                 fill="transparent"
               />
-              <circle
+              <Circle
                 cx={wheelSize / 2}
                 cy={wheelSize / 2}
                 r={wheelRadius}
@@ -197,7 +198,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 fill="transparent"
                 transform={`rotate(-90 ${wheelSize / 2} ${wheelSize / 2})`}
               />
-            </svg>
+            </Svg>
             <View style={styles.wheelCenterContent}>
               <IconTrophy size={20} color={hasWon ? COLORS.goldPrimary : COLORS.gentleOlive} />
             </View>

@@ -54,7 +54,6 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
           borderColor: theme.borderSubtle,
         },
       ]}
-      accessibilityRole="region"
       accessibilityLabel={`Caller broadcast: current ball ${currentCall ?? 'none'}, ball ${totalCalls} of ${maxCalls}`}
     >
       {/* Top Specular Hairline */}

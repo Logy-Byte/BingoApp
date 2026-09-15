@@ -1,97 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { LeaderboardEntry } from '../domain/types';
+import { LeaderboardEntry, Player } from '../domain/types';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { TrophyIcon, RankIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
+import { leaderboardService } from '../domain/services/leaderboardService';
+import { InlineLoader } from '../components/common/InlineLoader';
 
 type PeriodFilter = 'Daily' | 'Weekly' | 'All Time';
 
-export const LeaderboardScreen: React.FC = () => {
+interface LeaderboardScreenProps {
+  player: Player;
+}
+
+export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) => {
   const { theme, isDark } = useTheme();
   const [period, setPeriod] = useState<PeriodFilter>('Weekly');
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>('p-top-4');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(player.id);
+  const [rankedPlayers, setRankedPlayers] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Authentic Season Leaderboard Seed
-  const [rankedPlayers] = useState<LeaderboardEntry[]>([
-    {
-      id: 'p-top-1',
-      name: 'Apex_Valkyrie',
-      avatar: 'AV',
-      rank: 1,
-      rating: 2480,
-      wins: 142,
-      winRate: 88,
-      tier: 'Grandmaster',
-      isCurrentUser: false,
-    },
-    {
-      id: 'p-top-2',
-      name: 'SolarDauber',
-      avatar: 'SD',
-      rank: 2,
-      rating: 2310,
-      wins: 118,
-      winRate: 82,
-      tier: 'Master',
-      isCurrentUser: false,
-    },
-    {
-      id: 'p-top-3',
-      name: 'Matrix_King',
-      avatar: 'MK',
-      rank: 3,
-      rating: 2195,
-      wins: 95,
-      winRate: 79,
-      tier: 'Diamond',
-      isCurrentUser: false,
-    },
-    {
-      id: 'p-top-4',
-      name: 'Player_One',
-      avatar: 'PO',
-      rank: 4,
-      rating: 1450,
-      wins: 34,
-      winRate: 71,
-      tier: 'Platinum',
-      isCurrentUser: true,
-    },
-    {
-      id: 'p-top-5',
-      name: 'CyberDaub',
-      avatar: 'CD',
-      rank: 5,
-      rating: 1380,
-      wins: 29,
-      winRate: 68,
-      tier: 'Platinum',
-      isCurrentUser: false,
-    },
-    {
-      id: 'p-top-6',
-      name: 'ZenithPulse',
-      avatar: 'ZP',
-      rank: 6,
-      rating: 1240,
-      wins: 21,
-      winRate: 64,
-      tier: 'Gold',
-      isCurrentUser: false,
-    },
-    {
-      id: 'p-top-7',
-      name: 'NovaStriker',
-      avatar: 'NS',
-      rank: 7,
-      rating: 1120,
-      wins: 18,
-      winRate: 61,
-      tier: 'Gold',
-      isCurrentUser: false,
-    },
-  ]);
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadLeaderboard = async () => {
+      setIsLoading(true);
+      // Upsert current player first so they appear in the fetch
+      await leaderboardService.upsertPlayer(player);
+      
+      const players = await leaderboardService.fetchTopPlayers(player.id);
+      
+      if (mounted) {
+        setRankedPlayers(players);
+        setIsLoading(false);
+      }
+    };
+
+    loadLeaderboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, [player]);
 
   const topThree = rankedPlayers.slice(0, 3);
   const remainingPlayers = rankedPlayers.slice(3);
@@ -159,8 +109,17 @@ export const LeaderboardScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {isLoading && (
+          <View style={{ paddingVertical: 40, alignItems: 'center', gap: SPACING.md }}>
+            <InlineLoader size={24} color={COLORS.winterHazel} />
+            <Text style={{ color: theme.textMuted, fontSize: 12, fontFamily: TYPOGRAPHY.fontFamily, fontWeight: '600' }}>
+              SYNCING LIVE RANKS...
+            </Text>
+          </View>
+        )}
+
         {/* ARCHITECTURAL 3-STEP SEASON PODIUM */}
-        {topThree.length >= 3 && (
+        {!isLoading && topThree.length >= 3 && (
           <View
             style={[
               styles.podiumContainer,
@@ -338,10 +297,12 @@ export const LeaderboardScreen: React.FC = () => {
         )}
 
         {/* CONTINUING RANKINGS */}
-        <View style={styles.listContainer}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.listSectionTitle, { color: theme.textMuted }]}>
-              CONTINUING RANKINGS
+        {!isLoading && (
+          <>
+            <View style={styles.listContainer}>
+              <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.listSectionTitle, { color: theme.textMuted }]}>
+                CONTINUING RANKINGS
             </Text>
             <Text style={[styles.tierHeaderSubtitle, { color: theme.textMuted }]}>
               UPDATED LIVE
@@ -573,6 +534,8 @@ export const LeaderboardScreen: React.FC = () => {
             </View>
           );
         })()}
+          </>
+        )}
       </ScrollView>
     </View>
   );
