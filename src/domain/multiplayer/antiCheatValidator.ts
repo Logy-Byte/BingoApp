@@ -99,10 +99,10 @@ export class AntiCheatValidator {
       }
     }
 
-    if (legitimatelyCompleted.length === 0) {
+    if (legitimatelyCompleted.length < 5) {
       return {
         isValid: false,
-        reason: 'Your card does not currently match a verified winning pattern with called numbers.',
+        reason: 'You need 5 completed lines for a valid BINGO.',
       };
     }
 

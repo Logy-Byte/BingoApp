@@ -527,11 +527,11 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
   const claimBingo = useCallback(() => {
     if (!board || !isGameActive || !room || !transportRef.current) return;
 
-    if (linesCompletedCount === 0) {
+    if (linesCompletedCount < 5) {
       SoundEngine.playError();
       setClaimFeedback({
         success: false,
-        message: 'No completed lines to claim yet!',
+        message: 'You need 5 completed lines to claim BINGO!',
       });
       setTimeout(() => setClaimFeedback(null), 2000);
       return;
@@ -541,7 +541,6 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     transportRef.current.send('CLAIM_BINGO_REQUEST', room.id, player.id, {
       playerId: player.id,
       boardId: board.id,
-      patternId: completedPatternIds[0],
       claimTimestamp: Date.now(),
     });
   }, [board, isGameActive, room, player.id, linesCompletedCount, completedPatternIds]);
