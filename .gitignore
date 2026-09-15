@@ -81,3 +81,7 @@ yarn-error.log
 !**/README.md
 !**/readme.md
 
+
+#dist
+dist/bundle.web.js
+
