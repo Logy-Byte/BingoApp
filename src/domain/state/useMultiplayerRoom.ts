@@ -352,7 +352,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
 
         stateMachineRef.current.transition({ type: 'ROOM_CREATED', roomId });
       } catch (err) {
-        setJoinError('Unable to create room. Please try again.');
+        console.error('CREATE ROOM ERROR:', err);
+        setJoinError(`Unable to create room: ${err?.message || err}`);
         setRoomPageState('ERROR');
         SoundEngine.playError();
       } finally {
@@ -412,8 +413,9 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           }
         }, 8000);
       } catch (err) {
+        console.error('JOIN ROOM ERROR:', err);
         isJoiningRef.current = false;
-        setJoinError('Unable to join the room. Please try again.');
+        setJoinError(`Unable to join: ${err?.message || err}`);
         setRoomPageState('ERROR');
         SoundEngine.playError();
       }
