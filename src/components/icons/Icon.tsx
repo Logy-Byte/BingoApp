@@ -161,6 +161,10 @@ export const Icon: React.FC<IconProps> = ({
     </Svg>
   );
 
+  const rotationStyle = rotationTransform
+    ? { transform: [{ rotate: rotationTransform.replace('rotate(', '').replace('deg)', 'deg') }] }
+    : undefined;
+
   return (
     <View
       style={[
@@ -170,6 +174,7 @@ export const Icon: React.FC<IconProps> = ({
           height: size,
           opacity: state === 'disabled' ? 0.38 : 1,
         },
+        rotationStyle,
         style,
       ]}
       accessibilityRole={accessibilityRole}

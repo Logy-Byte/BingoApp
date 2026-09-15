@@ -13,11 +13,12 @@ import { Player, RobotDifficulty } from '../domain/types';
 import { globalRoomManager } from '../domain/multiplayer/roomManager';
 import { SoundEngine } from '../audio/soundEngine';
 import { PlayerHeader } from '../components/bingo/PlayerHeader';
-import { LobbyGallery } from '../components/lobby/LobbyGallery';
+import { GameModeCard } from '../components/bingo/GameModeCard';
 import {
   CloseIcon,
   UsersIcon,
 } from '../components/icons/CustomIcons';
+import { NumberSourceModal } from '../components/bingo/NumberSourceModal';
 import { useTheme } from '../design/theme';
 
 interface HomeScreenProps {
@@ -54,19 +55,39 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { theme } = useTheme();
   const [onlineCount, setOnlineCount] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showRobotModal, setShowRobotModal] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(!SoundEngine.isAudioMuted());
-  const [voiceEnabled, setVoiceEnabled] = useState(SoundEngine.isVoiceEnabled());
+  const [numberSourceModalVisible, setNumberSourceModalVisible] = useState(false);
+  const [pendingModeAction, setPendingModeAction] = useState<{
+    mode: 'ONLINE' | 'FRIENDS' | 'AI';
+    title: string;
+    action: (numbers?: number[], source?: 'manual' | 'ai') => void;
+  } | null>(null);
+
+  const openNumberSourceModal = (
+    mode: 'ONLINE' | 'FRIENDS' | 'AI',
+    title: string,
+    action: (numbers?: number[], source?: 'manual' | 'ai') => void
+  ) => {
+    setPendingModeAction({ mode, title, action });
+    setNumberSourceModalVisible(true);
+  };
 
   const handleRandomPlayerAction = () => {
-    if (onPlayRandomPlayer) {
-      onPlayRandomPlayer();
-    } else if (onPlayRandomHuman) {
+    if (onPlayRandomHuman) {
       onPlayRandomHuman();
-    } else if (onPlayRanked) {
-      onPlayRanked();
+      return;
     }
+    openNumberSourceModal('ONLINE', 'Play Online 1v1', () => {
+      if (onPlayRandomPlayer) {
+        onPlayRandomPlayer();
+      } else if (onPlayRanked) {
+        onPlayRanked();
+      }
+    });
   };
+
+  const [soundEnabled, setSoundEnabled] = useState(!SoundEngine.isAudioMuted());
+  const [voiceEnabled, setVoiceEnabled] = useState(SoundEngine.isVoiceEnabled());
+  const [showRobotModal, setShowRobotModal] = useState(false);
 
   const loadLobbyData = () => {
     setOnlineCount(globalRoomManager.getLiveOnlinePlayerCount());
@@ -94,6 +115,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     SoundEngine.setVoiceEnabled(next);
   };
 
+  const handlePlayFriendsAction = () => {
+    openNumberSourceModal('FRIENDS', 'Play with Friends', () => {
+      if (onPlayFriend) onPlayFriend();
+      else if (onCreateRoomDirect) onCreateRoomDirect();
+    });
+  };
+
+  const handlePlayAIAction = () => {
+    openNumberSourceModal('AI', 'Play with AI', () => {
+      setShowRobotModal(true);
+    });
+  };
+
   return (
     <ScrollView
       contentContainerStyle={[styles.container, { backgroundColor: theme.bgCanvas }]}
@@ -116,58 +150,52 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenSettings={onOpenSettings}
       />
 
-      {/* 2. LOBBY EXPERIENCE GALLERY */}
-      <LobbyGallery
-        onPlayRandomPlayer={handleRandomPlayerAction}
-        onSoloPress={() => setShowRobotModal(true)}
-        onDailyPress={onDailyPuzzle}
-        onlineCount={onlineCount}
-      />
+      {/* HERO SECTION: WELCOME & LOGO */}
+      <View style={styles.heroSection}>
+        <View style={styles.logoBadge}>
+          <Text style={styles.logoText}>BINGO</Text>
+        </View>
+        <Text style={[styles.heroHeadline, { color: theme.textPrimary }]}>
+          Choose How to Play
+        </Text>
+        <Text style={[styles.heroSubheadline, { color: theme.textSecondary }]}>
+          Instant multiplayer or offline challenge
+        </Text>
+      </View>
 
-      {/* 3. PRIVATE BINGO ROOMS (CREATE & JOIN) */}
-      {(onPlayFriend || onCreateRoomDirect) && (
-        <TouchableOpacity
-          testID="lobby-private-rooms-card"
-          style={[
-            styles.privateRoomCard,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onPlayFriend || onCreateRoomDirect}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Create or Join Private Bingo Room"
-        >
-          <View style={styles.privateRoomLeft}>
-            <View style={[styles.privateRoomIconBox, { backgroundColor: theme.accentOliveTint }]}>
-              <UsersIcon size={18} color={COLORS.lunarShadow} />
-            </View>
-            <View>
-              <Text style={[styles.privateRoomTitle, { color: theme.textPrimary }]}>
-                Bingo Rooms
-              </Text>
-              <Text style={[styles.privateRoomSub, { color: theme.textSecondary }]}>
-                Create or join a private 1v1 match
-              </Text>
-            </View>
-          </View>
-          <View
-            style={[
-              styles.openRoomBtn,
-              {
-                backgroundColor: theme.accentOliveTint,
-                borderColor: COLORS.gentleOlive,
-              },
-            ]}
-          >
-            <Text style={[styles.openRoomBtnText, { color: COLORS.lunarShadow }]}>
-              ENTER ↗
-            </Text>
-          </View>
-        </TouchableOpacity>
-      )}
+      {/* CORE 3 GAME MODES */}
+      <View style={styles.modesContainer}>
+        {/* 1. PLAY ONLINE */}
+        <GameModeCard
+          id="ONLINE"
+          title="PLAY ONLINE"
+          tagline="Find a player and compete live"
+          badge="Live 1v1"
+          onPress={handleRandomPlayerAction}
+          testID="home-mode-online"
+          accessibilityLabel="Play Random Player, Real Human 1v1 Matchmaking"
+        />
+
+        {/* 2. PLAY WITH FRIENDS */}
+        <GameModeCard
+          id="FRIENDS"
+          title="PLAY WITH FRIENDS"
+          tagline="Create or join a private room"
+          badge="Room Code"
+          onPress={handlePlayFriendsAction}
+          testID="home-mode-friends"
+        />
+
+        {/* 3. PLAY WITH AI */}
+        <GameModeCard
+          id="AI"
+          title="PLAY WITH AI"
+          tagline="Play instantly against AI"
+          badge="Instant"
+          onPress={handlePlayAIAction}
+          testID="home-mode-ai"
+        />
+      </View>
       <Modal visible={showRobotModal} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
           <View
@@ -294,6 +322,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* NUMBER SOURCE CONFIGURATION MODAL */}
+      {pendingModeAction && (
+        <NumberSourceModal
+          visible={numberSourceModalVisible}
+          gameModeTitle={pendingModeAction.title}
+          onClose={() => {
+            setNumberSourceModalVisible(false);
+            setPendingModeAction(null);
+          }}
+          onConfirmNumbers={(numbers, source) => {
+            setNumberSourceModalVisible(false);
+            const action = pendingModeAction.action;
+            setPendingModeAction(null);
+            action(numbers, source);
+          }}
+        />
+      )}
     </ScrollView>
   );
 };
@@ -304,6 +350,46 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
     width: '100%',
     alignSelf: 'center',
+  },
+  heroSection: {
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+  },
+  logoBadge: {
+    backgroundColor: COLORS.primaryOrange,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    marginBottom: SPACING.sm,
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoText: {
+    fontFamily: TYPOGRAPHY.brandFamily,
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 3,
+  },
+  heroHeadline: {
+    fontFamily: TYPOGRAPHY.brandFamily,
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  heroSubheadline: {
+    fontFamily: TYPOGRAPHY.fontFamily,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  modesContainer: {
+    gap: SPACING.md,
+    marginVertical: SPACING.sm,
   },
   modalBackdrop: {
     flex: 1,

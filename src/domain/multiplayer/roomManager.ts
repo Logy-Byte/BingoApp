@@ -40,27 +40,27 @@ export function getHumanErrorMessage(code: GameErrorCode): string {
     case 'NETWORK_UNAVAILABLE':
       return 'Unable to join the room. Please try again.';
     case 'ROOM_NOT_FOUND':
-      return 'Room not found.';
+      return 'Room not found. Check the code and try again.';
     case 'ROOM_FULL':
       return 'This room is full.';
     case 'ROOM_STARTED':
       return 'Match in this room is already in progress or concluded.';
     case 'INVALID_ROOM_CODE':
-      return 'Enter a valid room code.';
+      return 'Please enter a valid room code.';
     case 'UNAUTHORIZED':
       return 'Incorrect room password.';
     case 'SESSION_EXPIRED':
-      return 'This room has expired.';
+      return 'This room session has expired.';
     case 'GAME_STATE_CONFLICT':
       return 'Game state conflict detected. Re-synchronizing room...';
     case 'ALREADY_JOINED':
       return 'You are already in this room.';
     case 'HOST_DISCONNECTED':
-      return 'The room host has disconnected from the match.';
+      return 'The room host has disconnected.';
     case 'OWN_ROOM':
       return 'You already own this room.';
     case 'ROOM_CLOSED':
-      return 'This room is closed.';
+      return 'This room has been closed.';
     case 'ROOM_EXPIRED':
       return 'This room has expired.';
     case 'NOT_AUTHENTICATED':
@@ -74,7 +74,7 @@ export function getHumanErrorMessage(code: GameErrorCode): string {
 /**
  * Validates room code formatting before server lookup:
  * - Empty check
- * - Length check (exactly 6 characters)
+ * - Length check (5 to 6 characters, e.g. AB7K2)
  * - Alphanumeric character validation
  */
 export function validateRoomCodeFormat(code: string): { valid: boolean; error?: string } {
@@ -87,7 +87,7 @@ export function validateRoomCodeFormat(code: string): { valid: boolean; error?: 
   if (!/^[A-Z0-9]+$/.test(clean)) {
     return { valid: false, error: 'Room code contains invalid characters.' };
   }
-  if (clean.length < 6) {
+  if (clean.length < 5) {
     return { valid: false, error: 'Enter a valid room code.' };
   }
   return { valid: true };

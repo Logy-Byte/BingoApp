@@ -280,6 +280,9 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.lunarShadow,
     fontFamily: TYPOGRAPHY.monoFamily,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   recentTray: {
     flex: 1,

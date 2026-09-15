@@ -99,10 +99,10 @@ export class AntiCheatValidator {
       }
     }
 
-    if (legitimatelyCompleted.length < 5) {
+    if (legitimatelyCompleted.length < 1) {
       return {
         isValid: false,
-        reason: 'You need 5 completed lines for a valid BINGO.',
+        reason: 'No completed lines detected.',
       };
     }
 

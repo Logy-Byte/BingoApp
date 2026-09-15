@@ -85,10 +85,7 @@ export const RoomPage: React.FC<RoomPageProps> = ({
           accessibilityRole="button"
           accessibilityLabel={room ? 'Exit Room' : 'Back to Home'}
         >
-          <ChevronIcon size={18} color={theme.textPrimary} />
-          <Text style={[styles.backButtonText, { color: theme.textPrimary }]}>
-            {room ? 'Exit Room' : 'Back'}
-          </Text>
+          <ChevronIcon direction="left" size={20} color={theme.textPrimary} />
         </TouchableOpacity>
 
         <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>
@@ -318,13 +315,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   backButton: {
-    flexDirection: 'row',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.pill,
+    justifyContent: 'center',
     borderWidth: 1,
-    gap: 4,
   },
   backButtonText: {
     fontSize: 12,

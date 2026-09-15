@@ -124,19 +124,19 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
               <View
                 style={[
                   styles.codeRow,
-                  { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel },
+                  { backgroundColor: 'rgba(255, 122, 0, 0.12)', borderColor: COLORS.primaryOrange },
                 ]}
               >
-                <Text style={[styles.codeLabel, { color: '#8A6724' }]}>Room code:</Text>
-                <Text style={[styles.codeVal, { color: '#8A6724' }]}>#{room.id}</Text>
+                <Text style={[styles.codeLabel, { color: COLORS.primaryOrange }]}>Room Code:</Text>
+                <Text style={[styles.codeVal, { color: COLORS.primaryOrange }]}>{room.id}</Text>
               </View>
 
               <TouchableOpacity
                 style={[
                   styles.copyBtn,
                   {
-                    backgroundColor: copied ? theme.accentOlive : theme.bgRecessed,
-                    borderColor: theme.borderSubtle,
+                    backgroundColor: copied ? COLORS.primaryOrange : theme.bgRecessed,
+                    borderColor: copied ? COLORS.primaryOrange : theme.borderSubtle,
                   },
                 ]}
                 onPress={handleCopyCode}
@@ -144,14 +144,14 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Copy room code"
               >
-                <CopyIcon size={14} color={copied ? COLORS.lunarShadow : theme.textPrimary} />
+                <CopyIcon size={14} color={copied ? '#FFFFFF' : theme.textPrimary} />
                 <Text
                   style={[
                     styles.copyBtnText,
-                    { color: copied ? COLORS.lunarShadow : theme.textPrimary },
+                    { color: copied ? '#FFFFFF' : theme.textPrimary },
                   ]}
                 >
-                  {copied ? 'Copied!' : 'Copy code'}
+                  {copied ? 'Copied!' : 'Copy Code'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -289,8 +289,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   style={[
                     styles.startMatchBtn,
                     {
-                      backgroundColor: COLORS.gentleOlive,
-                      borderColor: '#D7E28E',
+                      backgroundColor: COLORS.primaryOrange,
+                      borderColor: '#E06900',
                     },
                   ]}
                   disabled={countdownSeconds !== null}
@@ -302,13 +302,13 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   <Text
                     style={[
                       styles.startMatchBtnText,
-                      { color: COLORS.lunarShadow },
+                      { color: '#FFFFFF' },
                     ]}
                   >
                     {countdownSeconds !== null
                       ? `Starting match in ${countdownSeconds}...`
                       : isReadyToStart
-                      ? 'Start match ↗'
+                      ? 'Start Match ↗'
                       : 'Launch Match with AI Opponent ↗'}
                   </Text>
                 </TouchableOpacity>
@@ -319,8 +319,8 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   style={[
                     styles.readyToggleBtn,
                     {
-                      backgroundColor: isSelfReady ? COLORS.gentleOlive : theme.bgRecessed,
-                      borderColor: isSelfReady ? COLORS.gentleOlive : theme.borderSubtle,
+                      backgroundColor: isSelfReady ? COLORS.primaryOrange : theme.bgRecessed,
+                      borderColor: isSelfReady ? COLORS.primaryOrange : theme.borderSubtle,
                     },
                   ]}
                   onPress={() => onToggleReady && onToggleReady(!isSelfReady)}
@@ -331,7 +331,7 @@ export const LobbyScreen: React.FC<LobbyScreenProps> = ({
                   <Text
                     style={[
                       styles.readyToggleBtnText,
-                      { color: isSelfReady ? COLORS.lunarShadow : theme.textPrimary },
+                      { color: isSelfReady ? '#FFFFFF' : theme.textPrimary },
                     ]}
                   >
                     {isSelfReady ? '✓ Ready to Play' : 'Tap When Ready'}

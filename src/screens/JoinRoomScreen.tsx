@@ -61,7 +61,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
           ]}
         >
           <Text style={[styles.cardDesc, { color: theme.textSecondary }]}>
-            Enter the 6-character room code provided by your match host.
+            Enter the room code (e.g. AB7K2) provided by your host.
           </Text>
 
           {errorMessage && (
@@ -74,7 +74,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
             label="ROOM CODE"
             value={roomId}
             onChangeText={(txt) => setRoomId(sanitizeRoomCode(txt))}
-            placeholder="e.g. K9X2P7"
+            placeholder="e.g. AB7K2"
             autoCapitalize="characters"
             maxLength={6}
             rightAction={
@@ -84,7 +84,7 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Paste room code from clipboard"
               >
-                <Text style={[styles.pasteBadgeText, { color: COLORS.gentleOlive }]}>Paste</Text>
+                <Text style={[styles.pasteBadgeText, { color: COLORS.primaryOrange }]}>Paste</Text>
               </TouchableOpacity>
             }
           />
@@ -101,12 +101,12 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
 
           <GameButton
             title="Join Match ↗"
-            icon={<JoinRoomIcon size={18} color={COLORS.lunarShadow} />}
+            icon={<JoinRoomIcon size={18} color="#FFFFFF" />}
             variant="primary"
             size="lg"
             fullWidth
             loading={isJoining}
-            disabled={roomId.trim().length < 6}
+            disabled={roomId.trim().length < 5}
             onPress={handleJoin}
             style={styles.joinBtn}
           />

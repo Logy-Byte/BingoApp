@@ -3,11 +3,14 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 export type ThemeMode = 'light' | 'dark';
 
 export const REFERENCE_PALETTE = {
-  lunarShadow: '#282828', // Primary dark container & surface
-  cleanWhite: '#FFFFFF',  // Primary card surface & contrast
-  grayWhisper: '#F7F7F7', // Canvas backdrop in light mode
-  gentleOlive: '#CBD77E', // Accent 1: radiant game action
-  winterHazel: '#E6CA9A', // Accent 2: warm luxury trophy/badge
+  primaryOrange: '#FF7A00',   // Primary Action Orange
+  secondaryOrange: '#FF9A3D', // Secondary Orange Accent
+  cleanWhite: '#FFFFFF',      // Background / Card Surface
+  softOrange: '#FFF7EF',      // Soft Background Tint
+  lunarShadow: '#171717',     // Dark Charcoal Text / Strong Element
+  gentleOlive: '#FF7A00',     // Backwards-compatible accent mapped to Orange
+  winterHazel: '#FF9A3D',     // Backwards-compatible accent mapped to Secondary Orange
+  grayWhisper: '#FFF7EF',     // Soft Tint Backdrop
 };
 
 export interface ThemeColors {
@@ -28,6 +31,9 @@ export interface ThemeColors {
   accentOliveTint: string;
   accentHazel: string;
   accentHazelTint: string;
+  primaryOrange: string;
+  primaryOrangeTint: string;
+  secondaryOrange: string;
   dockBg: string;
   dockBorder: string;
   activePillBg: string;
@@ -43,60 +49,66 @@ export interface ThemeColors {
 export const LIGHT_THEME: ThemeColors = {
   isDark: false,
   mode: 'light',
-  bgCanvas: REFERENCE_PALETTE.grayWhisper,   // #F7F7F7
-  bgCard: REFERENCE_PALETTE.cleanWhite,      // #FFFFFF
+  bgCanvas: '#FFF7EF',                      // Soft Warm Background
+  bgCard: '#FFFFFF',                        // Pure White Card
   bgCardElevated: '#FFFFFF',
-  bgSubtle: '#F0F0F0',
-  bgRecessed: '#EFEFEF',
-  borderSubtle: '#EAEAEA',
-  borderStrong: '#DCDCDC',
-  textPrimary: REFERENCE_PALETTE.lunarShadow, // #282828
-  textSecondary: '#6E737B',
-  textMuted: '#9AA0A8',
+  bgSubtle: '#FFF0E0',
+  bgRecessed: '#FEEAD6',
+  borderSubtle: '#FFE0C4',
+  borderStrong: '#FFC58D',
+  textPrimary: '#171717',                   // Dark High-Contrast Text
+  textSecondary: '#737373',                 // Secondary Muted Text
+  textMuted: '#9CA3AF',
   textInverse: '#FFFFFF',
-  accentOlive: REFERENCE_PALETTE.gentleOlive, // #CBD77E
-  accentOliveTint: 'rgba(203, 215, 126, 0.24)',
-  accentHazel: REFERENCE_PALETTE.winterHazel, // #E6CA9A
-  accentHazelTint: 'rgba(230, 202, 154, 0.24)',
-  dockBg: REFERENCE_PALETTE.lunarShadow,     // #282828 Floating Console Dock
-  dockBorder: '#383838',
-  activePillBg: REFERENCE_PALETTE.cleanWhite, // #FFFFFF
-  activePillText: REFERENCE_PALETTE.lunarShadow, // #282828
-  activePillIcon: REFERENCE_PALETTE.lunarShadow, // #282828
-  inactiveIcon: '#8E94A0',
-  daubWell: 'rgba(203, 215, 126, 0.18)',
-  daubBorder: REFERENCE_PALETTE.gentleOlive,
-  daubPip: REFERENCE_PALETTE.gentleOlive,
-  cardShadow: 'rgba(0, 0, 0, 0.04)',
+  primaryOrange: '#FF7A00',
+  primaryOrangeTint: 'rgba(255, 122, 0, 0.12)',
+  secondaryOrange: '#FF9A3D',
+  accentOlive: '#FF7A00',                   // Back-compatible
+  accentOliveTint: 'rgba(255, 122, 0, 0.12)',
+  accentHazel: '#FF9A3D',
+  accentHazelTint: 'rgba(255, 154, 61, 0.16)',
+  dockBg: '#FFFFFF',                        // Clean White Dock
+  dockBorder: '#FFE0C4',
+  activePillBg: '#FF7A00',                  // Primary Orange Pill
+  activePillText: '#FFFFFF',
+  activePillIcon: '#FFFFFF',
+  inactiveIcon: '#737373',
+  daubWell: 'rgba(255, 122, 0, 0.15)',
+  daubBorder: '#FF7A00',
+  daubPip: '#FF7A00',
+  cardShadow: 'rgba(255, 122, 0, 0.08)',
 };
 
 export const DARK_THEME: ThemeColors = {
   isDark: true,
   mode: 'dark',
-  bgCanvas: '#16181B',                      // Deep architectural dark plane
-  bgCard: REFERENCE_PALETTE.lunarShadow,    // #282828
-  bgCardElevated: '#32363C',
-  bgSubtle: '#222529',
-  bgRecessed: '#1D2024',
-  borderSubtle: '#383C44',
-  borderStrong: '#4A505B',
-  textPrimary: REFERENCE_PALETTE.cleanWhite, // #FFFFFF
-  textSecondary: '#A0A5AD',
-  textMuted: '#6C727D',
-  textInverse: REFERENCE_PALETTE.lunarShadow,
-  accentOlive: REFERENCE_PALETTE.gentleOlive, // #CBD77E
-  accentOliveTint: 'rgba(203, 215, 126, 0.18)',
-  accentHazel: REFERENCE_PALETTE.winterHazel, // #E6CA9A
-  accentHazelTint: 'rgba(230, 202, 154, 0.18)',
-  dockBg: '#1A1C1F',                        // Deep dock substrate
-  dockBorder: '#2E3238',
-  activePillBg: REFERENCE_PALETTE.cleanWhite, // #FFFFFF
-  activePillText: REFERENCE_PALETTE.lunarShadow, // #282828
-  activePillIcon: REFERENCE_PALETTE.lunarShadow, // #282828
-  inactiveIcon: '#7B818C',
-  daubWell: 'rgba(203, 215, 126, 0.14)',
-  daubBorder: REFERENCE_PALETTE.gentleOlive,
-  daubPip: REFERENCE_PALETTE.gentleOlive,
+  bgCanvas: '#171717',                      // Dark Theme Canvas
+  bgCard: '#222222',                        // Elevated Dark Card
+  bgCardElevated: '#2A2A2A',
+  bgSubtle: '#2E2E2E',
+  bgRecessed: '#1E1E1E',
+  borderSubtle: '#383838',
+  borderStrong: '#4D4D4D',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#A3A3A3',
+  textMuted: '#737373',
+  textInverse: '#171717',
+  primaryOrange: '#FF7A00',
+  primaryOrangeTint: 'rgba(255, 122, 0, 0.20)',
+  secondaryOrange: '#FF9A3D',
+  accentOlive: '#FF7A00',
+  accentOliveTint: 'rgba(255, 122, 0, 0.20)',
+  accentHazel: '#FF9A3D',
+  accentHazelTint: 'rgba(255, 154, 61, 0.20)',
+  dockBg: '#222222',
+  dockBorder: '#383838',
+  activePillBg: '#FF7A00',
+  activePillText: '#FFFFFF',
+  activePillIcon: '#FFFFFF',
+  inactiveIcon: '#8E8E93',
+  daubWell: 'rgba(255, 122, 0, 0.22)',
+  daubBorder: '#FF7A00',
+  daubPip: '#FF7A00',
   cardShadow: 'rgba(0, 0, 0, 0.35)',
 };
 

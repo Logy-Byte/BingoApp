@@ -688,15 +688,23 @@ export const ICON_DEFINITIONS: Record<IconName, IconDefinition> = {
     family: 'utility',
     viewBox: '0 0 24 24',
     paths: [
+      // Crisp Speaker cone & horn
       {
-        d: 'M10 5.5 L5.5 9 H2.5 V15 H5.5 L10 18.5 Z',
+        d: 'M11 5 L6 9 H3 C2.4 9 2 9.4 2 10 V14 C2 14.6 2.4 15 3 15 H6 L11 19 V5 Z',
         strokeWidth: 2,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
       },
+      // Inner sound wave arc
       {
-        d: 'M14 9 C15.5 10.5 15.5 13.5 14 15 M17.5 6 C20.5 9 20.5 15 17.5 18',
-        strokeWidth: 2,
+        d: 'M15.5 8.5 C16.8 9.8 16.8 14.2 15.5 15.5',
+        strokeWidth: 2.2,
+        strokeLinecap: 'round',
+      },
+      // Outer sound wave arc
+      {
+        d: 'M19 6 C21.5 8.5 21.5 15.5 19 18',
+        strokeWidth: 2.2,
         strokeLinecap: 'round',
       },
     ],
@@ -706,15 +714,17 @@ export const ICON_DEFINITIONS: Record<IconName, IconDefinition> = {
     family: 'utility',
     viewBox: '0 0 24 24',
     paths: [
+      // Crisp Speaker cone & horn
       {
-        d: 'M10 5.5 L5.5 9 H2.5 V15 H5.5 L10 18.5 Z',
+        d: 'M11 5 L6 9 H3 C2.4 9 2 9.4 2 10 V14 C2 14.6 2.4 15 3 15 H6 L11 19 V5 Z',
         strokeWidth: 2,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
       },
+      // Mute cross diagonal
       {
-        d: 'M21.5 9.5 L16.5 14.5 M16.5 9.5 L21.5 14.5',
-        strokeWidth: 2,
+        d: 'M22 9 L16 15 M16 9 L22 15',
+        strokeWidth: 2.2,
         strokeLinecap: 'round',
       },
     ],

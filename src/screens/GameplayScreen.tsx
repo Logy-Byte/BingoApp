@@ -2,7 +2,7 @@
  * GameplayScreen
  * Apple HIG-Grade Tactical Bingo Match Interface
  * Integrates BingoMatrixCard with 1-4 multi-card synchronization,
- * CallerHUD with physics entry, PowerUpDockWidget, and zero raw emojis (100% vector SVG).
+ * CallerHUD with physics entry, and zero raw emojis (100% vector SVG).
  */
 
 import React, { useState } from 'react';
@@ -16,7 +16,6 @@ import {
 import { Board5x5, GridCell5x5, PowerUpType } from '../domain/types';
 import { BingoMatrixCard } from '../components/game/BingoMatrixCard';
 import { CallerHUD } from '../components/game/CallerHUD';
-import { PowerUpDockWidget } from '../components/game/PowerUpDockWidget';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY, SPRING_CONFIGS, TOUCH_TARGET } from '../design/tokens';
 import {
   CheckIcon,
@@ -28,7 +27,7 @@ import {
   IconSparkles,
 } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
-import { NextBallModal, PowerUpUsedModal, PatternCompletedBanner } from '../components/game/InGameOverlays';
+import { PatternCompletedBanner } from '../components/game/InGameOverlays';
 
 interface GameplayScreenProps {
   board: Board5x5;
@@ -67,8 +66,6 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
 }) => {
   const { theme } = useTheme();
   const [activeBoardIdx, setActiveBoardIdx] = useState<number>(0);
-  const [usedPowerUp, setUsedPowerUp] = useState<string | null>(null);
-  const [showNextBallModal, setShowNextBallModal] = useState<boolean>(false);
   const [isBingoPressed, setIsBingoPressed] = useState<boolean>(false);
 
   const allBoards = [board, ...additionalBoards];
@@ -77,13 +74,6 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
   const currentCall = drawnNumbers[0];
   const recentCalls = drawnNumbers.slice(1, 6);
   const calledNumbersSet = new Set(drawnNumbers);
-
-  // Dynamic Energy Progress (gains 12% per verified line + 5% per active call)
-  const currentEnergy = Math.min(100, linesCompletedCount * 20 + Math.min(25, drawnNumbers.length * 2));
-
-  const handleUsePowerUp = (type: PowerUpType, name: string) => {
-    setUsedPowerUp(name);
-  };
 
   return (
     <ScrollView
@@ -110,15 +100,15 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>{score.toLocaleString()}</Text>
           </View>
 
-          <View style={[styles.statBox, styles.linesBox, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}>
-            <Text style={[styles.statLabel, { color: COLORS.lunarShadow }]}>MY LINES</Text>
-            <Text style={[styles.linesValue, { color: COLORS.lunarShadow }]}>{linesCompletedCount} / 5</Text>
+          <View style={[styles.statBox, styles.linesBox, { backgroundColor: 'rgba(255, 122, 0, 0.12)', borderColor: COLORS.primaryOrange }]}>
+            <Text style={[styles.statLabel, { color: COLORS.primaryOrange }]}>MY LINES</Text>
+            <Text style={[styles.linesValue, { color: COLORS.primaryOrange }]}>{linesCompletedCount} / 5</Text>
           </View>
 
           {opponentName && opponentLines !== undefined && (
-            <View style={[styles.statBox, styles.opponentBox, { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel }]}>
-              <Text style={[styles.statLabel, { color: '#8A6724' }]}>{opponentName.toUpperCase()}</Text>
-              <Text style={[styles.opponentLinesValue, { color: '#8A6724' }]}>{opponentLines} / 5</Text>
+            <View style={[styles.statBox, styles.opponentBox, { backgroundColor: 'rgba(255, 154, 61, 0.16)', borderColor: COLORS.secondaryOrange }]}>
+              <Text style={[styles.statLabel, { color: COLORS.secondaryOrange }]}>{opponentName.toUpperCase()}</Text>
+              <Text style={[styles.opponentLinesValue, { color: COLORS.secondaryOrange }]}>{opponentLines} / 5</Text>
             </View>
           )}
         </View>
@@ -131,7 +121,7 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel={isPaused ? 'Resume game' : 'Pause game'}
           >
-            {isPaused ? <ResumeIcon size={14} color={COLORS.gentleOlive} /> : <PauseIcon size={14} color={theme.textPrimary} />}
+            {isPaused ? <ResumeIcon size={14} color={COLORS.primaryOrange} /> : <PauseIcon size={14} color={theme.textPrimary} />}
             <Text style={[styles.pauseText, { color: theme.textPrimary }]}>{isPaused ? 'Resume' : 'Pause'}</Text>
           </TouchableOpacity>
         )}
@@ -149,7 +139,7 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
                   styles.cardTab,
                   {
                     backgroundColor: isActive ? COLORS.cleanWhite : theme.bgCard,
-                    borderColor: isActive ? COLORS.gentleOlive : theme.borderSubtle,
+                    borderColor: isActive ? COLORS.primaryOrange : theme.borderSubtle,
                   },
                 ]}
                 onPress={() => setActiveBoardIdx(idx)}
@@ -161,7 +151,7 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
                   style={[
                     styles.cardTabText,
                     {
-                      color: isActive ? COLORS.lunarShadow : theme.textSecondary,
+                      color: isActive ? COLORS.primaryOrange : theme.textSecondary,
                       fontWeight: isActive ? '800' : '600',
                     },
                   ]}
@@ -188,34 +178,18 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
         patternName={lastCompletedPatternName || ''}
       />
 
-      {/* POWER UP USED MODAL 
-      <PowerUpUsedModal
-        visible={!!usedPowerUp}
-        powerUpName={usedPowerUp || ''}
-        onDismiss={() => setUsedPowerUp(null)}
-      />
-      */}
-
-      {/* NEXT BALL MONEY MODAL 
-      <NextBallModal
-        visible={showNextBallModal}
-        rewardAmount={70}
-        onDismiss={() => setShowNextBallModal(false)}
-      />
-      */}
-
       {/* CLAIM FEEDBACK BANNER */}
       {claimFeedback && (
         <View
           style={[
             styles.feedbackBanner,
             claimFeedback.success
-              ? { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }
+              ? { backgroundColor: 'rgba(255, 122, 0, 0.12)', borderColor: COLORS.primaryOrange }
               : { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: '#EF4444' },
           ]}
         >
-          {claimFeedback.success ? <CheckIcon size={16} color={COLORS.lunarShadow} /> : <CloseIcon size={16} color="#EF4444" />}
-          <Text style={[styles.feedbackText, { color: claimFeedback.success ? COLORS.lunarShadow : '#DC2626' }]}>
+          {claimFeedback.success ? <CheckIcon size={16} color={COLORS.primaryOrange} /> : <CloseIcon size={16} color="#EF4444" />}
+          <Text style={[styles.feedbackText, { color: claimFeedback.success ? COLORS.primaryOrange : '#DC2626' }]}>
             {claimFeedback.message}
           </Text>
         </View>
@@ -250,19 +224,11 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
           accessibilityLabel="Claim Bingo Victory"
         >
           <View style={styles.bingoBtnBevel} />
-          <IconSparkles size={20} color="#0B0E14" />
+          <IconSparkles size={20} color="#FFFFFF" />
           <Text style={styles.giantBingoText}>BINGO!</Text>
-          <BingoIdentityIcon size={18} color="#0B0E14" variant="filled" />
+          <BingoIdentityIcon size={18} color="#FFFFFF" variant="filled" />
         </TouchableOpacity>
       </View>
-
-      {/* POWER-UP DOCK CONSOLE (Zero Raw Emojis) 
-      <PowerUpDockWidget
-        currentEnergy={currentEnergy}
-        onUsePowerUp={handleUsePowerUp}
-        onOpenNextBallModal={() => setShowNextBallModal(true)}
-      />
-      */}
     </ScrollView>
   );
 };
@@ -410,8 +376,8 @@ const styles = StyleSheet.create({
   giantBingoBtn: {
     width: '100%',
     maxWidth: 320,
-    height: Math.max(52, TOUCH_TARGET.minSize),
-    backgroundColor: COLORS.winterHazel,
+    height: Math.max(54, TOUCH_TARGET.minSize),
+    backgroundColor: COLORS.primaryOrange,
     borderRadius: RADIUS.hero,
     flexDirection: 'row',
     alignItems: 'center',
@@ -419,31 +385,34 @@ const styles = StyleSheet.create({
     gap: 8,
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: COLORS.winterHazel,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
     shadowRadius: 14,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: '#E06900',
   },
   bingoBtnBevel: {
     position: 'absolute',
     top: 0,
     left: 8,
     right: 8,
-    height: 1,
+    height: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.45)',
   },
   giantBingoBtnGlow: {
-    backgroundColor: COLORS.goldPrimary,
-    shadowColor: COLORS.goldPrimary,
+    backgroundColor: '#E06900',
+    shadowColor: COLORS.primaryOrange,
     shadowOpacity: 0.6,
     shadowRadius: 18,
+    elevation: 10,
   },
   giantBingoText: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#0B0E14',
-    letterSpacing: 1.5,
-    fontFamily: TYPOGRAPHY.fontFamily,
+    color: '#FFFFFF',
+    letterSpacing: 2,
+    fontFamily: TYPOGRAPHY.brandFamily,
   },
 });

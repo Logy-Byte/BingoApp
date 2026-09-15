@@ -13,6 +13,9 @@ module.exports = {
     extensions: ['.web.tsx', '.web.ts', '.tsx', '.ts', '.web.js', '.js'],
     alias: {
       'react-native$': 'react-native-web',
+      'react-native-svg$': path.resolve(appDirectory, 'src/web-mocks/react-native-svg.js'),
+      'react-native-tts$': path.resolve(appDirectory, 'src/web-mocks/react-native-tts.js'),
+      'react-native-haptic-feedback$': path.resolve(appDirectory, 'src/web-mocks/react-native-haptic-feedback.js'),
     },
   },
   module: {

@@ -183,14 +183,14 @@ export const MatchmakingScreen: React.FC<MatchmakingScreenProps> = ({
             <View
               style={[
                 styles.countdownBadge,
-                { backgroundColor: COLORS.gentleOlive, borderColor: '#D7E28E' },
+                { backgroundColor: COLORS.primaryOrange, borderColor: '#E06900' },
               ]}
             >
-              <Text style={[styles.countdownBadgeText, { color: COLORS.lunarShadow }]}>
+              <Text style={[styles.countdownBadgeText, { color: '#FFFFFF' }]}>
                 MATCH FOUND!
               </Text>
               {countdownSeconds !== null && (
-                <Text style={[styles.countdownDigits, { color: COLORS.lunarShadow }]}>
+                <Text style={[styles.countdownDigits, { color: '#FFFFFF' }]}>
                   {`Game starting in ${countdownSeconds}s`}
                 </Text>
               )}
@@ -203,11 +203,11 @@ export const MatchmakingScreen: React.FC<MatchmakingScreenProps> = ({
               <View
                 style={[
                   styles.vsPlayerBox,
-                  { backgroundColor: theme.bgCard, borderColor: COLORS.gentleOlive },
+                  { backgroundColor: theme.bgCard, borderColor: COLORS.primaryOrange },
                 ]}
               >
-                <View style={[styles.vsAvatarSphere, { backgroundColor: theme.accentOliveTint }]}>
-                  <ProfileIcon size={28} color={COLORS.lunarShadow} />
+                <View style={[styles.vsAvatarSphere, { backgroundColor: 'rgba(255, 122, 0, 0.12)' }]}>
+                  <ProfileIcon size={28} color={COLORS.primaryOrange} />
                 </View>
                 <Text style={[styles.vsPlayerName, { color: theme.textPrimary }]} numberOfLines={1}>
                   {player.name}

@@ -58,10 +58,11 @@ export function generate5x5NumberPool(rng: () => number = Math.random): number[]
 export function generate5x5Board(
   boardId: string,
   seed: string,
-  includeFreeCenter: boolean = false
+  includeFreeCenter: boolean = false,
+  customNumbers?: number[]
 ): Board5x5 {
   const rng = createRNG(`${seed}-${boardId}`);
-  const numbers = generate5x5NumberPool(rng);
+  const numbers = customNumbers && customNumbers.length === 25 ? customNumbers : generate5x5NumberPool(rng);
   const matrix: GridCell5x5[][] = [];
 
   let numIdx = 0;

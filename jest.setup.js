@@ -3,6 +3,20 @@
 jest.mock('react-native-url-polyfill/auto', () => {}, { virtual: true });
 jest.mock('react-native-url-polyfill', () => ({ setupURLPolyfill: () => {} }), { virtual: true });
 
+// Mock react-native-tts & haptics
+jest.mock('react-native-tts', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  setDefaultRate: jest.fn(),
+  setDefaultPitch: jest.fn(),
+}), { virtual: true });
+
+jest.mock('react-native-haptic-feedback', () => ({
+  trigger: jest.fn(),
+}), { virtual: true });
+
 // Mock @react-native-async-storage/async-storage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),
@@ -13,9 +27,9 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 // Mock Supabase client for testing
 jest.mock('./src/lib/supabase', () => {
-  const mockListeners: Record<string, ((...args: any[]) => void)[]> = {};
+  const mockListeners = {};
 
-  const createMockChannel = (channelName: string) => ({
+  const createMockChannel = (channelName) => ({
     name: channelName,
     on: jest.fn(function(type, filter, callback) {
       const event = filter.event || type;
@@ -56,8 +70,31 @@ jest.mock('./src/lib/supabase', () => {
         insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
         update: jest.fn(() => Promise.resolve({ data: null, error: null })),
       })),
-      channel: jest.fn((name: string) => createMockChannel(name)),
+      channel: jest.fn((name) => createMockChannel(name)),
       removeChannel: jest.fn(),
     },
   };
 });
+
+// Mock react-native-svg
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const mockComponent = (name) => {
+    const Component = (props) => React.createElement(name, props, props?.children);
+    Component.displayName = name;
+    return Component;
+  };
+
+  const handler = {
+    get: (target, prop) => {
+      if (prop === '__esModule') return true;
+      if (prop === 'default') return mockComponent('Svg');
+      if (typeof prop === 'string') {
+        return mockComponent(prop);
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy({}, handler);
+}, { virtual: true });

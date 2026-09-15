@@ -45,8 +45,8 @@ export const CopyRoomCodeButton: React.FC<CopyRoomCodeButtonProps> = ({
       style={[
         styles.button,
         {
-          backgroundColor: copied ? theme.accentOlive : theme.bgRecessed,
-          borderColor: copied ? '#B8C665' : theme.borderSubtle,
+          backgroundColor: copied ? COLORS.primaryOrange : theme.bgRecessed,
+          borderColor: copied ? '#E06900' : theme.borderSubtle,
         },
       ]}
       onPress={handleCopy}
@@ -56,7 +56,7 @@ export const CopyRoomCodeButton: React.FC<CopyRoomCodeButtonProps> = ({
     >
       <View style={styles.content}>
         {copied ? (
-          <CheckIcon size={14} color={COLORS.lunarShadow} />
+          <CheckIcon size={14} color="#FFFFFF" />
         ) : (
           <CopyIcon size={14} color={theme.textPrimary} />
         )}
@@ -64,7 +64,7 @@ export const CopyRoomCodeButton: React.FC<CopyRoomCodeButtonProps> = ({
           style={[
             styles.text,
             {
-              color: copied ? COLORS.lunarShadow : theme.textPrimary,
+              color: copied ? '#FFFFFF' : theme.textPrimary,
             },
           ]}
         >

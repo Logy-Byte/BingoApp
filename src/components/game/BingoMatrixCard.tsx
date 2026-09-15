@@ -426,6 +426,9 @@ const styles = StyleSheet.create({
   },
   cellNumeral: {
     fontFamily: TYPOGRAPHY.monoFamily,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   daubStampBadge: {
     position: 'absolute',

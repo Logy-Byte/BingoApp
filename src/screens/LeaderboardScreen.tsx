@@ -591,12 +591,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
   },
   filterTabActive: {
-    backgroundColor: COLORS.cleanWhite,
-    shadowColor: '#000000',
+    backgroundColor: COLORS.primaryOrange,
+    shadowColor: COLORS.primaryOrange,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   filterLabel: {
     fontSize: 12,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   filterLabelActive: {
-    color: COLORS.lunarShadow,
+    color: '#FFFFFF',
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
   },

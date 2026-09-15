@@ -11,76 +11,79 @@ export { REFERENCE_PALETTE, LIGHT_THEME, DARK_THEME, useTheme, ThemeProvider } f
 export type { ThemeMode, ThemeColors } from './theme';
 
 export const COLORS = {
-  // Reference 3 Exact Palette
-  lunarShadow: '#282828',     // Primary Color
-  cleanWhite: '#FFFFFF',      // BG Color 1
-  grayWhisper: '#F7F7F7',     // BG Color 2
-  gentleOlive: '#CBD77E',     // Accent Color 1
-  winterHazel: '#E6CA9A',     // Accent Color 2
+  // Orange + White Core Game Palette
+  primaryOrange: '#FF7A00',   // Primary Action Orange
+  secondaryOrange: '#FF9A3D', // Secondary Orange Accent
+  cleanWhite: '#FFFFFF',      // Background / Card Surface
+  softOrange: '#FFF7EF',      // Soft Background Tint
+  lunarShadow: '#171717',     // Dark Charcoal Text / Strong Element
+  grayWhisper: '#FFF7EF',     // BG Color 2
+  gentleOlive: '#FF7A00',     // Mapped to Orange for backward compatibility
+  winterHazel: '#FF9A3D',     // Mapped to Secondary Orange
 
   // Ambient Game Environment & Base Planes
-  bgDark: '#16181B',          // Deep luxury backdrop
-  tableFelt: '#1C1F24',       // Table staging plane
-  surfaceDeep: '#23262B',     // Recessed board well & modal base
-  surfaceRaised: '#282828',   // Lunar Shadow elevated card surface
-  surfaceHighlight: '#32373F',// Bevel light catching edge
+  bgDark: '#171717',          // Deep backdrop
+  tableFelt: '#1E1E1E',       // Table staging plane
+  surfaceDeep: '#242424',     // Recessed board well & modal base
+  surfaceRaised: '#FFFFFF',   // Elevated card surface
+  surfaceHighlight: '#FFF0E0',// Bevel light catching edge
 
   // Metallic & Architectural Rim Edges
-  borderSubtle: '#2E333C',    // Hairline separation
-  borderStrong: '#3E4552',    // Frame edges
-  borderGold: '#E6CA9A',      // Winter Hazel highlight
-  borderSpecular: 'rgba(255, 255, 255, 0.08)',       // Apple HIG 1px micro-border
-  borderSpecularStrong: 'rgba(255, 255, 255, 0.16)', // Specular glint highlight
-  glassHighlight: 'rgba(255, 255, 255, 0.12)',       // Top edge illumination
+  borderSubtle: '#FFE0C4',    // Hairline separation
+  borderStrong: '#FFC58D',    // Frame edges
+  borderGold: '#FF9A3D',      // Winter Hazel highlight
+  borderSpecular: 'rgba(255, 122, 0, 0.10)',       // 1px micro-border
+  borderSpecularStrong: 'rgba(255, 122, 0, 0.20)', // Specular glint highlight
+  glassHighlight: 'rgba(255, 255, 255, 0.40)',     // Top edge illumination
 
-  // Reference 3: Signature Floating Console Dock
-  floatingDockBg: '#282828',     // Lunar Shadow capsule dock
-  floatingDockBorder: '#383838', // Refined dock border
-  activeTabBg: '#FFFFFF',        // High-contrast clean white pill capsule
-  activeTabText: '#282828',      // Lunar Shadow dark text on active pill
-  activeTabIcon: '#282828',      // Lunar Shadow dark icon on active pill
-  inactiveTabIcon: '#8E94A0',    // Muted slate icon on inactive tab
+  // Signature Floating Console Dock
+  floatingDockBg: '#FFFFFF',     // Clean White capsule dock
+  floatingDockBorder: '#FFE0C4', // Refined dock border
+  activeTabBg: '#FF7A00',        // High-contrast primary orange pill capsule
+  activeTabText: '#FFFFFF',      // Clean white text on active pill
+  activeTabIcon: '#FFFFFF',      // Clean white icon on active pill
+  inactiveTabIcon: '#737373',    // Muted slate icon on inactive tab
 
-  // Reference 2: Timeline Ribbon & Active Indicator
-  timelineBg: '#111622',         // Dark ribbon container
-  timelineBorder: '#232C3E',     // Hairline border
-  timelineActiveBg: '#FFFFFF',   // Inverted circular white badge for active call
-  timelineActiveText: '#0B0E14', // High-contrast numeral
+  // Timeline Ribbon & Active Indicator
+  timelineBg: '#FFF7EF',         // Ribbon container
+  timelineBorder: '#FFE0C4',     // Hairline border
+  timelineActiveBg: '#FF7A00',   // Inverted circular badge for active call
+  timelineActiveText: '#FFFFFF', // High-contrast numeral
 
-  // Reference 4: 3-Metric KPI Shelf
-  kpiCardBg: '#161E2D',
-  kpiCardBorder: '#222B3F',
+  // 3-Metric KPI Shelf
+  kpiCardBg: '#FFFFFF',
+  kpiCardBorder: '#FFE0C4',
 
-  // Reference 3: Two-Tone Energy Gradients & Progress
-  gradientSunset: '#F97316',     // Coral sunset
-  gradientMint: '#10B981',       // Radiant mint
-  progressTrack: '#1C2538',
+  // Two-Tone Energy Gradients & Progress
+  gradientSunset: '#FF7A00',     // Primary Orange
+  gradientMint: '#22C55E',       // Success Green
+  progressTrack: '#FEEAD6',
 
-  // Reference 3: Podium & Ranking Accents
-  podiumGold: '#F59E0B',
-  podiumSilver: '#94A3B8',
-  podiumBronze: '#B45309',
-  starRatingBg: 'rgba(245, 158, 11, 0.15)',
-  starRatingText: '#F59E0B',
+  // Podium & Ranking Accents
+  podiumGold: '#FF7A00',
+  podiumSilver: '#9CA3AF',
+  podiumBronze: '#D97706',
+  starRatingBg: 'rgba(255, 122, 0, 0.15)',
+  starRatingText: '#FF7A00',
 
-  // Primary Action & Play Energy (Radiant Emerald)
-  playEmerald: '#10B981',        // Primary match trigger & ready indicators
-  playEmeraldPressed: '#059669',
-  playEmeraldGlow: 'rgba(16, 185, 129, 0.25)',
-  playEmeraldSubtle: 'rgba(16, 185, 129, 0.12)',
+  // Primary Action & Play Energy (Primary Orange)
+  playEmerald: '#FF7A00',        // Primary match trigger & ready indicators
+  playEmeraldPressed: '#E06900',
+  playEmeraldGlow: 'rgba(255, 122, 0, 0.25)',
+  playEmeraldSubtle: 'rgba(255, 122, 0, 0.12)',
 
-  // Crown Victory & Alignment Vector (Solar Gold)
-  goldPrimary: '#F59E0B',       // Winning line illumination & trophy ranks
-  goldDeep: '#78350F',          // Shadowed bevel of gold elements
-  goldLight: '#FDE68A',         // Specular glint on gold numerals
-  goldGlow: 'rgba(245, 158, 11, 0.28)',
-  goldBg: 'rgba(245, 158, 11, 0.12)',
+  // Crown Victory & Alignment Vector (Orange / Gold)
+  goldPrimary: '#FF7A00',       // Winning line illumination & trophy ranks
+  goldDeep: '#C25E00',          // Shadowed bevel of gold elements
+  goldLight: '#FFC58D',         // Specular glint on gold numerals
+  goldGlow: 'rgba(255, 122, 0, 0.32)',
+  goldBg: 'rgba(255, 122, 0, 0.12)',
 
-  // Authentic Stamped Daub Seal (Deep Royal Sapphire & Pip)
-  daubWell: '#142542',          // Pressed stamped cell background
-  daubBorder: '#3B82F6',        // Crisp blue lacquer boundary
-  daubPip: '#60A5FA',           // Central optical wax seal pip
-  daubGlow: 'rgba(59, 130, 246, 0.25)',
+  // Authentic Stamped Daub Seal (Orange Pip & Tint)
+  daubWell: 'rgba(255, 122, 0, 0.15)', // Pressed stamped cell background
+  daubBorder: '#FF7A00',                // Crisp orange boundary
+  daubPip: '#FF7A00',                   // Central optical wax seal pip
+  daubGlow: 'rgba(255, 122, 0, 0.25)',
 
   // Broadcast Caller Ball (Dimensionally lit sphere colors - Ref 1 & 2)
   ballIvory: '#F8FAFC',         // Specular crown of drawn ball

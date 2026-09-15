@@ -703,22 +703,22 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
   },
   sectionTabActive: {
-    backgroundColor: COLORS.cleanWhite, // Illuminated white capsule
-    shadowColor: '#000000',
+    backgroundColor: COLORS.primaryOrange, // Vibrant Orange active pill
+    shadowColor: COLORS.primaryOrange,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 4,
   },
   sectionTabLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     color: '#8E94A0',
     fontFamily: TYPOGRAPHY.fontFamily,
     textAlign: 'center',
   },
   sectionTabLabelActive: {
-    color: COLORS.lunarShadow, // Bold dark ink
+    color: '#FFFFFF', // Crisp White
     fontWeight: '800',
     letterSpacing: -0.2,
     fontFamily: TYPOGRAPHY.fontFamily,

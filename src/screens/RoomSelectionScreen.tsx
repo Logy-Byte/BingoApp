@@ -197,7 +197,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: SPACING.xs,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 122, 0, 0.2)',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,

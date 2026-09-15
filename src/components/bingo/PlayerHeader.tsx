@@ -64,14 +64,17 @@ export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
       {/* Right Control Group: Rebuilt using unified ThreeUI IconButton */}
       <View style={styles.controlCluster}>
         <IconButton
-          icon={({ size, color }) => (
-            <VolumeIcon size={size} color={color} muted={!soundEnabled} />
+          icon={({ size }) => (
+            <VolumeIcon
+              size={size}
+              color={soundEnabled ? COLORS.primaryOrange : '#8E94A0'}
+              muted={!soundEnabled}
+            />
           )}
           onPress={onToggleSound}
           accessibilityLabel={soundEnabled ? 'Mute game sound' : 'Enable game sound'}
           size="md"
-          variant={soundEnabled ? 'tinted' : 'default'}
-          activeColor={soundEnabled ? COLORS.gentleOlive : undefined}
+          variant="default"
         />
 
         <IconButton
@@ -101,9 +104,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.sheet,
     marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 122, 0, 0.15)',
+    backgroundColor: '#FFFFFF',
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
     position: 'relative',
     overflow: 'hidden',
   },
