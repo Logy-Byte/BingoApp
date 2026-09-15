@@ -10,13 +10,19 @@ type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 
 interface ProfileScreenProps {
   playerName?: string;
+  coins?: number;
+  gems?: number;
   onUpdateName?: (name: string) => void;
   onOpenSettings?: () => void;
+  onLogout?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   playerName = 'Player_One',
+  coins = 50380,
+  gems = 1000,
   onUpdateName,
+  onLogout,
 }) => {
   const { theme, isDark } = useTheme();
   const [activeSection, setActiveSection] = useState<ProfileSection>('Overview');
@@ -104,25 +110,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 autoFocus
                 maxLength={18}
               />
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: COLORS.gentleOlive }]}
-                onPress={handleSaveName}
-                accessibilityRole="button"
-                accessibilityLabel="Save player name"
-              >
-                <Text style={styles.saveBtnText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: theme.borderSubtle }]}
-                onPress={() => {
-                  setNameInput(playerName);
-                  setIsEditingName(false);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel name edit"
-              >
-                <Text style={[styles.cancelBtnText, { color: theme.textMuted }]}>✕</Text>
-              </TouchableOpacity>
+              <View style={styles.editBtnGroup}>
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: COLORS.gentleOlive }]}
+                  onPress={handleSaveName}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save player name"
+                >
+                  <Text style={styles.saveBtnText}>Save</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.cancelBtn, { borderColor: theme.borderSubtle }]}
+                  onPress={() => {
+                    setNameInput(playerName);
+                    setIsEditingName(false);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel name edit"
+                >
+                  <Text style={[styles.cancelBtnText, { color: theme.textMuted }]}>✕</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <View style={styles.nameHeaderRow}>
@@ -150,7 +158,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <Text style={[styles.ratingValue, { color: theme.textPrimary }]}>
               {profile.rating.toLocaleString()}
             </Text>
-            <Text style={[styles.ratingLabel, { color: theme.textMuted }]}>COMPETITIVE RATING</Text>
+            <Text style={[styles.ratingLabel, { color: theme.textMuted }]}>MMR</Text>
           </View>
         </View>
       </View>
@@ -475,18 +483,43 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           ))}
         </View>
       )}
+
+      {/* LOGOUT BUTTON */}
+      {onLogout && (
+        <View style={styles.logoutWrap}>
+          <TouchableOpacity
+            style={[
+              styles.logoutBtn,
+              {
+                backgroundColor: theme.bgCard,
+                borderColor: COLORS.dangerRed,
+              },
+            ]}
+            onPress={onLogout}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Log out of account"
+          >
+            <Text style={[styles.logoutBtnText, { color: COLORS.dangerRed }]}>
+              Log Out
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: SPACING.lg,
-    paddingBottom: 110,
+    padding: SPACING.md,
+    paddingBottom: 120,
+    width: '100%',
+    alignSelf: 'center',
   },
   crestCard: {
     borderRadius: RADIUS.sheet, // 28px
-    padding: SPACING.lg, // 16px
+    padding: SPACING.md, // 16px -> 12px for better fit
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.md, // 12px
@@ -496,19 +529,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
+    width: '100%',
+    overflow: 'hidden',
   },
   avatarWrap: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: RADIUS.pill,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    marginRight: SPACING.md,
+    marginRight: SPACING.sm,
+    flexShrink: 0,
   },
   avatarInitials: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
@@ -526,6 +562,7 @@ const styles = StyleSheet.create({
   identityDetails: {
     flex: 1,
     gap: 4,
+    minWidth: 0,
   },
   nameHeaderRow: {
     flexDirection: 'row',
@@ -533,10 +570,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playerName: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.3,
     fontFamily: TYPOGRAPHY.fontFamily,
+    flexShrink: 1,
   },
   editPencilBtn: {
     width: 26,
@@ -549,16 +587,24 @@ const styles = StyleSheet.create({
   editNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 6,
     marginBottom: 4,
+    width: '100%',
+  },
+  editBtnGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   nameInput: {
     flex: 1,
+    minWidth: 110,
     height: 34,
     borderRadius: RADIUS.compact,
     borderWidth: 1.5,
     paddingHorizontal: 8,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
@@ -590,6 +636,7 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   ratingValue: {
     fontSize: 13,
@@ -605,14 +652,15 @@ const styles = StyleSheet.create({
   },
   kpiRow: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: SPACING.xs + 2,
     marginBottom: SPACING.md,
+    width: '100%',
   },
   kpiCard: {
     flex: 1,
     borderRadius: RADIUS.surface, // 16px
-    paddingVertical: SPACING.md, // 12px
-    paddingHorizontal: SPACING.sm, // 8px
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: 4,
     alignItems: 'center',
     borderWidth: 1,
     shadowColor: '#000000',
@@ -625,29 +673,31 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   kpiValue: {
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '800',
     fontFamily: TYPOGRAPHY.fontFamily,
     marginBottom: 2,
   },
   kpiLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
     fontFamily: TYPOGRAPHY.fontFamily,
+    textAlign: 'center',
   },
   sectionTabRow: {
     flexDirection: 'row',
     borderRadius: RADIUS.dock, // 28px
-    padding: SPACING.xs, // 4px
+    padding: 3,
     borderWidth: 1,
     marginBottom: SPACING.md, // 12px
-    gap: SPACING.xs, // 4px
+    gap: 3,
+    width: '100%',
   },
   sectionTab: {
     flex: 1,
-    paddingVertical: SPACING.sm, // 8px
-    paddingHorizontal: SPACING.sm, // 8px
+    paddingVertical: 7,
+    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: RADIUS.pill,
@@ -661,10 +711,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTabLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#8E94A0',
     fontFamily: TYPOGRAPHY.fontFamily,
+    textAlign: 'center',
   },
   sectionTabLabelActive: {
     color: COLORS.lunarShadow, // Bold dark ink
@@ -856,6 +907,24 @@ const styles = StyleSheet.create({
   ratingDelta: {
     fontSize: 11,
     fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  logoutWrap: {
+    marginTop: SPACING.xl,
+    alignItems: 'center',
+  },
+  logoutBtn: {
+    width: '100%',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.control,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
 });

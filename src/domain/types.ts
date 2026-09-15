@@ -16,6 +16,7 @@ export type ScreenState =
   | 'LOBBY'
   | 'GAMEPLAY'
   | 'RESULTS'
+  | 'ROOMS'
   | 'CREATE_ROOM'
   | 'JOIN_ROOM'
   | 'DAILY_PUZZLE'
@@ -25,6 +26,35 @@ export type ScreenState =
 export type GameModeType = 'RANKED' | 'ROBOT' | 'FRIEND' | 'DAILY' | 'LOCAL';
 
 export type RobotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
+export type MatchmakingStatus =
+  | 'IDLE'
+  | 'SEARCHING'
+  | 'WAITING_FOR_PLAYER'
+  | 'MATCH_FOUND'
+  | 'GAME_STARTING'
+  | 'DISCONNECTED'
+  | 'CLOSED'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'ERROR';
+
+export interface MatchmakingTicket {
+  ticketId: string;
+  userId: string;
+  playerId?: string;
+  playerName: string;
+  playerRating: number;
+  playerAvatar?: string;
+  playerTier?: string;
+  tier?: string;
+  gameMode?: GameModeType;
+  status: MatchmakingStatus;
+  createdAt: number;
+  expiresAt?: number;
+  matchedRoomId?: string;
+  matchedOpponent?: Player;
+}
 
 export type CellState = 'DEFAULT' | 'CALLED' | 'MARKED' | 'COMPLETED' | 'INVALID' | 'DISABLED';
 
@@ -103,10 +133,13 @@ export type RoomPrivacy = 'open' | 'password';
 export type MatchStatus = 
   | 'WAITING'
   | 'READY'
+  | 'STARTING'
   | 'ACTIVE'
   | 'VALIDATING'
   | 'RESULT'
-  | 'FINISHED';
+  | 'FINISHED'
+  | 'CLOSED'
+  | 'EXPIRED';
 
 export interface Player {
   id: string;

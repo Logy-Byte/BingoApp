@@ -167,35 +167,34 @@ describe('Design Token Compliance & Component Primitives', () => {
       const textNodes = root.findAllByType('Text');
       const texts = textNodes.map((n: any) => n.props.children);
 
-      // Verifies rectangular gallery boxes
-      expect(texts).toContain('Play Ranked Match');
-      expect(texts).toContain('Live Blitz');
-      expect(texts).toContain('Daily Bonus');
-      expect(texts).toContain('Bingo Rooms');
-      expect(texts).toContain('Solo Practice');
-      expect(texts).toContain('Private Room');
+      // Verifies rectangular gallery boxes strictly containing the 3 playable options
+      expect(texts).toContain('Random Player');
+      expect(texts).toContain('Robot / Solo Practice');
       expect(texts).toContain('Daily Puzzle');
+      expect(texts).not.toContain('Live Blitz');
+      expect(texts).not.toContain('Bingo Rooms');
+      expect(texts).not.toContain('Private Room');
 
-      // Test interaction with Hero card
-      const heroCard = root.findByProps({ accessibilityLabel: 'Play Ranked Match, 5x5 Matrix, ±25 MMR' });
+      // Test interaction with Hero Random Player card
+      const heroCard = root.findByProps({ accessibilityLabel: 'Play Random Player, Real Human 1v1 Matchmaking' });
       act(() => {
         heroCard.props.onPress();
       });
       expect(onPlayRanked).toHaveBeenCalledTimes(1);
 
-      // Test interaction with Daily Bonus
-      const bonusBox = root.findByProps({ accessibilityLabel: 'Daily Bonus, Claim 500 Coins and 10 Gems' });
+      // Test interaction with Solo Practice
+      const soloBox = root.findByProps({ accessibilityLabel: 'Solo practice against AI Robot' });
       act(() => {
-        bonusBox.props.onPress();
+        soloBox.props.onPress();
       });
-      expect(onOpenBonus).toHaveBeenCalledTimes(1);
+      expect(onSolo).toHaveBeenCalledTimes(1);
 
-      // Test interaction with Bingo Rooms
-      const roomsBox = root.findByProps({ accessibilityLabel: 'Select Bingo Room and Tickets' });
+      // Test interaction with Daily Puzzle
+      const puzzleBox = root.findByProps({ accessibilityLabel: 'Daily Seed Puzzle Challenge' });
       act(() => {
-        roomsBox.props.onPress();
+        puzzleBox.props.onPress();
       });
-      expect(onOpenRooms).toHaveBeenCalledTimes(1);
+      expect(onDaily).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -4,16 +4,16 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY, TOUCH_TARGET } from '../design/tokens';
 import { useTheme } from '../design/theme';
 import { AppIconVector } from '../components/icons/AppIconVector';
 import { GameButton } from '../components/common/GameButton';
 import { GameInput } from '../components/common/GameInput';
-import { ProfileIcon as UserIcon, GoogleIcon, FacebookIcon } from '../components/icons/CustomIcons';
+import { PasswordField } from '../components/auth/PasswordField';
+import { ProfileIcon as UserIcon, UsersIcon } from '../components/icons/CustomIcons';
 
 interface SignInScreenProps {
   currentName: string;
@@ -27,44 +27,90 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   const { theme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | undefined>();
+  const [passwordError, setPasswordError] = useState<string | undefined>();
+  const [serverError, setServerError] = useState<string | undefined>();
+  const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
+  const validateForm = (): boolean => {
+    let isValid = true;
+    setEmailError(undefined);
+    setPasswordError(undefined);
+    setServerError(undefined);
+    setSuccessMessage(undefined);
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setEmailError('Enter your email.');
+      isValid = false;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setEmailError('Enter a valid email address.');
+        isValid = false;
+      }
+    }
+
+    if (!password) {
+      setPasswordError('Enter your password.');
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   async function signInWithEmail() {
+    if (loading) return;
+    if (!validateForm()) return;
+
     setLoading(true);
+    setServerError(undefined);
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
+      email: email.trim(),
       password: password,
     });
     setLoading(false);
 
-    if (error) Alert.alert('Sign In Failed', error.message);
-    else if (data.user) {
-      // In a full implementation, we'd fetch the user's name from the profiles table here
+    if (error) {
+      setServerError('Email or password is incorrect.');
+    } else if (data?.user) {
       onLogin(data.user.email?.split('@')[0] || 'Player', data.user.id);
     }
   }
 
   async function signUpWithEmail() {
+    if (loading) return;
+    if (!validateForm()) return;
+
     setLoading(true);
+    setServerError(undefined);
+
     const { data, error } = await supabase.auth.signUp({
-      email: email,
+      email: email.trim(),
       password: password,
     });
     setLoading(false);
 
-    if (error) Alert.alert('Sign Up Failed', error.message);
-    else if (data.user) {
-      Alert.alert('Success', 'Please check your email for the login link!');
+    if (error) {
+      setServerError('Something went wrong. Please try again.');
+    } else if (data?.user) {
+      setSuccessMessage('Please check your email for the login confirmation link!');
     }
   }
 
   async function handleGuestSubmit() {
+    if (loading) return;
     setLoading(true);
+    setServerError(undefined);
+
     const { data, error } = await supabase.auth.signInAnonymously();
     setLoading(false);
 
-    if (error) Alert.alert('Guest Login Failed', error.message);
-    else if (data.user) {
+    if (error) {
+      setServerError('Something went wrong. Please try again.');
+    } else if (data?.user) {
       onLogin('Guest Player', data.user.id);
     }
   }
@@ -83,31 +129,54 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
       </View>
 
       <View style={styles.formContainer}>
+        {/* Server error banner */}
+        {serverError ? (
+          <View style={[styles.messageBanner, { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: COLORS.dangerRed }]}>
+            <Text style={[styles.messageText, { color: COLORS.dangerRed }]}>{serverError}</Text>
+          </View>
+        ) : null}
+
+        {/* Success message banner */}
+        {successMessage ? (
+          <View style={[styles.messageBanner, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}>
+            <Text style={[styles.messageText, { color: COLORS.lunarShadow }]}>{successMessage}</Text>
+          </View>
+        ) : null}
+
         <GameInput
           label="EMAIL ADDRESS"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (emailError) setEmailError(undefined);
+            if (serverError) setServerError(undefined);
+          }}
           placeholder="Enter your email"
           autoCapitalize="none"
           keyboardType="email-address"
+          error={emailError}
           icon={<UserIcon size={18} color={theme.textMuted} />}
         />
         
         <View style={{ height: 12 }} />
 
-        <GameInput
+        <PasswordField
           label="PASSWORD"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (passwordError) setPasswordError(undefined);
+            if (serverError) setServerError(undefined);
+          }}
           placeholder="Enter your password"
-          secureTextEntry
-          autoCapitalize="none"
+          error={passwordError}
+          disabled={loading}
         />
 
         <View style={{ flexDirection: 'row', gap: 12, marginTop: SPACING.md }}>
           <View style={{ flex: 1 }}>
             <GameButton
-              title="Sign In"
+              title={loading ? 'Signing In…' : 'Sign In'}
               onPress={signInWithEmail}
               variant="primary"
               size="lg"
@@ -148,10 +217,43 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             </Text>
           )}
         </TouchableOpacity>
+
+        {/* QA DEMO PROFILES SECTION FOR TWO-PLAYER VERIFICATION */}
+        <View style={[styles.qaContainer, { borderColor: theme.borderSubtle, backgroundColor: theme.bgRecessed }]}>
+          <View style={styles.qaHeaderRow}>
+            <UsersIcon size={14} color={COLORS.winterHazel} />
+            <Text style={[styles.qaHeaderText, { color: theme.textMuted }]}>
+              QA DEMO MULTIPLAYER PROFILES
+            </Text>
+          </View>
+          <Text style={[styles.qaSubtitle, { color: theme.textSecondary }]}>
+            Instant 1-click login to test dual-browser real-time matchmaking:
+          </Text>
+          <View style={styles.qaButtonRow}>
+            <TouchableOpacity
+              style={[styles.qaBtn, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}
+              onPress={() => onLogin('Alpha Commander', 'qa-user-alpha-001')}
+              accessibilityRole="button"
+              accessibilityLabel="Login as QA Player A"
+            >
+              <Text style={[styles.qaBtnText, { color: COLORS.lunarShadow }]}>QA Player A (Alpha)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.qaBtn, { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel }]}
+              onPress={() => onLogin('Bravo Striker', 'qa-user-bravo-002')}
+              accessibilityRole="button"
+              accessibilityLabel="Login as QA Player B"
+            >
+              <Text style={[styles.qaBtnText, { color: '#8A6724' }]}>QA Player B (Bravo)</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -241,4 +343,65 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
+  eyeBtn: {
+    padding: SPACING.xs,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  messageBanner: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.compact,
+    borderWidth: 1,
+    marginBottom: SPACING.sm,
+  },
+  messageText: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily,
+    textAlign: 'center',
+  },
+  qaContainer: {
+    marginTop: SPACING.xl,
+    padding: SPACING.md,
+    borderRadius: RADIUS.control,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  qaHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  qaHeaderText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  qaSubtitle: {
+    fontSize: 11,
+    marginBottom: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  qaButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  qaBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: RADIUS.compact,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qaBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
 });
+

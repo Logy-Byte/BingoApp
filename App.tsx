@@ -36,15 +36,16 @@ import { ThemeProvider, useTheme } from './src/design/theme';
 import { useMultiplayerRoom } from './src/domain/state/useMultiplayerRoom';
 import { supabase } from './src/lib/supabase';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNavBar } from './src/components/navigation/BottomNavBar';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { RoomSelectionScreen } from './src/screens/RoomSelectionScreen';
 import { PreGameScreen } from './src/screens/PreGameScreen';
-import { ShopScreen } from './src/screens/ShopScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { RoomPage } from './src/components/rooms/RoomPage';
 import { CreateRoomScreen } from './src/screens/CreateRoomScreen';
 import { JoinRoomScreen } from './src/screens/JoinRoomScreen';
 import { LobbyScreen } from './src/screens/LobbyScreen';
@@ -52,21 +53,25 @@ import { GameplayScreen } from './src/screens/GameplayScreen';
 import { ResultsScreen } from './src/screens/ResultsScreen';
 import { DailyPuzzleScreen } from './src/screens/DailyPuzzleScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { MatchmakingScreen } from './src/screens/MatchmakingScreen';
 import { DailyBonusModal } from './src/components/common/DailyBonusModal';
+import { globalMatchmakingService } from './src/domain/multiplayer/matchmakingService';
+import { MatchmakingStatus } from './src/domain/types';
 
 function MainApp() {
   const { theme, isDark } = useTheme();
 
   // Navigation State
   const [currentTab, setCurrentTab] = useState<TabDestination>('PLAY');
+  const [authStatus, setAuthStatus] = useState<'AUTH_RESTORING' | 'AUTHENTICATED' | 'UNAUTHENTICATED'>('AUTH_RESTORING');
   const [screenState, setScreenState] = useState<ScreenState>('SPLASH');
   const [gameMode, setGameMode] = useState<GameModeType>('LOCAL');
 
   // Player Profile State (Real local player identity with coins & gems)
   const [player, setPlayer] = useState<Player>({
     id: `player-${Math.floor(Math.random() * 9000 + 1000)}`,
-    name: 'Jiyer Kame',
-    avatar: 'JK',
+    name: 'Player',
+    avatar: 'PL',
     isHost: false,
     isReady: false,
     score: 0,
@@ -104,51 +109,76 @@ function MainApp() {
 
   const callerIntervalRef = useRef<any>(null);
 
+  // Matchmaking State (Random Player 1v1 Arena)
+  const [matchmakingStatus, setMatchmakingStatus] = useState<MatchmakingStatus>('IDLE');
+  const [matchedOpponent, setMatchedOpponent] = useState<Player | null>(null);
+  const [matchCountdown, setMatchCountdown] = useState<number | null>(null);
+
   // Authoritative Realtime Multiplayer Room Controller
   const multiplayer = useMultiplayerRoom({
     player,
     onNavigateToScreen: (screen) => setScreenState(screen),
   });
 
-  // Supabase Auth State Listener
+  // Supabase & Local Session State Listener
   useEffect(() => {
     const fetchProfile = async (userId: string, email: string | undefined) => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (data && !error) {
-        setPlayer((prev) => ({
-          ...prev,
+        const updated = {
           id: data.id,
           name: data.name,
           coins: data.coins,
           gems: data.gems,
           rating: data.rating,
           tier: data.tier,
-        }));
+        };
+        setPlayer((prev) => ({ ...prev, ...updated }));
+        AsyncStorage.setItem('bingo_user_session', JSON.stringify({ userId: data.id, name: data.name }));
       } else {
-        // Fallback for new accounts before trigger completes
-        setPlayer((prev) => ({ 
-          ...prev, 
-          id: userId, 
-          name: email?.split('@')[0] || 'Player' 
-        }));
+        const updated = { id: userId, name: email?.split('@')[0] || 'Player' };
+        setPlayer((prev) => ({ ...prev, ...updated }));
+        AsyncStorage.setItem('bingo_user_session', JSON.stringify(updated));
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
-      if (session?.user) {
-        fetchProfile(session.user.id, session.user.email);
-        if (screenState === 'SPLASH' || screenState === 'SIGN_IN') {
+    // Check both Supabase auth session and stored local session
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await fetchProfile(session.user.id, session.user.email);
+          setAuthStatus('AUTHENTICATED');
           setScreenState('TAB_NAV');
+          return;
         }
+
+        // Check persisted user session (for guest/QA or offline persistence)
+        const stored = await AsyncStorage.getItem('bingo_user_session');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.userId) {
+            setPlayer((prev) => ({ ...prev, id: parsed.userId, name: parsed.name || prev.name }));
+            setAuthStatus('AUTHENTICATED');
+            setScreenState('TAB_NAV');
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback gracefully
       }
-    });
+
+      setAuthStatus('UNAUTHENTICATED');
+      setScreenState('SIGN_IN');
+    };
+
+    initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       if (session?.user) {
         fetchProfile(session.user.id, session.user.email);
+        setAuthStatus('AUTHENTICATED');
         setScreenState('TAB_NAV');
-      } else {
-        setScreenState('SIGN_IN');
       }
     });
 
@@ -156,6 +186,22 @@ function MainApp() {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  // Explicit User Logout Handler (until clicked, user stays logged in)
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      // Safe ignore
+    }
+    await AsyncStorage.removeItem('bingo_user_session');
+    setPlayer((prev) => ({
+      ...prev,
+      id: `player-${Math.floor(Math.random() * 9000 + 1000)}`,
+      name: 'Player',
+    }));
+    setScreenState('SIGN_IN');
+  };
 
   // Android Back Button Lifecycle
   useEffect(() => {
@@ -177,6 +223,7 @@ function MainApp() {
       }
 
       if (
+        screenState === 'ROOMS' ||
         screenState === 'CREATE_ROOM' ||
         screenState === 'JOIN_ROOM' ||
         screenState === 'DAILY_PUZZLE' ||
@@ -189,6 +236,11 @@ function MainApp() {
           multiplayer.leaveRoom();
         }
         setScreenState('TAB_NAV');
+        return true;
+      }
+
+      if (screenState === 'MATCHMAKING') {
+        handleCancelMatchmaking();
         return true;
       }
 
@@ -252,7 +304,41 @@ function MainApp() {
   }, [player.id]);
 
   // Launchers
-  const handlePlayRanked = () => initGame('RANKED', 1);
+  const handlePlayRandomPlayer = async () => {
+    setGameMode('RANKED');
+    setMatchmakingStatus('SEARCHING');
+    setMatchedOpponent(null);
+    setMatchCountdown(null);
+    setScreenState('MATCHMAKING');
+
+    await globalMatchmakingService.requestRandomMatch(player, 'RANKED', {
+      onStatusChange: (status) => {
+        setMatchmakingStatus(status);
+      },
+      onOpponentFound: (opponent, gameSessionId, isHost) => {
+        setMatchedOpponent(opponent);
+        setMatchmakingStatus('MATCH_FOUND');
+        multiplayer.joinDirectMatchSession(gameSessionId, opponent, isHost);
+      },
+      onCountdownTick: (sec) => {
+        setMatchCountdown(sec);
+      },
+      onError: () => {
+        setMatchmakingStatus('IDLE');
+        setScreenState('TAB_NAV');
+      },
+    });
+  };
+
+  const handleCancelMatchmaking = async () => {
+    await globalMatchmakingService.cancelMatchmaking();
+    setMatchmakingStatus('IDLE');
+    setMatchedOpponent(null);
+    setMatchCountdown(null);
+    setScreenState('TAB_NAV');
+  };
+
+  const handlePlayRanked = () => handlePlayRandomPlayer();
 
   const handlePlayRobot = (difficulty: RobotDifficulty) => {
     const seed = `game-robot-${Date.now()}`;
@@ -286,10 +372,11 @@ function MainApp() {
 
   const handlePlayFriend = () => {
     setGameMode('FRIEND');
-    setScreenState('CREATE_ROOM');
+    multiplayer.resetToIdle();
+    setScreenState('ROOMS');
   };
 
-  const handleCreateRoom = (name: string, privacy: RoomPrivacy, password?: string) => {
+  const handleCreateRoom = (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
     setGameMode('FRIEND');
     multiplayer.createRoom(name, privacy, password);
   };
@@ -479,14 +566,24 @@ function MainApp() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
         {screenState === 'SPLASH' && (
-          <SplashScreen onFinish={() => setScreenState('SIGN_IN')} />
+          <SplashScreen
+            onFinish={() => {
+              if (authStatus === 'AUTHENTICATED') {
+                setScreenState('TAB_NAV');
+              } else if (authStatus === 'UNAUTHENTICATED') {
+                setScreenState('SIGN_IN');
+              }
+            }}
+          />
         )}
 
         {screenState === 'SIGN_IN' && (
           <SignInScreen
             currentName={player.name}
             onLogin={(name, userId) => {
-              setPlayer((prev) => ({ ...prev, name, id: userId || prev.id }));
+              const activeId = userId || player.id;
+              setPlayer((prev) => ({ ...prev, name, id: activeId }));
+              AsyncStorage.setItem('bingo_user_session', JSON.stringify({ userId: activeId, name }));
               setScreenState('TAB_NAV');
             }}
           />
@@ -497,6 +594,7 @@ function MainApp() {
             {currentTab === 'PLAY' && (
               <HomeScreen
                 player={player}
+                onPlayRandomPlayer={handlePlayRandomPlayer}
                 onPlayRanked={handlePlayRanked}
                 onPlayRobot={handlePlayRobot}
                 onPlayFriend={handlePlayFriend}
@@ -515,21 +613,26 @@ function MainApp() {
             {currentTab === 'PROFILE' && (
               <ProfileScreen
                 playerName={player.name}
-                onUpdateName={(name) => setPlayer((prev) => ({ ...prev, name }))}
-                onOpenSettings={() => setScreenState('SETTINGS')}
-              />
-            )}
-
-            {currentTab === 'SHOP' && (
-              <ShopScreen
                 coins={player.coins}
                 gems={player.gems}
-                onBuyItem={handleBuyStoreItem}
+                onUpdateName={(name) => setPlayer((prev) => ({ ...prev, name }))}
+                onOpenSettings={() => setScreenState('SETTINGS')}
+                onLogout={handleLogout}
               />
             )}
 
             <BottomNavBar currentTab={currentTab} onSelectTab={setCurrentTab} />
           </>
+        )}
+
+        {screenState === 'MATCHMAKING' && (
+          <MatchmakingScreen
+            player={player}
+            opponent={matchedOpponent}
+            status={matchmakingStatus}
+            countdownSeconds={matchCountdown}
+            onCancel={handleCancelMatchmaking}
+          />
         )}
 
         {screenState === 'ROOM_SELECTION' && (
@@ -546,6 +649,28 @@ function MainApp() {
             room={selectedRoom}
             onBuyTickets={handleBuyTickets}
             onBack={() => setScreenState('ROOM_SELECTION')}
+          />
+        )}
+
+        {screenState === 'ROOMS' && (
+          <RoomPage
+            player={player}
+            room={multiplayer.room}
+            players={multiplayer.players}
+            pageState={multiplayer.roomPageState}
+            isHost={multiplayer.isHost}
+            canStart={multiplayer.canStart}
+            countdownSeconds={multiplayer.countdownSeconds}
+            errorMessage={multiplayer.joinError}
+            onCreateRoom={(name) => handleCreateRoom(name, 'open')}
+            onJoinRoom={(code) => handleJoinRoom(code)}
+            onStartMatch={multiplayer.startMatch}
+            onExitRoom={multiplayer.leaveRoom}
+            onBackToRooms={multiplayer.resetToIdle}
+            onBackToLobby={() => {
+              multiplayer.leaveRoom();
+              setScreenState('TAB_NAV');
+            }}
           />
         )}
 
@@ -592,26 +717,48 @@ function MainApp() {
         ) : null}
 
         {screenState === 'GAMEPLAY' && (
-          board ? (
+          (multiplayer.board || board) ? (
             <GameplayScreen
-              board={board}
+              board={multiplayer.board || board!}
               additionalBoards={additionalBoards}
-              drawnNumbers={drawnNumbers}
-              score={score}
-              linesCompletedCount={linesCompletedCount}
-              isGameActive={isGameActive}
-              isPaused={isPaused}
-              onCellPress={handleCellPress}
-              onClaimBingo={handleClaimBingo}
-              onTogglePause={() => setIsPaused(!isPaused)}
-              onLeaveGame={() => {
-                setIsGameActive(false);
-                setScreenState('TAB_NAV');
+              drawnNumbers={multiplayer.room ? multiplayer.drawnNumbers : drawnNumbers}
+              score={multiplayer.room ? multiplayer.score : score}
+              linesCompletedCount={multiplayer.room ? multiplayer.linesCompletedCount : linesCompletedCount}
+              isGameActive={multiplayer.room ? multiplayer.isGameActive : isGameActive}
+              isPaused={multiplayer.room ? multiplayer.isPaused : isPaused}
+              onCellPress={(cell, bIdx) => {
+                if (multiplayer.room) {
+                  multiplayer.daubCell(cell);
+                } else {
+                  handleCellPress(cell, bIdx);
+                }
               }}
-              lastCompletedPatternName={lastCompletedPatternName}
-              claimFeedback={claimFeedback}
-              opponentLines={gameMode === 'ROBOT' ? robotLines : undefined}
-              opponentName={gameMode === 'ROBOT' ? 'Robot AI' : undefined}
+              onClaimBingo={() => {
+                if (multiplayer.room) {
+                  multiplayer.claimBingo();
+                } else {
+                  handleClaimBingo();
+                }
+              }}
+              onTogglePause={() => {
+                if (multiplayer.room) {
+                  multiplayer.togglePause();
+                } else {
+                  setIsPaused(!isPaused);
+                }
+              }}
+              onLeaveGame={() => {
+                if (multiplayer.room) {
+                  multiplayer.leaveRoom();
+                } else {
+                  setIsGameActive(false);
+                  setScreenState('TAB_NAV');
+                }
+              }}
+              lastCompletedPatternName={multiplayer.room ? multiplayer.lastCompletedPatternName : lastCompletedPatternName}
+              claimFeedback={multiplayer.room ? multiplayer.claimFeedback : claimFeedback}
+              opponentLines={gameMode === 'ROBOT' ? robotLines : (multiplayer.room ? multiplayer.opponentLines : undefined)}
+              opponentName={gameMode === 'ROBOT' ? 'Robot AI' : (multiplayer.room ? multiplayer.opponentName : undefined)}
             />
           ) : null
         )}
@@ -654,9 +801,13 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    width: '100%',
+    alignItems: 'center',
   },
   container: {
     flex: 1,
+    width: '100%',
+    maxWidth: 520,
     position: 'relative',
   },
 });

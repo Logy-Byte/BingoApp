@@ -2,371 +2,71 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../design/tokens';
 import {
-  IconLightning,
-  IconTicket,
-  IconCoinStack,
   RobotIcon,
-  FriendIcon,
   PuzzleIcon,
   ChevronIcon,
-  BingoIdentityIcon,
+  UsersIcon,
 } from '../icons/CustomIcons';
 import { useTheme } from '../../design/theme';
 
 interface LobbyGalleryProps {
-  onPlayRanked: () => void;
+  onPlayRanked?: () => void;
+  onPlayRandomPlayer: () => void;
+  onSoloPress: () => void;
+  onDailyPress: () => void;
+  // Optional backward compatibility props
+  onFriendPress?: () => void;
   onOpenDailyBonusModal?: () => void;
   onOpenRoomSelection?: () => void;
-  onSoloPress: () => void;
-  onFriendPress: () => void;
-  onDailyPress: () => void;
   onlineCount?: number | null;
 }
 
 /**
- * LobbyGallery: Clean Rectangular Gallery of Game Modes & Actions
- * Replaces the stacked elongated pill banners with a structured gallery of
- * premium rectangular cards and 2-column gallery boxes.
+ * LobbyGallery: Clean Rectangular Gallery with EXACTLY THREE playable options:
+ * 1. Robot / Solo Practice
+ * 2. Random Player (Real human 1v1 matchmaking)
+ * 3. Daily Puzzle
  */
+import { RandomPlayerCard } from '../bingo/RandomPlayerCard';
+import { RobotPracticeCard } from '../bingo/RobotPracticeCard';
+import { DailyPuzzleCard } from '../bingo/DailyPuzzleCard';
+
 export const LobbyGallery: React.FC<LobbyGalleryProps> = ({
+  onPlayRandomPlayer,
   onPlayRanked,
-  onOpenDailyBonusModal,
-  onOpenRoomSelection,
   onSoloPress,
-  onFriendPress,
   onDailyPress,
+  onFriendPress,
   onlineCount = 1240,
 }) => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
+  const handleRandomPlay = onPlayRandomPlayer || onPlayRanked || (() => {});
 
   return (
     <View style={styles.container}>
-      {/* 1. FEATURED HERO RECTANGLE BOX: RANKED ARENA
-      <TouchableOpacity
-        style={[
-          styles.heroCard,
-          {
-            backgroundColor: theme.bgCard,
-            borderColor: COLORS.gentleOlive,
-          },
-        ]}
-        onPress={onPlayRanked}
-        activeOpacity={0.88}
-        accessibilityRole="button"
-        accessibilityLabel="Play Ranked Match, 5x5 Matrix, ±25 MMR"
-      >
-        <View style={styles.specularBevel} />
+      {/* 1. REBUILT THREEUI HERO CARD: RANDOM PLAYER (MULTI-LAYERED WITH REAL STATE) */}
+      <RandomPlayerCard
+        state="IDLE"
+        onlineCount={onlineCount}
+        onFindPlayer={handleRandomPlay}
+      />
 
-        <View style={styles.heroHeaderRow}>
-          <View style={styles.heroBadgeRow}>
-            <View style={[styles.liveDot, { backgroundColor: COLORS.gentleOlive }]} />
-            <Text style={[styles.heroBadgeText, { color: COLORS.gentleOlive }]}>
-              ACTIVE SEASON 4
-            </Text>
-          </View>
-          <View
-            style={[
-              styles.playerCountPill,
-              { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
-            ]}
-          >
-            <Text style={[styles.playerCountText, { color: theme.textSecondary }]}>
-              {onlineCount ? `${onlineCount.toLocaleString()} in Queue` : 'Live Queue'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.heroContentRow}>
-          <View style={styles.heroTextGroup}>
-            <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
-              Play Ranked Match
-            </Text>
-            <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
-              5×5 Matrix • ±25 MMR Rating • Live 1v1 Matchmaking
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.heroActionBtn,
-              { backgroundColor: COLORS.gentleOlive },
-            ]}
-          >
-            <Text style={styles.heroArrow}>↗</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-      */}
-
-      {/* 2. GALLERY GRID SECTION HEADER */}
+      {/* 2. SECTION HEADER */}
       <View style={styles.sectionHeaderRow}>
         <Text style={[styles.sectionTitle, { color: theme.textMuted }]}>
-          EXPERIENCE GALLERY
+          PRACTICE & CHALLENGES
         </Text>
       </View>
 
-      {/* 3. RECTANGULAR GALLERY GRID (Row 1: Live Blitz + Daily Bonus) */}
+      {/* 4. REBUILT TWO-COLUMN GALLERY: ROBOT PRACTICE & DAILY PUZZLE */}
       <View style={styles.galleryGridRow}>
-        {/* Box 1: Live Blitz Matchmaking
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onPlayRanked}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Live Blitz Instant Match"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.accentOliveTint },
-              ]}
-            >
-              <IconLightning size={18} color={COLORS.lunarShadow} />
-            </View>
-            <View
-              style={[
-                styles.boxTagPill,
-                { backgroundColor: theme.accentOliveTint },
-              ]}
-            >
-              <Text style={[styles.boxTagText, { color: COLORS.lunarShadow }]}>
-                Instant
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Live Blitz
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            Fast 1v1 Table • Zero Wait
-          </Text>
-        </TouchableOpacity>
-        */}
-
-        {/* Box 2: Daily Bonus Reward Box */}
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onOpenDailyBonusModal}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Daily Bonus, Claim 500 Coins and 10 Gems"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.accentHazelTint },
-              ]}
-            >
-              <IconCoinStack size={18} color={COLORS.winterHazel} />
-            </View>
-            <View
-              style={[
-                styles.boxActionPill,
-                { backgroundColor: COLORS.winterHazel },
-              ]}
-            >
-              <Text style={styles.boxActionPillText}>Collect</Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Daily Bonus
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            +500 Coins • +10 Gems
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 4. RECTANGULAR GALLERY GRID (Row 2: Bingo Rooms & Tickets + Solo Practice) */}
-      <View style={styles.galleryGridRow}>
-        {/* Box 3: Select Bingo Room & Tickets
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onOpenRoomSelection}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Select Bingo Room and Tickets"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.bgRecessed },
-              ]}
-            >
-              <IconTicket size={18} color={theme.textPrimary} />
-            </View>
-            <View
-              style={[
-                styles.boxTagPill,
-                { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
-              ]}
-            >
-              <Text style={[styles.boxTagText, { color: theme.textSecondary }]}>
-                Staking
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Bingo Rooms
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            1–4 Cards • Jackpots
-          </Text>
-        </TouchableOpacity>
-        */}
-
-        {/* Box 4: Solo Practice AI Robot */}
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onSoloPress}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Solo practice against AI Robot"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.accentOliveTint },
-              ]}
-            >
-              <RobotIcon size={18} color={COLORS.lunarShadow} />
-            </View>
-            <View
-              style={[
-                styles.boxTagPill,
-                { backgroundColor: theme.accentOliveTint },
-              ]}
-            >
-              <Text style={[styles.boxTagText, { color: COLORS.lunarShadow }]}>
-                Offline
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Solo Practice
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            AI Robot • 3 Levels
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 5. RECTANGULAR GALLERY GRID (Row 3: Private Room + Daily Puzzle) */}
-      <View style={styles.galleryGridRow}>
-        {/* Box 5: Private Friendly Room
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onFriendPress}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Create or join private room"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.accentHazelTint },
-              ]}
-            >
-              <FriendIcon size={18} color={COLORS.winterHazel} />
-            </View>
-            <View
-              style={[
-                styles.boxTagPill,
-                { backgroundColor: theme.accentHazelTint },
-              ]}
-            >
-              <Text style={[styles.boxTagText, { color: '#8A6724' }]}>Social</Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Private Room
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            Passcode Protected
-          </Text>
-        </TouchableOpacity>
-        */}
-
-        {/* Box 6: Daily Puzzle Challenge */}
-        <TouchableOpacity
-          style={[
-            styles.galleryBox,
-            {
-              backgroundColor: theme.bgCard,
-              borderColor: theme.borderSubtle,
-            },
-          ]}
-          onPress={onDailyPress}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel="Daily Seed Puzzle Challenge"
-        >
-          <View style={styles.boxTopRow}>
-            <View
-              style={[
-                styles.boxIconSphere,
-                { backgroundColor: theme.bgRecessed },
-              ]}
-            >
-              <PuzzleIcon size={18} color={COLORS.winterHazel} />
-            </View>
-            <View
-              style={[
-                styles.boxTagPill,
-                { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle },
-              ]}
-            >
-              <Text style={[styles.boxTagText, { color: theme.textSecondary }]}>
-                Streak
-              </Text>
-            </View>
-          </View>
-          <Text style={[styles.boxTitle, { color: theme.textPrimary }]}>
-            Daily Puzzle
-          </Text>
-          <Text style={[styles.boxDesc, { color: theme.textSecondary }]}>
-            Global Seed Board
-          </Text>
-        </TouchableOpacity>
+        <RobotPracticeCard onPress={onSoloPress} selectedDifficulty="MEDIUM" />
+        <DailyPuzzleCard onPress={onDailyPress} streakCount={3} />
       </View>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -553,5 +253,49 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  privateRoomCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    borderRadius: RADIUS.control + 2,
+    borderWidth: 1.5,
+    borderBottomWidth: 3,
+    borderBottomColor: '#A4B456',
+  },
+  privateRoomLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  privateRoomIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: RADIUS.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  privateRoomTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  privateRoomSub: {
+    fontSize: 11,
+    marginTop: 2,
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  openRoomBtn: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+  },
+  openRoomBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    fontFamily: TYPOGRAPHY.fontFamily,
+    letterSpacing: 0.6,
   },
 });

@@ -13,6 +13,7 @@ import {
   Text,
   TouchableOpacity,
   ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import {
   COLORS,
@@ -63,15 +64,19 @@ export const BingoMatrixCard: React.FC<BingoMatrixCardProps> = React.memo(({
   // Multi-touch rate-limiting guard (60ms lock to avoid race conditions)
   const lastTouchTimeRef = useRef<number>(0);
 
+  const { width: windowWidth } = useWindowDimensions();
+
   // Concentric metrics
   const trayOuterRadius = RADIUS.board; // 24px
-  const trayPadding = isCompact ? SPACING.xs + 2 : SPACING.md; // 6px or 12px
-  const cellRadius = calcConcentricRadius(trayOuterRadius, trayPadding, 10);
+  const trayPadding = isCompact ? SPACING.xs + 2 : Math.min(SPACING.md, Math.max(8, windowWidth * 0.025));
+  const cellRadius = calcConcentricRadius(trayOuterRadius, trayPadding, 8);
 
-  // Responsive cell size calculation ensuring minimum touch bound
-  const availableWidth = Math.min(maxWidth, 420) - trayPadding * 2;
-  const rawCellSize = Math.floor((availableWidth - 4 * SPACING.xs) / 5);
-  const cellSize = Math.max(rawCellSize, isCompact ? 36 : TOUCH_TARGET.minSize);
+  // Responsive cell size calculation based on actual screen and card width
+  const targetCardWidth = Math.min(maxWidth, windowWidth - SPACING.md * 2, 420);
+  const availableWidth = targetCardWidth - trayPadding * 2;
+  const gapBetweenCells = Math.min(SPACING.xs, Math.max(3, Math.floor(availableWidth * 0.015)));
+  const rawCellSize = Math.floor((availableWidth - 4 * gapBetweenCells) / 5);
+  const cellSize = Math.min(Math.max(rawCellSize, 32), 64);
 
   const handleCellTap = useCallback(
     (cell: GridCell5x5) => {
@@ -135,9 +140,9 @@ export const BingoMatrixCard: React.FC<BingoMatrixCardProps> = React.memo(({
       </View>
 
       {/* 5x5 Matrix Layout */}
-      <View style={styles.gridContainer}>
+      <View style={[styles.gridContainer, { gap: gapBetweenCells }]}>
         {board.matrix.map((row, rIdx) => (
-          <View key={`r-${rIdx}`} style={styles.gridRow}>
+          <View key={`r-${rIdx}`} style={[styles.gridRow, { gap: gapBetweenCells }]}>
             {row.map((cell) => {
               const isCalled = calledNumbersSet.has(cell.value);
               const isJustCalled = cell.value === lastDrawnNumber;
@@ -332,6 +337,8 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.xs,
     position: 'relative',
     overflow: 'hidden',
+    width: '100%',
+    alignSelf: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,

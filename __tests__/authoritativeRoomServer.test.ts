@@ -174,4 +174,49 @@ describe('AuthoritativeRoomServer Controller Suite', () => {
       });
     }, 50);
   });
+
+  test('ROOM_CLOSED message destroys authoritative server and rejects subsequent joins', (done) => {
+    // Guest joins room
+    guestTransport.send('JOIN_REQUEST', roomId, guestPlayer.id, { player: guestPlayer });
+
+    setTimeout(() => {
+      // Disconnect/leave triggers ROOM_CLOSED
+      guestTransport.send('ROOM_CLOSED', roomId, guestPlayer.id, {
+        reason: 'Guest disconnected',
+        disconnectedPlayerId: guestPlayer.id,
+      });
+
+      setTimeout(() => {
+        // Authoritative server should now be destroyed
+        expect((server as any).isDestroyed).toBe(true);
+        done();
+      }, 50);
+    }, 50);
+  });
+
+  test('rejects host trying to join own room as second player', (done) => {
+    guestTransport.subscribe((msg) => {
+      if (msg.type === 'JOIN_RESPONSE' && msg.payload.targetPlayerId === hostPlayer.id) {
+        expect(msg.payload.success).toBe(false);
+        expect(msg.payload.error).toBe('You already own this room.');
+        done();
+      }
+    });
+
+    guestTransport.send('JOIN_REQUEST', roomId, hostPlayer.id, { player: hostPlayer });
+  });
+
+  test('rejects join if room is closed', (done) => {
+    (server as any).room.status = 'CLOSED';
+
+    guestTransport.subscribe((msg) => {
+      if (msg.type === 'JOIN_RESPONSE' && msg.payload.targetPlayerId === guestPlayer.id) {
+        expect(msg.payload.success).toBe(false);
+        expect(msg.payload.error).toBe('This room is closed.');
+        done();
+      }
+    });
+
+    guestTransport.send('JOIN_REQUEST', roomId, guestPlayer.id, { player: guestPlayer });
+  });
 });

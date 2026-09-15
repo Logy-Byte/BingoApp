@@ -85,6 +85,36 @@ export class AuthoritativeRoomServer {
     return this.boards.get(playerId)!;
   }
 
+  /**
+   * Directly launch an authoritative 2-player match when formed via Matchmaking.
+   */
+  public startDirectMatch(opponentPlayer: Player) {
+    this.players.set(opponentPlayer.id, {
+      ...opponentPlayer,
+      isHost: false,
+      isReady: true,
+      score: 0,
+      linesCompleted: 0,
+      hasWon: false,
+    });
+    this.getPlayerBoard(opponentPlayer.id);
+
+    this.room.status = 'ACTIVE';
+    this.room.playerCount = 2;
+    this.numberPool = generate5x5NumberPool();
+    this.drawnNumbers = [];
+    this.winner = null;
+    this.matchStartTime = Date.now();
+
+    // Broadcast instant match start to both clients
+    this.transport.send('MATCH_STARTED', this.room.id, this.room.hostId, {
+      snapshot: this.getSnapshot(),
+    });
+
+    // Start caller ticker
+    this.startBallCaller();
+  }
+
   private broadcastRoomAnnounce() {
     this.transport.send('ROOM_ANNOUNCE', this.room.id, this.room.hostId, this.getSnapshot(), this.room.hostName);
   }
@@ -120,18 +150,63 @@ export class AuthoritativeRoomServer {
       case 'HEARTBEAT_PING':
         this.transport.send('HEARTBEAT_PONG', this.room.id, this.room.hostId, { timestamp: Date.now() });
         break;
+      case 'ROOM_CLOSED':
+        this.destroy();
+        break;
     }
   };
 
   private handleJoinRequest(message: TransportMessage<{ player: Player; password?: string }>) {
     const { player, password } = message.payload;
 
-    // Check capacity
-    if (this.players.size >= this.room.maxPlayers && !this.players.has(player.id)) {
+    // Check destroyed or closed status
+    if (this.isDestroyed || this.room.status === 'CLOSED') {
       this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
         success: false,
         targetPlayerId: player.id,
-        error: 'Room is already full.',
+        error: 'This room is closed.',
+      });
+      return;
+    }
+
+    // Check expiry (e.g. 15 minutes = 900,000 ms)
+    const isExpired = this.room.status === 'EXPIRED' || (Date.now() - this.room.createdAt > 900000);
+    if (isExpired) {
+      this.room.status = 'EXPIRED';
+      this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
+        success: false,
+        targetPlayerId: player.id,
+        error: 'This room has expired.',
+      });
+      return;
+    }
+
+    // Check same-user protection: host cannot join their own room as second player
+    if (player.id === this.room.hostId) {
+      this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
+        success: false,
+        targetPlayerId: player.id,
+        error: 'You already own this room.',
+      });
+      return;
+    }
+
+    // Check if already in room
+    if (this.players.has(player.id)) {
+      this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
+        success: false,
+        targetPlayerId: player.id,
+        error: 'You are already in this room.',
+      });
+      return;
+    }
+
+    // Check capacity (strictly max 2 players: 1 host + 1 opponent)
+    if (this.players.size >= 2) {
+      this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
+        success: false,
+        targetPlayerId: player.id,
+        error: 'This room is full.',
       });
       return;
     }
@@ -368,6 +443,7 @@ export class AuthoritativeRoomServer {
 
   public destroy() {
     this.isDestroyed = true;
+    this.room.status = 'CLOSED';
     if (this.callerInterval) clearInterval(this.callerInterval);
     if (this.unsubscribeTransport) {
       this.unsubscribeTransport();

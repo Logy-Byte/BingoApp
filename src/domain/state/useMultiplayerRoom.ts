@@ -6,18 +6,32 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PublicRoom, Player, Board5x5, GridCell5x5, RoomPrivacy } from '../types';
 import { RoomTransport, TransportMessage } from '../multiplayer/transport';
 import { AuthoritativeRoomServer, AuthoritativeRoomSnapshot } from '../multiplayer/authoritativeRoomServer';
-import { generateRoomId, hashPassword, sanitizeRoomCode, getHumanErrorMessage } from '../multiplayer/roomManager';
+import { generateRoomId, hashPassword, sanitizeRoomCode, getHumanErrorMessage, validateRoomCodeFormat } from '../multiplayer/roomManager';
 import { AntiCheatValidator } from '../multiplayer/antiCheatValidator';
 import { evaluate5x5Wins, generate5x5Board } from '../engine/gridGameEngine';
 import { SoundEngine } from '../../audio/soundEngine';
 import { GameStateMachine, GameState } from './gameStateMachine';
 
+export type RoomPageState =
+  | 'IDLE'
+  | 'CREATING'
+  | 'WAITING'
+  | 'JOINING'
+  | 'ROOM_READY'
+  | 'STARTING'
+  | 'ERROR'
+  | 'CLOSED'
+  | 'EXPIRED';
+
+const ACTIVE_ROOM_STORAGE_KEY = 'bingo_active_room_session';
+
 export interface UseMultiplayerRoomProps {
   player: Player;
-  onNavigateToScreen: (screen: 'LOBBY' | 'GAMEPLAY' | 'RESULTS' | 'TAB_NAV') => void;
+  onNavigateToScreen: (screen: 'LOBBY' | 'GAMEPLAY' | 'RESULTS' | 'TAB_NAV' | 'ROOMS') => void;
 }
 
 export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplayerRoomProps) {
@@ -39,18 +53,25 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
   const [opponentLines, setOpponentLines] = useState<number>(0);
   const [opponentName, setOpponentName] = useState<string>('Opponent');
 
+  // Single-page room state machine
+  const [roomPageState, setRoomPageState] = useState<RoomPageState>('IDLE');
+
   const transportRef = useRef<RoomTransport | null>(null);
   const serverRef = useRef<AuthoritativeRoomServer | null>(null);
   const stateMachineRef = useRef<GameStateMachine>(new GameStateMachine('IDLE'));
   const matchStartTimeRef = useRef<number>(0);
 
+  // Concurrency and race protection flags
+  const isCreatingRef = useRef<boolean>(false);
+  const isJoiningRef = useRef<boolean>(false);
+
   const isHost = room?.hostId === player.id;
   const canStart = Boolean(
     isHost &&
     room &&
-    players.length >= 2 &&
+    players.length === 2 &&
     players.every((p) => p.isHost || p.isReady) &&
-    room.status === 'WAITING'
+    (room.status === 'WAITING' || room.status === 'READY')
   );
 
   // Clean up transport and server on unmount
@@ -76,6 +97,13 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           setRoom(snapshot.room);
           setPlayers(snapshot.players);
 
+          // Update room page state based on actual players count
+          if (snapshot.players.length >= 2) {
+            setRoomPageState('ROOM_READY');
+          } else if (snapshot.players.length === 1) {
+            setRoomPageState('WAITING');
+          }
+
           // Find opponent info
           const opp = snapshot.players.find((p) => p.id !== player.id);
           if (opp) {
@@ -86,6 +114,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         }
 
         case 'JOIN_RESPONSE': {
+          isJoiningRef.current = false;
           const { success, targetPlayerId, snapshot, board: serverBoard, error } = msg.payload;
           if (targetPlayerId === player.id) {
             if (success && snapshot) {
@@ -95,10 +124,32 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
                 setBoard(serverBoard);
               }
               setJoinError(undefined);
+              if (snapshot.players.length >= 2) {
+                setRoomPageState('ROOM_READY');
+              } else {
+                setRoomPageState('WAITING');
+              }
+              // Save active session for refresh restoration
+              AsyncStorage.setItem(
+                ACTIVE_ROOM_STORAGE_KEY,
+                JSON.stringify({
+                  roomId: snapshot.room.id,
+                  isHost: false,
+                  hostId: snapshot.room.hostId,
+                  joinedAt: Date.now(),
+                })
+              );
               stateMachineRef.current.transition({ type: 'JOIN_SUCCESS', roomId: snapshot.room.id });
-              onNavigateToScreen('LOBBY');
             } else {
-              setJoinError(error || 'Failed to join room.');
+              const friendlyError = error || 'Unable to join the room. Please try again.';
+              setJoinError(friendlyError);
+              if (friendlyError.includes('closed')) {
+                setRoomPageState('CLOSED');
+              } else if (friendlyError.includes('expired')) {
+                setRoomPageState('EXPIRED');
+              } else {
+                setRoomPageState('ERROR');
+              }
               SoundEngine.playError();
             }
           }
@@ -108,6 +159,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         case 'START_COUNTDOWN': {
           const { seconds, snapshot } = msg.payload;
           setCountdownSeconds(seconds);
+          setRoomPageState('STARTING');
           if (snapshot) {
             setRoom(snapshot.room);
           }
@@ -185,6 +237,29 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           break;
         }
 
+        case 'ROOM_CLOSED': {
+          const reason = msg.payload?.reason || 'Player disconnected. The match was closed.';
+          SoundEngine.playError();
+          if (serverRef.current) {
+            serverRef.current.destroy();
+            serverRef.current = null;
+          }
+          if (transportRef.current) {
+            transportRef.current.close();
+            transportRef.current = null;
+          }
+          setRoom(null);
+          setPlayers([]);
+          setBoard(null);
+          setIsGameActive(false);
+          setCountdownSeconds(null);
+          stateMachineRef.current.reset('IDLE');
+          setJoinError(reason);
+          setRoomPageState('CLOSED');
+          AsyncStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+          break;
+        }
+
         case 'REMATCH_CONFIRMED': {
           const snapshot: AuthoritativeRoomSnapshot = msg.payload;
           setRoom(snapshot.room);
@@ -201,7 +276,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           setBoard(newBoard);
 
           stateMachineRef.current.transition({ type: 'REMATCH_CONFIRMED' });
-          onNavigateToScreen('LOBBY');
+          setRoomPageState('ROOM_READY');
+          onNavigateToScreen('ROOMS');
           break;
         }
       }
@@ -223,69 +299,126 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     [handleTransportMessage]
   );
 
-  // 1. Create Room
+  // 1. Create Room (with Race & Duplicate Request Protection)
   const createRoom = useCallback(
-    (name: string, privacy: RoomPrivacy = 'open', password?: string) => {
-      const roomId = generateRoomId();
-      const newRoom: PublicRoom = {
-        id: roomId,
-        name: name.trim() || 'Custom Arena',
-        privacy,
-        passwordHash: password && password.trim().length > 0 ? hashPassword(password.trim()) : undefined,
-        hostId: player.id,
-        hostName: player.name,
-        playerCount: 1,
-        maxPlayers: 2,
-        status: 'WAITING',
-        createdAt: Date.now(),
-        ticketPrice: 2.0,
-        jackpotAmount: 50000,
-        recommendedTickets: [1, 2, 4, 8],
-      };
+    (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
+      if (isCreatingRef.current) return;
+      isCreatingRef.current = true;
+      setRoomPageState('CREATING');
+      setJoinError(undefined);
 
-      const transport = setupTransport(roomId);
+      try {
+        const roomId = generateRoomId();
+        const newRoom: PublicRoom = {
+          id: roomId,
+          name: name.trim() || 'Friendly Arena',
+          privacy,
+          passwordHash: password && password.trim().length > 0 ? hashPassword(password.trim()) : undefined,
+          hostId: player.id,
+          hostName: player.name,
+          playerCount: 1,
+          maxPlayers: 2,
+          status: 'WAITING',
+          createdAt: Date.now(),
+          ticketPrice: 2.0,
+          jackpotAmount: 50000,
+          recommendedTickets: [1, 2, 4, 8],
+        };
 
-      // Create Authoritative Room Server on Host
-      if (serverRef.current) serverRef.current.destroy();
-      const server = new AuthoritativeRoomServer(newRoom, player, transport);
-      serverRef.current = server;
+        const transport = setupTransport(roomId);
 
-      // Assign host board
-      const hostBoard = server.getPlayerBoard(player.id);
-      setBoard(hostBoard);
-      setRoom(newRoom);
-      setPlayers([player]);
+        // Create Authoritative Room Server on Host
+        if (serverRef.current) serverRef.current.destroy();
+        const server = new AuthoritativeRoomServer(newRoom, player, transport);
+        serverRef.current = server;
 
-      stateMachineRef.current.transition({ type: 'ROOM_CREATED', roomId });
-      onNavigateToScreen('LOBBY');
+        // Assign host board
+        const hostBoard = server.getPlayerBoard(player.id);
+        setBoard(hostBoard);
+        setRoom(newRoom);
+        setPlayers([player]);
+        setRoomPageState('WAITING');
+
+        // Persist session for page refresh restore
+        AsyncStorage.setItem(
+          ACTIVE_ROOM_STORAGE_KEY,
+          JSON.stringify({
+            roomId,
+            isHost: true,
+            hostId: player.id,
+            joinedAt: Date.now(),
+          })
+        );
+
+        stateMachineRef.current.transition({ type: 'ROOM_CREATED', roomId });
+      } catch (err) {
+        setJoinError('Unable to create room. Please try again.');
+        setRoomPageState('ERROR');
+        SoundEngine.playError();
+      } finally {
+        isCreatingRef.current = false;
+      }
     },
-    [player, setupTransport, onNavigateToScreen]
+    [player, setupTransport]
   );
 
-  // 2. Join Room
+  // 2. Join Room (with Race & Duplicate Request Protection)
   const joinRoom = useCallback(
     (rawRoomId: string, password?: string) => {
-      const cleanId = sanitizeRoomCode(rawRoomId);
-      if (!cleanId || cleanId.length < 6) {
-        setJoinError(getHumanErrorMessage('INVALID_ROOM_CODE'));
+      if (isJoiningRef.current) return;
+
+      const formatCheck = validateRoomCodeFormat(rawRoomId);
+      if (!formatCheck.valid) {
+        setJoinError(formatCheck.error);
+        setRoomPageState('ERROR');
         SoundEngine.playError();
         return;
       }
 
+      const cleanId = sanitizeRoomCode(rawRoomId);
+
+      // Same-user protection on client side
+      if (room && room.hostId === player.id && room.id === cleanId) {
+        setJoinError('You already own this room.');
+        setRoomPageState('ERROR');
+        SoundEngine.playError();
+        return;
+      }
+
+      isJoiningRef.current = true;
       setJoinError(undefined);
-      const transport = setupTransport(cleanId);
+      setRoomPageState('JOINING');
 
-      // Send Join Request to room host
-      transport.send('JOIN_REQUEST', cleanId, player.id, {
-        player,
-        password,
-      });
+      try {
+        const transport = setupTransport(cleanId);
 
-      // Generate speculative board while waiting for server response
-      const speculativeBoard = generate5x5Board(`b-${player.id}`, `join-${cleanId}-${Date.now()}`, false);
-      setBoard(speculativeBoard);
+        // Send Join Request to authoritative room host
+        transport.send('JOIN_REQUEST', cleanId, player.id, {
+          player,
+          password,
+        });
+
+        // Speculative board while waiting for server response
+        const speculativeBoard = generate5x5Board(`b-${player.id}`, `join-${cleanId}-${Date.now()}`, false);
+        setBoard(speculativeBoard);
+
+        // Timeout fallback if host never responds within 8s
+        setTimeout(() => {
+          if (isJoiningRef.current) {
+            isJoiningRef.current = false;
+            setJoinError('Room not found or host unavailable.');
+            setRoomPageState('ERROR');
+            SoundEngine.playError();
+          }
+        }, 8000);
+      } catch (err) {
+        isJoiningRef.current = false;
+        setJoinError('Unable to join the room. Please try again.');
+        setRoomPageState('ERROR');
+        SoundEngine.playError();
+      }
     },
-    [player, setupTransport]
+    [player, setupTransport, room]
   );
 
   // 3. Toggle Ready
@@ -307,10 +440,12 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
   // 4. Start Match (Host only)
   const startMatch = useCallback(() => {
     if (!room || !isHost || !transportRef.current) return;
+    if (players.length < 2) return;
+    setRoomPageState('STARTING');
     transportRef.current.send('START_COUNTDOWN', room.id, player.id, {
       seconds: 3,
     });
-  }, [room, isHost, player.id]);
+  }, [room, isHost, player.id, players.length]);
 
   // 5. Daub Cell
   const daubCell = useCallback(
@@ -417,8 +552,19 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     transportRef.current.send('REMATCH_REQUEST', room.id, player.id, {});
   }, [room, player.id]);
 
-  // 8. Leave Room
+  // 8. Leave Room / Disconnect / Exit Room
   const leaveRoom = useCallback(() => {
+    if (room && transportRef.current) {
+      try {
+        transportRef.current.send('ROOM_CLOSED', room.id, player.id, {
+          reason: `${player.name || 'Opponent'} disconnected. Match closed.`,
+          disconnectedPlayerId: player.id,
+        });
+      } catch (e) {
+        // Safe ignore
+      }
+    }
+
     if (serverRef.current) {
       serverRef.current.destroy();
       serverRef.current = null;
@@ -431,9 +577,105 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     setPlayers([]);
     setBoard(null);
     setIsGameActive(false);
+    setCountdownSeconds(null);
+    setRoomPageState('IDLE');
+    setJoinError(undefined);
     stateMachineRef.current.reset('IDLE');
+    AsyncStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
     onNavigateToScreen('TAB_NAV');
-  }, [onNavigateToScreen]);
+  }, [room, player.id, player.name, onNavigateToScreen]);
+
+  // Reset page state back to IDLE (e.g. from error or closed state)
+  const resetToIdle = useCallback(() => {
+    setJoinError(undefined);
+    setRoomPageState('IDLE');
+  }, []);
+
+  // 9. Join Direct Matched Session (for Random Player 2-player matchmaking)
+  const joinDirectMatchSession = useCallback(
+    (gameSessionId: string, opponent: Player, isMatchHost: boolean) => {
+      const matchRoom: PublicRoom = {
+        id: gameSessionId,
+        name: 'Live 1v1 Arena',
+        privacy: 'open',
+        hostId: isMatchHost ? player.id : opponent.id,
+        hostName: isMatchHost ? player.name : opponent.name,
+        playerCount: 2,
+        maxPlayers: 2,
+        status: 'ACTIVE',
+        createdAt: Date.now(),
+        ticketPrice: 0,
+        jackpotAmount: 1000,
+        recommendedTickets: [1],
+      };
+
+      const transport = setupTransport(gameSessionId);
+
+      if (isMatchHost) {
+        if (serverRef.current) serverRef.current.destroy();
+        const server = new AuthoritativeRoomServer(matchRoom, player, transport);
+        serverRef.current = server;
+        const hostBoard = server.getPlayerBoard(player.id);
+        setBoard(hostBoard);
+        // Start authoritative game loop immediately
+        server.startDirectMatch(opponent);
+      } else {
+        const guestBoard = generate5x5Board(`b-${player.id}`, `match-${gameSessionId}-${player.id}`, false);
+        setBoard(guestBoard);
+      }
+
+      setRoom(matchRoom);
+      setPlayers([
+        { ...player, isHost: isMatchHost, isReady: true },
+        { ...opponent, isHost: !isMatchHost, isReady: true },
+      ]);
+      setOpponentName(opponent.name);
+      setOpponentLines(0);
+      setIsGameActive(true);
+      setDrawnNumbers([]);
+      setScore(0);
+      setLinesCompletedCount(0);
+      setCompletedPatternIds([]);
+      setWinner(null);
+      matchStartTimeRef.current = Date.now();
+      stateMachineRef.current.transition({ type: 'MATCH_STARTED' });
+      onNavigateToScreen('GAMEPLAY');
+    },
+    [player, setupTransport, onNavigateToScreen]
+  );
+
+  // 10. Restore Session on Refresh
+  useEffect(() => {
+    const restoreActiveSession = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(ACTIVE_ROOM_STORAGE_KEY);
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        if (!parsed?.roomId || !parsed?.joinedAt) return;
+
+        // Verify session not older than 15 minutes
+        if (Date.now() - parsed.joinedAt > 900000) {
+          await AsyncStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+          return;
+        }
+
+        // Reconnect transport
+        const transport = setupTransport(parsed.roomId);
+        if (parsed.isHost) {
+          // Host reconnect
+          setRoomPageState('WAITING');
+        } else {
+          // Guest reconnect -> query state
+          transport.send('SYNC_STATE_REQUEST', parsed.roomId, player.id, {});
+          setRoomPageState('JOINING');
+        }
+      } catch (e) {
+        // Safe ignore
+      }
+    };
+
+    restoreActiveSession();
+  }, [player.id, setupTransport]);
 
   return {
     room,
@@ -454,14 +696,17 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     opponentName,
     isHost,
     canStart,
+    roomPageState,
     createRoom,
     joinRoom,
+    joinDirectMatchSession,
     toggleReady,
     startMatch,
     daubCell,
     claimBingo,
     requestRematch,
     leaveRoom,
+    resetToIdle,
     togglePause: () => setIsPaused((prev) => !prev),
   };
 }

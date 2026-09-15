@@ -169,12 +169,14 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
 const styles = StyleSheet.create({
   hudContainer: {
     borderRadius: RADIUS.hero, // 24px
-    paddingHorizontal: SPACING.lg, // 16px
-    paddingVertical: SPACING.md, // 12px
+    paddingHorizontal: SPACING.md, // 12px
+    paddingVertical: SPACING.sm + 2, // 10px
     borderWidth: 1,
     marginVertical: SPACING.xs, // 4px
     position: 'relative',
     overflow: 'hidden',
+    width: '100%',
+    alignSelf: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -193,7 +195,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.xs, // 4px
+    marginBottom: 4,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -219,7 +221,7 @@ const styles = StyleSheet.create({
   broadcastBody: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.lg, // 16px
+    gap: SPACING.md, // 12px
     marginTop: 2,
   },
   sphereShadowWrap: {

@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { TabDestination } from '../../domain/types';
 import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from '../../design/tokens';
-import { HomeIcon, LeaderboardIcon, ProfileIcon, IconCoinStack } from '../icons/CustomIcons';
+import { HomeIcon, LeaderboardIcon, ProfileIcon } from '../icons/CustomIcons';
 
 interface BottomNavBarProps {
   currentTab: TabDestination;
@@ -16,101 +16,79 @@ interface BottomNavBarProps {
  * Home icon updated to match Reference 1 with Gentle Olive accent dot.
  */
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelectTab }) => {
+  const tabs: Array<{ key: TabDestination; label: string; icon: (active: boolean) => React.ReactNode }> = [
+    {
+      key: 'PLAY',
+      label: 'Home',
+      icon: (active) => (
+        <HomeIcon
+          size={17}
+          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          variant={active ? 'filled' : 'outline'}
+          state={active ? 'active' : 'idle'}
+        />
+      ),
+    },
+    {
+      key: 'LEADERBOARD',
+      label: 'Ranks',
+      icon: (active) => (
+        <LeaderboardIcon
+          size={17}
+          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          variant={active ? 'filled' : 'outline'}
+          state={active ? 'active' : 'idle'}
+        />
+      ),
+    },
+    {
+      key: 'PROFILE',
+      label: 'Profile',
+      icon: (active) => (
+        <ProfileIcon
+          size={17}
+          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          variant={active ? 'filled' : 'outline'}
+          state={active ? 'active' : 'idle'}
+        />
+      ),
+    },
+  ];
+
   return (
     <View style={styles.dockWrapper} pointerEvents="box-none">
       <View style={styles.consoleDock} accessibilityRole="tablist">
-        {/* Top Edge Specular Hairline */}
+        {/* Specular Edge Hairline */}
         <View style={styles.dockTopBevel} />
 
-        {/* 1. HOME / PLAY TAB */}
-        <TouchableOpacity
-          style={[styles.dockItem, currentTab === 'PLAY' && styles.dockItemActive]}
-          onPress={() => onSelectTab('PLAY')}
-          activeOpacity={0.85}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-          accessibilityRole="tab"
-          accessibilityLabel="Home tab"
-          accessibilityState={{ selected: currentTab === 'PLAY' }}
-        >
-          {currentTab === 'PLAY' ? (
-            <View style={styles.activePill}>
-              <HomeIcon size={16} color={COLORS.activeTabIcon} variant="filled" state="active" />
-              <Text style={styles.activeLabel}>Home</Text>
-              {/* Reference 1: Gentle Olive accent dot at top perimeter */}
-              <View style={styles.activeDot} />
-            </View>
-          ) : (
-            <View style={styles.inactivePill}>
-              <HomeIcon size={19} color={COLORS.inactiveTabIcon} variant="outline" state="idle" />
-            </View>
-          )}
-        </TouchableOpacity>
+        {tabs.map((tab) => {
+          const isActive = currentTab === tab.key;
 
-        {/* 2. LEADERBOARD TAB */}
-        <TouchableOpacity
-          style={[styles.dockItem, currentTab === 'LEADERBOARD' && styles.dockItemActive]}
-          onPress={() => onSelectTab('LEADERBOARD')}
-          activeOpacity={0.85}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-          accessibilityRole="tab"
-          accessibilityLabel="Leaderboard tab"
-          accessibilityState={{ selected: currentTab === 'LEADERBOARD' }}
-        >
-          {currentTab === 'LEADERBOARD' ? (
-            <View style={styles.activePill}>
-              <LeaderboardIcon size={16} color={COLORS.activeTabIcon} variant="filled" state="active" />
-              <Text style={styles.activeLabel}>Ranks</Text>
-            </View>
-          ) : (
-            <View style={styles.inactivePill}>
-              <LeaderboardIcon size={19} color={COLORS.inactiveTabIcon} variant="outline" state="idle" />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* 3. SHOP TAB */}
-        <TouchableOpacity
-          style={[styles.dockItem, currentTab === 'SHOP' && styles.dockItemActive]}
-          onPress={() => onSelectTab('SHOP')}
-          activeOpacity={0.85}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-          accessibilityRole="tab"
-          accessibilityLabel="Shop tab"
-          accessibilityState={{ selected: currentTab === 'SHOP' }}
-        >
-          {currentTab === 'SHOP' ? (
-            <View style={styles.activePill}>
-              <IconCoinStack size={14} color={COLORS.activeTabIcon} />
-              <Text style={styles.activeLabel}>Shop</Text>
-            </View>
-          ) : (
-            <View style={styles.inactivePill}>
-              <IconCoinStack size={16} color={COLORS.inactiveTabIcon} />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* 4. PROFILE TAB */}
-        <TouchableOpacity
-          style={[styles.dockItem, currentTab === 'PROFILE' && styles.dockItemActive]}
-          onPress={() => onSelectTab('PROFILE')}
-          activeOpacity={0.85}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-          accessibilityRole="tab"
-          accessibilityLabel="Profile tab"
-          accessibilityState={{ selected: currentTab === 'PROFILE' }}
-        >
-          {currentTab === 'PROFILE' ? (
-            <View style={styles.activePill}>
-              <ProfileIcon size={16} color={COLORS.activeTabIcon} variant="filled" state="active" />
-              <Text style={styles.activeLabel}>Profile</Text>
-            </View>
-          ) : (
-            <View style={styles.inactivePill}>
-              <ProfileIcon size={19} color={COLORS.inactiveTabIcon} variant="outline" state="idle" />
-            </View>
-          )}
-        </TouchableOpacity>
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.dockItem, isActive && styles.dockItemActive]}
+              onPress={() => onSelectTab(tab.key)}
+              activeOpacity={0.8}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="tab"
+              accessibilityLabel={`${tab.label} tab`}
+              accessibilityState={{ selected: isActive }}
+            >
+              {isActive ? (
+                <View style={styles.activePill}>
+                  {tab.icon(true)}
+                  <Text style={styles.activeLabel}>{tab.label}</Text>
+                  <View style={styles.activeDot} />
+                </View>
+              ) : (
+                <View style={styles.inactivePill}>
+                  {tab.icon(false)}
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );

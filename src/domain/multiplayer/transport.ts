@@ -23,7 +23,8 @@ export type MultiplayerMessageType =
   | 'SYNC_STATE_REQUEST'
   | 'SYNC_STATE_RESPONSE'
   | 'HEARTBEAT_PING'
-  | 'HEARTBEAT_PONG';
+  | 'HEARTBEAT_PONG'
+  | 'ROOM_CLOSED';
 
 export interface TransportMessage<T = any> {
   type: MultiplayerMessageType;

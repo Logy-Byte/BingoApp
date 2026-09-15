@@ -29,34 +29,68 @@ export type GameErrorCode =
   | 'GAME_STATE_CONFLICT'
   | 'ALREADY_JOINED'
   | 'HOST_DISCONNECTED'
+  | 'OWN_ROOM'
+  | 'ROOM_CLOSED'
+  | 'ROOM_EXPIRED'
+  | 'NOT_AUTHENTICATED'
   | 'SERVER_ERROR';
 
 export function getHumanErrorMessage(code: GameErrorCode): string {
   switch (code) {
     case 'NETWORK_UNAVAILABLE':
-      return 'Network connection unavailable. Please check your internet connection.';
+      return 'Unable to join the room. Please try again.';
     case 'ROOM_NOT_FOUND':
-      return 'Room not found. Please verify the 6-character room code.';
+      return 'Room not found.';
     case 'ROOM_FULL':
-      return 'Room is already full.';
+      return 'This room is full.';
     case 'ROOM_STARTED':
       return 'Match in this room is already in progress or concluded.';
     case 'INVALID_ROOM_CODE':
-      return 'Invalid room code format. Room codes consist of 6 alphanumeric characters.';
+      return 'Enter a valid room code.';
     case 'UNAUTHORIZED':
       return 'Incorrect room password.';
     case 'SESSION_EXPIRED':
-      return 'Your game session has expired. Please return to the lobby.';
+      return 'This room has expired.';
     case 'GAME_STATE_CONFLICT':
-      return 'Game state conflict detected. Re-synchronizing board...';
+      return 'Game state conflict detected. Re-synchronizing room...';
     case 'ALREADY_JOINED':
-      return 'You are already connected to this room.';
+      return 'You are already in this room.';
     case 'HOST_DISCONNECTED':
       return 'The room host has disconnected from the match.';
+    case 'OWN_ROOM':
+      return 'You already own this room.';
+    case 'ROOM_CLOSED':
+      return 'This room is closed.';
+    case 'ROOM_EXPIRED':
+      return 'This room has expired.';
+    case 'NOT_AUTHENTICATED':
+      return 'Please log in to join a room.';
     case 'SERVER_ERROR':
     default:
-      return 'A server communication error occurred. Please try again.';
+      return 'Unable to join the room. Please try again.';
   }
+}
+
+/**
+ * Validates room code formatting before server lookup:
+ * - Empty check
+ * - Length check (exactly 6 characters)
+ * - Alphanumeric character validation
+ */
+export function validateRoomCodeFormat(code: string): { valid: boolean; error?: string } {
+  const trimmed = (code || '').trim();
+  if (!trimmed) {
+    return { valid: false, error: 'Enter a room code.' };
+  }
+  const clean = trimmed.replace(/[#\s\-]/g, '').toUpperCase();
+  // Check invalid characters
+  if (!/^[A-Z0-9]+$/.test(clean)) {
+    return { valid: false, error: 'Room code contains invalid characters.' };
+  }
+  if (clean.length < 6) {
+    return { valid: false, error: 'Enter a valid room code.' };
+  }
+  return { valid: true };
 }
 
 /**
@@ -138,11 +172,35 @@ export class RoomManager {
       };
     }
 
+    if (player.id === room.hostId) {
+      return {
+        success: false,
+        error: getHumanErrorMessage('OWN_ROOM'),
+        errorCode: 'OWN_ROOM',
+      };
+    }
+
     if (room.playerCount >= room.maxPlayers) {
       return {
         success: false,
         error: getHumanErrorMessage('ROOM_FULL'),
         errorCode: 'ROOM_FULL',
+      };
+    }
+
+    if (room.status === 'CLOSED') {
+      return {
+        success: false,
+        error: getHumanErrorMessage('ROOM_CLOSED'),
+        errorCode: 'ROOM_CLOSED',
+      };
+    }
+
+    if (room.status === 'EXPIRED') {
+      return {
+        success: false,
+        error: getHumanErrorMessage('ROOM_EXPIRED'),
+        errorCode: 'ROOM_EXPIRED',
       };
     }
 
