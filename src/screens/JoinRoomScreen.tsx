@@ -10,7 +10,7 @@ import { useTheme } from '../design/theme';
 import { sanitizeRoomCode } from '../domain/multiplayer/roomManager';
 
 interface JoinRoomScreenProps {
-  onJoin: (roomId: string, password?: string) => void;
+  onJoin: (roomId: string, password?: string) => Promise<void>;
   onBack: () => void;
   initialRoomId?: string;
   errorMessage?: string;
@@ -36,14 +36,15 @@ export const JoinRoomScreen: React.FC<JoinRoomScreenProps> = ({
     } catch (_) {}
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     const cleanCode = sanitizeRoomCode(roomId);
     if (!cleanCode) return;
     setIsJoining(true);
-    setTimeout(() => {
-      onJoin(cleanCode, password.trim());
+    try {
+      await onJoin(cleanCode, password.trim());
+    } finally {
       setIsJoining(false);
-    }, 250);
+    }
   };
 
   return (

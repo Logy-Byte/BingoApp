@@ -188,6 +188,17 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           setWinner(null);
           matchStartTimeRef.current = Date.now();
           stateMachineRef.current.transition({ type: 'MATCH_STARTED' });
+
+          if (msg.payload.snapshot) {
+            setRoom(msg.payload.snapshot.room);
+            // In direct matches, guest doesn't get a JOIN_RESPONSE with a board. 
+            // Generate it here deterministically using the authoritative seed.
+            if (msg.senderId !== player.id) {
+              const guestBoard = generate5x5Board(`b-${player.id}`, `${msg.payload.snapshot.seed}-${player.id}`, false);
+              setBoard(guestBoard);
+            }
+          }
+
           onNavigateToScreen('GAMEPLAY');
           break;
         }
@@ -301,29 +312,16 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
 
   // 1. Create Room (with Race & Duplicate Request Protection)
   const createRoom = useCallback(
-    (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
+    async (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
       if (isCreatingRef.current) return;
       isCreatingRef.current = true;
       setRoomPageState('CREATING');
       setJoinError(undefined);
 
       try {
-        const roomId = generateRoomId();
-        const newRoom: PublicRoom = {
-          id: roomId,
-          name: name.trim() || 'Friendly Arena',
-          privacy,
-          passwordHash: password && password.trim().length > 0 ? hashPassword(password.trim()) : undefined,
-          hostId: player.id,
-          hostName: player.name,
-          playerCount: 1,
-          maxPlayers: 2,
-          status: 'WAITING',
-          createdAt: Date.now(),
-          ticketPrice: 2.0,
-          jackpotAmount: 50000,
-          recommendedTickets: [1, 2, 4, 8],
-        };
+        const { globalRoomManager } = await import('../multiplayer/roomManager');
+        const newRoom = await globalRoomManager.createRoom(name, player, privacy, password);
+        const roomId = newRoom.id;
 
         const transport = setupTransport(roomId);
 
@@ -351,7 +349,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         );
 
         stateMachineRef.current.transition({ type: 'ROOM_CREATED', roomId });
-      } catch (err) {
+      } catch (err: any) {
         console.error('CREATE ROOM ERROR:', err);
         setJoinError(`Unable to create room: ${err?.message || err}`);
         setRoomPageState('ERROR');
@@ -365,7 +363,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
 
   // 2. Join Room (with Race & Duplicate Request Protection)
   const joinRoom = useCallback(
-    (rawRoomId: string, password?: string) => {
+    async (rawRoomId: string, password?: string) => {
       if (isJoiningRef.current) return;
 
       const formatCheck = validateRoomCodeFormat(rawRoomId);
@@ -391,6 +389,17 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
       setRoomPageState('JOINING');
 
       try {
+        const { globalRoomManager } = await import('../multiplayer/roomManager');
+        const joinResult = await globalRoomManager.joinRoom(cleanId, player, password);
+        
+        if (!joinResult.success) {
+          isJoiningRef.current = false;
+          setJoinError(joinResult.error || 'Unable to join the room.');
+          setRoomPageState('ERROR');
+          SoundEngine.playError();
+          return;
+        }
+
         const transport = setupTransport(cleanId);
 
         // Send Join Request to authoritative room host
@@ -412,7 +421,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
             SoundEngine.playError();
           }
         }, 8000);
-      } catch (err) {
+      } catch (err: any) {
         console.error('JOIN ROOM ERROR:', err);
         isJoiningRef.current = false;
         setJoinError(`Unable to join: ${err?.message || err}`);
@@ -455,15 +464,15 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
       if (!board || !isGameActive) return;
       if (cell.state === 'MARKED' || cell.state === 'COMPLETED') return;
 
-      // Authoritative anti-cheat validation
+      // Authoritative anti-cheat validation: if it hasn't been called, call it!
       const isLegitCalled = AntiCheatValidator.validateDaub(cell.value, drawnNumbers);
       if (!isLegitCalled) {
-        SoundEngine.playError();
-        setClaimFeedback({
-          success: false,
-          message: `Number ${cell.value} has not been called yet!`,
-        });
-        setTimeout(() => setClaimFeedback(null), 1400);
+        // Send a request to call this number to the server.
+        // We do NOT mark the cell yet. The server will broadcast NUMBER_DRAWN,
+        // and the player will manually mark it once it appears as drawn.
+        if (transportRef.current && room) {
+          transportRef.current.send('CALL_NUMBER_REQUEST', room.id, player.id, { number: cell.value });
+        }
         return;
       }
 
@@ -620,9 +629,6 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         setBoard(hostBoard);
         // Start authoritative game loop immediately
         server.startDirectMatch(opponent);
-      } else {
-        const guestBoard = generate5x5Board(`b-${player.id}`, `match-${gameSessionId}-${player.id}`, false);
-        setBoard(guestBoard);
       }
 
       setRoom(matchRoom);

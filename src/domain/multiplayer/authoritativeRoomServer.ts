@@ -55,6 +55,7 @@ export class AuthoritativeRoomServer {
     this.players.set(host.id, host);
 
     // Bind transport message listeners
+    console.log('[RoomServer] Initializing transport subscription');
     this.unsubscribeTransport = this.transport.subscribe(this.handleClientMessage);
 
     // Broadcast room existence
@@ -120,7 +121,16 @@ export class AuthoritativeRoomServer {
   }
 
   private handleClientMessage = (message: TransportMessage) => {
-    if (this.isDestroyed || message.roomId !== this.room.id) return;
+    console.log('[RoomServer] Received transport message:', message);
+    if (this.isDestroyed) {
+      console.warn('[RoomServer] Ignoring message because server is destroyed');
+      return;
+    }
+    if (message.roomId.toUpperCase() !== this.room.id.toUpperCase()) {
+      console.warn(`[RoomServer] Message roomId mismatch (expected ${this.room.id}, got ${message.roomId})`);
+      return;
+    }
+    if (this.isDestroyed || message.roomId.toUpperCase() !== this.room.id.toUpperCase()) return;
 
     switch (message.type) {
       case 'JOIN_REQUEST':
@@ -131,6 +141,12 @@ export class AuthoritativeRoomServer {
         break;
       case 'START_COUNTDOWN':
         this.handleStartMatch(message);
+        break;
+      case 'MATCH_STARTED':
+        // Wait, handleStartMatch is below? No it's START_COUNTDOWN that handles it.
+        break;
+      case 'CALL_NUMBER_REQUEST':
+        this.handleCallNumberRequest(message);
         break;
       case 'OPPONENT_PROGRESS':
         this.handleOpponentProgress(message);
@@ -157,6 +173,7 @@ export class AuthoritativeRoomServer {
   };
 
   private handleJoinRequest(message: TransportMessage<{ player: Player; password?: string }>) {
+    console.log('[RoomServer] Handling JOIN_REQUEST from player', message.payload?.player?.id);
     const { player, password } = message.payload;
 
     // Check destroyed or closed status
@@ -307,29 +324,35 @@ export class AuthoritativeRoomServer {
   }
 
   private startBallCaller() {
-    if (this.callerInterval) clearInterval(this.callerInterval);
+    // Automatic timer is disabled for manual turn-based calling.
+    // Numbers are now drawn when a client sends CALL_NUMBER_REQUEST.
+    if (this.callerInterval) {
+      clearInterval(this.callerInterval);
+      this.callerInterval = null;
+    }
+  }
 
-    this.callerInterval = setInterval(() => {
-      if (this.room.status !== 'ACTIVE' || this.isDestroyed) {
-        clearInterval(this.callerInterval);
-        return;
-      }
+  private handleCallNumberRequest(message: TransportMessage<{ number: number }>) {
+    if (this.room.status !== 'ACTIVE' || this.isDestroyed) return;
 
-      if (this.numberPool.length === 0) {
-        clearInterval(this.callerInterval);
-        return;
-      }
+    const requestedNumber = message.payload.number;
+    
+    // Check if it was already drawn to prevent duplicates
+    if (this.drawnNumbers.includes(requestedNumber)) return;
 
-      const nextNumber = this.numberPool.shift()!;
-      this.drawnNumbers.unshift(nextNumber);
+    // Add to drawn numbers list
+    this.drawnNumbers.unshift(requestedNumber);
 
-      this.transport.send('NUMBER_DRAWN', this.room.id, this.room.hostId, {
-        number: nextNumber,
-        drawnNumbers: [...this.drawnNumbers],
-        remaining: this.numberPool.length,
-        callOrder: this.drawnNumbers.length,
-      });
-    }, 3500);
+    // Remove it from the numberPool so it isn't drawn again if we re-enable automatic calling
+    this.numberPool = this.numberPool.filter(n => n !== requestedNumber);
+
+    // Broadcast the newly called number to all players (including the sender via loopback)
+    this.transport.send('NUMBER_DRAWN', this.room.id, this.room.hostId, {
+      number: requestedNumber,
+      drawnNumbers: [...this.drawnNumbers],
+      remaining: this.numberPool.length,
+      callOrder: this.drawnNumbers.length,
+    });
   }
 
   private handleOpponentProgress(message: TransportMessage<{ linesCompleted: number; score: number }>) {

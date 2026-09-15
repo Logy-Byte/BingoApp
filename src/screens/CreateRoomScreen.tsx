@@ -10,7 +10,7 @@ import { LockIcon, UnlockIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
 
 interface CreateRoomScreenProps {
-  onCreateRoom: (name: string, privacy: RoomPrivacy, password?: string) => void;
+  onCreateRoom: (name: string, privacy: RoomPrivacy, password?: string) => Promise<void>;
   onBack: () => void;
 }
 
@@ -24,12 +24,13 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      onCreateRoom(roomName.trim() || 'Friendly Arena', privacy, password.trim());
+    try {
+      await onCreateRoom(roomName.trim() || 'Friendly Arena', privacy, password.trim());
+    } finally {
       setIsSubmitting(false);
-    }, 200);
+    }
   };
 
   return (

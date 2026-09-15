@@ -1,4 +1,5 @@
 import { PublicRoom, RoomPrivacy, Player } from '../types';
+import { supabase } from '../../lib/supabase';
 
 export function generateRoomId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // omit ambiguous 0, O, 1, I
@@ -38,7 +39,7 @@ export type GameErrorCode =
 export function getHumanErrorMessage(code: GameErrorCode): string {
   switch (code) {
     case 'NETWORK_UNAVAILABLE':
-      return 'Unable to join the room. Please try again.';
+      return 'Unable to connect. Please check your network and try again.';
     case 'ROOM_NOT_FOUND':
       return 'Room not found. Check the code and try again.';
     case 'ROOM_FULL':
@@ -110,49 +111,102 @@ export function sanitizeRoomCode(input: string): string {
 }
 
 export class RoomManager {
-  private rooms: Map<string, PublicRoom> = new Map();
-
-  // No fake mock rooms - starts strictly empty or real
   constructor() {}
 
-  public getAvailablePublicRooms(): PublicRoom[] {
-    return Array.from(this.rooms.values()).filter(
-      (r) => r.privacy === 'open' && r.status === 'WAITING'
-    );
+  public async getAvailablePublicRooms(): Promise<PublicRoom[]> {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('privacy', 'open')
+      .eq('status', 'WAITING')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching public rooms:', error);
+      return [];
+    }
+
+    return (data || []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      privacy: row.privacy as RoomPrivacy,
+      passwordHash: row.password_hash,
+      hostId: row.host_id,
+      hostName: row.host_name,
+      playerCount: row.player_count,
+      maxPlayers: row.max_players,
+      status: row.status as any,
+      createdAt: new Date(row.created_at).getTime(),
+      ticketPrice: row.ticket_price,
+      jackpotAmount: row.jackpot_amount,
+      recommendedTickets: [1, 2, 4, 8],
+    }));
   }
 
-  public createRoom(
+  public async createRoom(
     name: string,
     host: Player,
     privacy: RoomPrivacy = 'open',
     password?: string
-  ): PublicRoom {
+  ): Promise<PublicRoom> {
     const roomId = generateRoomId();
-    const room: PublicRoom = {
-      id: roomId,
-      name: name.trim() || 'Custom Arena',
-      privacy,
-      passwordHash: password && password.trim().length > 0 ? hashPassword(password.trim()) : undefined,
-      hostId: host.id,
-      hostName: host.name,
-      playerCount: 1,
-      maxPlayers: 2,
-      status: 'WAITING',
-      createdAt: Date.now(),
-      ticketPrice: 2.0,
-      jackpotAmount: 50000,
+    const passwordHashStr = password && password.trim().length > 0 ? hashPassword(password.trim()) : null;
+
+    const insertPayload = {
+        id: roomId,
+        name: name.trim() || 'Custom Arena',
+        privacy: privacy,
+        password_hash: passwordHashStr,
+        host_id: host.id,
+        host_name: host.name,
+        player_count: 1,
+        max_players: 2,
+        status: 'WAITING',
+        ticket_price: 2.0,
+        jackpot_amount: 50000,
+      };
+    console.log('[RoomManager] Creating room with payload:', insertPayload);
+
+    const { data, error } = await supabase
+      .from('rooms')
+      .insert(insertPayload)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('[RoomManager] Error creating room in Supabase:', error);
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      console.error('[RoomManager] Insert returned no data. Room may not have been created. Check RLS policies.');
+      throw new Error('Room creation failed - no data returned. Please check your Supabase RLS policies.');
+    }
+
+    console.log('[RoomManager] Room created successfully:', data);
+
+    return {
+      id: data.id,
+      name: data.name,
+      privacy: data.privacy as RoomPrivacy,
+      passwordHash: data.password_hash || undefined,
+      hostId: data.host_id,
+      hostName: data.host_name,
+      playerCount: data.player_count,
+      maxPlayers: data.max_players,
+      status: data.status as any,
+      createdAt: new Date(data.created_at).getTime(),
+      ticketPrice: data.ticket_price,
+      jackpotAmount: data.jackpot_amount,
       recommendedTickets: [1, 2, 4, 8],
     };
-
-    this.rooms.set(roomId, room);
-    return room;
   }
 
-  public joinRoom(
+  public async joinRoom(
     roomId: string,
     player: Player,
     password?: string
-  ): { success: boolean; error?: string; errorCode?: GameErrorCode; room?: PublicRoom } {
+  ): Promise<{ success: boolean; error?: string; errorCode?: GameErrorCode; room?: PublicRoom }> {
     const cleanId = sanitizeRoomCode(roomId);
     if (!cleanId || cleanId.length < 6) {
       return {
@@ -162,15 +216,46 @@ export class RoomManager {
       };
     }
 
-    const room = this.rooms.get(cleanId);
+    console.log('[RoomManager] Looking up room:', cleanId);
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', cleanId)
+      .maybeSingle();
 
-    if (!room) {
+    if (error) {
+      console.error('[RoomManager] Error looking up room:', error);
       return {
         success: false,
         error: getHumanErrorMessage('ROOM_NOT_FOUND'),
         errorCode: 'ROOM_NOT_FOUND',
       };
     }
+
+    if (!data) {
+      console.warn('[RoomManager] Room not found in database:', cleanId);
+      return {
+        success: false,
+        error: getHumanErrorMessage('ROOM_NOT_FOUND'),
+        errorCode: 'ROOM_NOT_FOUND',
+      };
+    }
+
+    const room: PublicRoom = {
+      id: data.id,
+      name: data.name,
+      privacy: data.privacy as RoomPrivacy,
+      passwordHash: data.password_hash || undefined,
+      hostId: data.host_id,
+      hostName: data.host_name,
+      playerCount: data.player_count,
+      maxPlayers: data.max_players,
+      status: data.status as any,
+      createdAt: new Date(data.created_at).getTime(),
+      ticketPrice: data.ticket_price,
+      jackpotAmount: data.jackpot_amount,
+      recommendedTickets: [1, 2, 4, 8],
+    };
 
     if (player.id === room.hostId) {
       return {
@@ -222,20 +307,23 @@ export class RoomManager {
       }
     }
 
+    // Increment player count in Supabase optimistically
+    await supabase.from('rooms').update({ player_count: room.playerCount + 1 }).eq('id', room.id);
     room.playerCount += 1;
     if (room.playerCount === room.maxPlayers) {
       room.status = 'READY';
+      await supabase.from('rooms').update({ status: 'READY' }).eq('id', room.id);
     }
 
     return { success: true, room };
   }
 
-  /**
-   * Returns null if no live backend telemetry is connected.
-   * Never fakes or fabricates online player counts.
-   */
-  public getLiveOnlinePlayerCount(): number | null {
-    // In local standalone mode without backend server socket, return null
+  public async updateRoomStatus(roomId: string, status: string) {
+    await supabase.from('rooms').update({ status }).eq('id', roomId);
+  }
+
+  public async getLiveOnlinePlayerCount(): Promise<number | null> {
+    // Ideally query presence from Supabase, but return a fallback or null for now
     return null;
   }
 }

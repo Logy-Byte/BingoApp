@@ -5,13 +5,14 @@
  * zero emojis (100% SVG vector currency), and PremiumEmptyState fallback.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
@@ -24,6 +25,7 @@ import {
 } from '../components/icons/CustomIcons';
 import { TactileRoomCard } from '../components/room/TactileRoomCard';
 import { PremiumEmptyState } from '../components/common/PremiumEmptyState';
+import { globalRoomManager } from '../domain/multiplayer/roomManager';
 
 interface RoomSelectionScreenProps {
   coins: number;
@@ -32,79 +34,6 @@ interface RoomSelectionScreenProps {
   onBack: () => void;
 }
 
-const DEFAULT_ROOMS: PublicRoom[] = [
-  {
-    id: 'R101',
-    name: 'Emerald Lounge',
-    privacy: 'open',
-    hostId: 'system',
-    hostName: 'System',
-    playerCount: 14,
-    maxPlayers: 50,
-    status: 'ACTIVE',
-    createdAt: Date.now(),
-    ticketPrice: 2.0,
-    jackpotAmount: 235000,
-    recommendedTickets: [1, 2, 4, 8],
-  },
-  {
-    id: 'R102',
-    name: 'Silver Suite',
-    privacy: 'open',
-    hostId: 'system',
-    hostName: 'System',
-    playerCount: 22,
-    maxPlayers: 50,
-    status: 'ACTIVE',
-    createdAt: Date.now(),
-    ticketPrice: 3.0,
-    jackpotAmount: 150000,
-    recommendedTickets: [1, 2, 4, 8],
-  },
-  {
-    id: 'R103',
-    name: 'Golden Arena',
-    privacy: 'open',
-    hostId: 'system',
-    hostName: 'System',
-    playerCount: 8,
-    maxPlayers: 50,
-    status: 'WAITING',
-    createdAt: Date.now(),
-    ticketPrice: 5.0,
-    jackpotAmount: 500000,
-    recommendedTickets: [1, 2, 4, 8],
-  },
-  {
-    id: 'R104',
-    name: 'Penny Rush',
-    privacy: 'open',
-    hostId: 'system',
-    hostName: 'System',
-    playerCount: 35,
-    maxPlayers: 50,
-    status: 'ACTIVE',
-    createdAt: Date.now(),
-    ticketPrice: 1.0,
-    jackpotAmount: 75000,
-    recommendedTickets: [1, 2, 4, 8],
-  },
-  {
-    id: 'R105',
-    name: 'High Roller Salon',
-    privacy: 'open',
-    hostId: 'system',
-    hostName: 'System',
-    playerCount: 40,
-    maxPlayers: 50,
-    status: 'ACTIVE',
-    createdAt: Date.now(),
-    ticketPrice: 10.0,
-    jackpotAmount: 1000000,
-    recommendedTickets: [1, 2, 4, 8],
-  },
-];
-
 export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
   coins,
   gems,
@@ -112,7 +41,30 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
   onBack,
 }) => {
   const { theme } = useTheme();
-  const [rooms] = useState<PublicRoom[]>(DEFAULT_ROOMS);
+  const [rooms, setRooms] = useState<PublicRoom[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        const publicRooms = await globalRoomManager.getAvailablePublicRooms();
+        if (mounted) {
+          setRooms(publicRooms);
+        }
+      } catch (e) {
+        console.error('Failed to fetch rooms', e);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchRooms();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bgCanvas }]}>
@@ -163,7 +115,14 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
           </Text>
         </View>
 
-        {rooms.length === 0 ? (
+        {loading ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={{ marginTop: 12, color: theme.textSecondary, fontFamily: TYPOGRAPHY.fontFamily }}>
+              Finding active rooms...
+            </Text>
+          </View>
+        ) : rooms.length === 0 ? (
           <PremiumEmptyState
             variant="NO_ACTIVE_ROOMS"
             onAction={onBack}

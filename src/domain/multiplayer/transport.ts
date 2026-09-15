@@ -13,6 +13,7 @@ export type MultiplayerMessageType =
   | 'START_COUNTDOWN'
   | 'MATCH_STARTED'
   | 'NUMBER_DRAWN'
+  | 'CALL_NUMBER_REQUEST'
   | 'OPPONENT_PROGRESS'
   | 'CLAIM_BINGO_REQUEST'
   | 'CLAIM_VERIFICATION_RESULT'
@@ -50,6 +51,8 @@ export class RoomTransport {
   private maxProcessedMemory = 500;
   private seqCounter = 0;
   private isClosed = false;
+  private isSubscribed = false;
+  private pendingMessages: any[] = [];
 
   constructor(roomId: string) {
     this.channelName = `bingo_room_${roomId.toUpperCase()}`;
@@ -57,7 +60,11 @@ export class RoomTransport {
   }
 
   private initTransport() {
-    this.supabaseChannel = supabase.channel(this.channelName);
+    this.supabaseChannel = supabase.channel(this.channelName, {
+      config: {
+        broadcast: { ack: true, self: true },
+      },
+    });
     
     this.supabaseChannel
       .on('broadcast', { event: 'transport_message' }, (payload: any) => {
@@ -66,8 +73,19 @@ export class RoomTransport {
       .subscribe((status: any) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Successfully connected to realtime channel: ${this.channelName}`);
+          this.isSubscribed = true;
+          this.flushPendingMessages();
         }
       });
+  }
+
+  private flushPendingMessages() {
+    if (!this.supabaseChannel || this.isClosed || !this.isSubscribed) return;
+    const messages = [...this.pendingMessages];
+    this.pendingMessages = [];
+    messages.forEach((msg) => {
+      this.supabaseChannel!.send(msg).catch((err: any) => console.warn('Supabase Realtime pending postMessage error:', err));
+    });
   }
 
   private handleIncomingMessage(message: TransportMessage) {
@@ -114,14 +132,29 @@ export class RoomTransport {
     // Mark as processed locally so we don't handle our own broadcast if echoed
     this.processedMsgIds.add(message.msgId);
 
+    const broadcastPayload = {
+      type: 'broadcast' as const,
+      event: 'transport_message',
+      payload: message,
+    };
+
     // Broadcast via Supabase Realtime
     if (this.supabaseChannel && !this.isClosed) {
-      this.supabaseChannel.send({
-        type: 'broadcast',
-        event: 'transport_message',
-        payload: message,
-      }).catch((err: any) => console.warn('Supabase Realtime postMessage error:', err));
+      if (this.isSubscribed) {
+        this.supabaseChannel.send(broadcastPayload).catch((err: any) => console.warn('Supabase Realtime postMessage error:', err));
+      } else {
+        this.pendingMessages.push(broadcastPayload);
+      }
     }
+
+    // Local loopback: allow the sender to process their own outgoing messages immediately
+    this.handlers.forEach((handler) => {
+      try {
+        handler(message);
+      } catch (err) {
+        console.error('Error in local transport message loopback:', err);
+      }
+    });
 
     return message;
   }
@@ -135,6 +168,8 @@ export class RoomTransport {
 
   public close() {
     this.isClosed = true;
+    this.isSubscribed = false;
+    this.pendingMessages = [];
     this.handlers.clear();
     if (this.supabaseChannel) {
       supabase.removeChannel(this.supabaseChannel);
