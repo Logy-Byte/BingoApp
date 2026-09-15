@@ -1,11 +1,17 @@
 const React = require('react');
 
 const SvgComponent = (props) => {
-  return React.createElement('svg', props, props.children);
+  const cleanProps = { ...props };
+  delete cleanProps.xmlns;
+  return React.createElement('svg', cleanProps, cleanProps.children);
 };
 
 const mockComponent = (tag) => {
-  const Comp = (props) => React.createElement(tag, props, props.children);
+  const Comp = ({ children, ...props }) => {
+    // Map react-native-svg props to web SVG attributes if needed
+    const cleanProps = { ...props };
+    return React.createElement(tag, cleanProps, children);
+  };
   Comp.displayName = tag;
   return Comp;
 };
@@ -15,7 +21,7 @@ const elements = [
   'Polyline', 'Line', 'Rect', 'Use', 'Image', 'Symbol', 'Defs', 'LinearGradient',
   'RadialGradient', 'Stop', 'ClipPath', 'Pattern', 'Mask', 'Marker',
   'Svg', 'SvgUri', 'SvgXml', 'Filter', 'FeGaussianBlur', 'FeMerge', 'FeMergeNode',
-  'FeColorMatrix', 'FeDropShadow', 'FeOffset', 'FeBlend'
+  'FeColorMatrix', 'FeDropShadow', 'FeOffset', 'FeBlend', 'FeComposite'
 ];
 
 const mockSvg = {
@@ -25,7 +31,9 @@ const mockSvg = {
 };
 
 elements.forEach((el) => {
-  const htmlTag = el.toLowerCase().startsWith('fe') ? el : el.toLowerCase();
+  const htmlTag = el.startsWith('Fe') 
+    ? 'fe' + el.slice(2).toLowerCase() 
+    : el.toLowerCase();
   mockSvg[el] = mockComponent(htmlTag);
 });
 

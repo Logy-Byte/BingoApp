@@ -16,6 +16,9 @@ module.exports = {
       'react-native-svg$': path.resolve(appDirectory, 'src/web-mocks/react-native-svg.js'),
       'react-native-tts$': path.resolve(appDirectory, 'src/web-mocks/react-native-tts.js'),
       'react-native-haptic-feedback$': path.resolve(appDirectory, 'src/web-mocks/react-native-haptic-feedback.js'),
+      '@react-native-async-storage/async-storage$': path.resolve(appDirectory, 'src/web-mocks/async-storage.js'),
+      'react-native-url-polyfill/auto$': path.resolve(appDirectory, 'src/web-mocks/url-polyfill.js'),
+      'react-native-url-polyfill$': path.resolve(appDirectory, 'src/web-mocks/url-polyfill.js'),
     },
   },
   module: {

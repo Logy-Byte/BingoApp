@@ -590,7 +590,7 @@ function MainApp() {
             onFinish={() => {
               if (authStatus === 'AUTHENTICATED') {
                 setScreenState('TAB_NAV');
-              } else if (authStatus === 'UNAUTHENTICATED') {
+              } else {
                 setScreenState('SIGN_IN');
               }
             }}
