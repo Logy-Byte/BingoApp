@@ -377,12 +377,12 @@ function MainApp() {
     setScreenState('ROOMS');
   };
 
-  const handleCreateRoom = (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
+  const handleCreateRoom = async (name: string = 'Friendly Arena', privacy: RoomPrivacy = 'open', password?: string) => {
     setGameMode('FRIEND');
     multiplayer.createRoom(name, privacy, password);
   };
 
-  const handleJoinRoom = (roomId: string, password?: string) => {
+  const handleJoinRoom = async (roomId: string, password?: string) => {
     setGameMode('FRIEND');
     multiplayer.joinRoom(roomId, password);
   };
@@ -779,6 +779,9 @@ function MainApp() {
               claimFeedback={multiplayer.room ? multiplayer.claimFeedback : claimFeedback}
               opponentLines={gameMode === 'ROBOT' ? robotLines : (multiplayer.room ? multiplayer.opponentLines : undefined)}
               opponentName={gameMode === 'ROBOT' ? 'Robot AI' : (multiplayer.room ? multiplayer.opponentName : undefined)}
+              currentTurnPlayerId={multiplayer.room ? multiplayer.currentTurnPlayerId : undefined}
+              turnExpiresAt={multiplayer.room ? multiplayer.turnExpiresAt : undefined}
+              playerId={player.id}
             />
           ) : null
         )}

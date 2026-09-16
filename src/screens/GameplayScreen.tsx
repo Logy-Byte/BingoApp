@@ -45,6 +45,9 @@ interface GameplayScreenProps {
   claimFeedback?: { success: boolean; message: string } | null;
   opponentLines?: number;
   opponentName?: string;
+  currentTurnPlayerId?: string;
+  turnExpiresAt?: number;
+  playerId?: string;
 }
 
 export const GameplayScreen: React.FC<GameplayScreenProps> = ({
@@ -63,10 +66,25 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
   claimFeedback,
   opponentLines,
   opponentName,
+  currentTurnPlayerId,
+  turnExpiresAt,
+  playerId,
 }) => {
   const { theme } = useTheme();
   const [activeBoardIdx, setActiveBoardIdx] = useState<number>(0);
   const [isBingoPressed, setIsBingoPressed] = useState<boolean>(false);
+  const [turnSecondsLeft, setTurnSecondsLeft] = useState<number>(0);
+
+  React.useEffect(() => {
+    if (!turnExpiresAt || !currentTurnPlayerId) return;
+    
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((turnExpiresAt - Date.now()) / 1000));
+      setTurnSecondsLeft(remaining);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [turnExpiresAt, currentTurnPlayerId]);
 
   const allBoards = [board, ...additionalBoards];
   const currentBoard = allBoards[activeBoardIdx] || board;
@@ -80,6 +98,26 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
       contentContainerStyle={[styles.container, { backgroundColor: theme.bgCanvas }]}
       showsVerticalScrollIndicator={false}
     >
+      {/* TURN INDICATOR (Only for multiplayer matches) */}
+      {currentTurnPlayerId && playerId && (
+        <View style={{
+          backgroundColor: currentTurnPlayerId === playerId ? COLORS.primaryOrange : theme.bgRecessed,
+          paddingVertical: 10,
+          alignItems: 'center',
+          borderBottomWidth: 1,
+          borderColor: theme.borderSubtle
+        }}>
+          <Text style={{
+            fontFamily: TYPOGRAPHY.monoFamily,
+            color: currentTurnPlayerId === playerId ? COLORS.cleanWhite : theme.textMuted,
+            fontSize: 14,
+            fontWeight: 'bold'
+          }}>
+            {currentTurnPlayerId === playerId ? `YOUR TURN (${turnSecondsLeft}s)` : `OPPONENT'S TURN (${turnSecondsLeft}s)`}
+          </Text>
+        </View>
+      )}
+
       {/* TOP MATCH TELEMETRY HUD */}
       <View style={[styles.hudBar, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
         <View style={styles.hudBevel} />

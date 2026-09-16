@@ -22,6 +22,8 @@ export interface AuthoritativeRoomSnapshot {
   seed: string;
   winner?: { id: string; name: string } | null;
   matchDurationSec: number;
+  currentTurnPlayerId?: string;
+  turnExpiresAt?: number;
 }
 
 export class AuthoritativeRoomServer {
@@ -37,6 +39,11 @@ export class AuthoritativeRoomServer {
   private winner: { id: string; name: string } | null = null;
   private unsubscribeTransport: (() => void) | null = null;
   private isDestroyed = false;
+  
+  private currentTurnPlayerId: string | undefined;
+  private turnExpiresAt: number | undefined;
+  private turnTimerInterval: any = null;
+  private readonly TURN_DURATION_MS = 10000;
 
   constructor(room: PublicRoom, hostPlayer: Player, transport: RoomTransport) {
     this.room = { ...room };
@@ -75,6 +82,8 @@ export class AuthoritativeRoomServer {
       seed: this.seed,
       winner: this.winner,
       matchDurationSec: this.matchStartTime > 0 ? Math.floor((Date.now() - this.matchStartTime) / 1000) : 0,
+      currentTurnPlayerId: this.currentTurnPlayerId,
+      turnExpiresAt: this.turnExpiresAt,
     };
   }
 
@@ -101,19 +110,24 @@ export class AuthoritativeRoomServer {
     this.getPlayerBoard(opponentPlayer.id);
 
     this.room.status = 'ACTIVE';
-    this.room.playerCount = 2;
+    this.room.playerCount = this.players.size;
     this.numberPool = generate5x5NumberPool();
     this.drawnNumbers = [];
     this.winner = null;
     this.matchStartTime = Date.now();
 
-    // Broadcast instant match start to both clients
+    // Assign first turn randomly or to host
+    const playerIds = Array.from(this.players.keys());
+    this.currentTurnPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
+    this.turnExpiresAt = Date.now() + this.TURN_DURATION_MS;
+
+    // Broadcast instant match start to all clients
     this.transport.send('MATCH_STARTED', this.room.id, this.room.hostId, {
       snapshot: this.getSnapshot(),
     });
 
-    // Start caller ticker
-    this.startBallCaller();
+    // Start turn timeout checker
+    this.startTurnTimer();
   }
 
   private broadcastRoomAnnounce() {
@@ -323,6 +337,40 @@ export class AuthoritativeRoomServer {
     }, 3000);
   }
 
+  private startTurnTimer() {
+    if (this.turnTimerInterval) {
+      clearInterval(this.turnTimerInterval);
+    }
+    
+    this.turnTimerInterval = setInterval(() => {
+      if (this.room.status !== 'ACTIVE' || this.isDestroyed || this.winner) {
+        clearInterval(this.turnTimerInterval);
+        return;
+      }
+      
+      if (this.turnExpiresAt && Date.now() >= this.turnExpiresAt) {
+        // Current player timed out! Opponent wins.
+        clearInterval(this.turnTimerInterval);
+        
+        const opponentId = Array.from(this.players.keys()).find(id => id !== this.currentTurnPlayerId);
+        const opponent = opponentId ? this.players.get(opponentId) : null;
+        
+        if (opponent) {
+           this.winner = { id: opponent.id, name: opponent.name };
+           opponent.hasWon = true;
+           this.room.status = 'CLOSED';
+           
+           this.transport.send('WINNER_DECLARED', this.room.id, this.room.hostId, {
+             winnerId: opponent.id,
+             winnerName: opponent.name,
+             reason: 'Opponent timed out',
+             snapshot: this.getSnapshot(),
+           });
+        }
+      }
+    }, 1000);
+  }
+
   private startBallCaller() {
     // Automatic timer is disabled for manual turn-based calling.
     // Numbers are now drawn when a client sends CALL_NUMBER_REQUEST.
@@ -333,7 +381,13 @@ export class AuthoritativeRoomServer {
   }
 
   private handleCallNumberRequest(message: TransportMessage<{ number: number }>) {
-    if (this.room.status !== 'ACTIVE' || this.isDestroyed) return;
+    if (this.room.status !== 'ACTIVE' || this.isDestroyed || this.winner) return;
+
+    // Verify it's the sender's turn
+    if (this.currentTurnPlayerId && message.senderId !== this.currentTurnPlayerId) {
+      console.warn(`[RoomServer] Ignored CALL_NUMBER_REQUEST from ${message.senderId}: not their turn.`);
+      return;
+    }
 
     const requestedNumber = message.payload.number;
     
@@ -346,12 +400,21 @@ export class AuthoritativeRoomServer {
     // Remove it from the numberPool so it isn't drawn again if we re-enable automatic calling
     this.numberPool = this.numberPool.filter(n => n !== requestedNumber);
 
+    // Switch turns
+    const opponentId = Array.from(this.players.keys()).find(id => id !== message.senderId);
+    if (opponentId) {
+      this.currentTurnPlayerId = opponentId;
+      this.turnExpiresAt = Date.now() + this.TURN_DURATION_MS;
+    }
+
     // Broadcast the newly called number to all players (including the sender via loopback)
     this.transport.send('NUMBER_DRAWN', this.room.id, this.room.hostId, {
       number: requestedNumber,
       drawnNumbers: [...this.drawnNumbers],
       remaining: this.numberPool.length,
       callOrder: this.drawnNumbers.length,
+      nextTurnPlayerId: this.currentTurnPlayerId,
+      turnExpiresAt: this.turnExpiresAt,
     });
   }
 

@@ -52,6 +52,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
   const [matchDuration, setMatchDuration] = useState(0);
   const [opponentLines, setOpponentLines] = useState<number>(0);
   const [opponentName, setOpponentName] = useState<string>('Opponent');
+  const [currentTurnPlayerId, setCurrentTurnPlayerId] = useState<string | undefined>();
+  const [turnExpiresAt, setTurnExpiresAt] = useState<number | undefined>();
 
   // Single-page room state machine
   const [roomPageState, setRoomPageState] = useState<RoomPageState>('IDLE');
@@ -197,6 +199,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
               const guestBoard = generate5x5Board(`b-${player.id}`, `${msg.payload.snapshot.seed}-${player.id}`, false);
               setBoard(guestBoard);
             }
+            setCurrentTurnPlayerId(msg.payload.snapshot.currentTurnPlayerId);
+            setTurnExpiresAt(msg.payload.snapshot.turnExpiresAt);
           }
 
           onNavigateToScreen('GAMEPLAY');
@@ -204,8 +208,10 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         }
 
         case 'NUMBER_DRAWN': {
-          const { number, drawnNumbers: calls } = msg.payload;
+          const { number, drawnNumbers: calls, nextTurnPlayerId, turnExpiresAt: newExpiresAt } = msg.payload;
           setDrawnNumbers(calls);
+          setCurrentTurnPlayerId(nextTurnPlayerId);
+          setTurnExpiresAt(newExpiresAt);
           SoundEngine.playBallDrawn();
           SoundEngine.speakNumber(number);
           break;
@@ -467,6 +473,17 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
       // Authoritative anti-cheat validation: if it hasn't been called, call it!
       const isLegitCalled = AntiCheatValidator.validateDaub(cell.value, drawnNumbers);
       if (!isLegitCalled) {
+        // Enforce turn based calling
+        if (currentTurnPlayerId && currentTurnPlayerId !== player.id) {
+          SoundEngine.playError();
+          setClaimFeedback({
+            success: false,
+            message: "It's not your turn!",
+          });
+          setTimeout(() => setClaimFeedback(null), 1400);
+          return;
+        }
+
         // Send a request to call this number to the server.
         // We do NOT mark the cell yet. The server will broadcast NUMBER_DRAWN,
         // and the player will manually mark it once it appears as drawn.
@@ -701,6 +718,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     matchDuration,
     opponentLines,
     opponentName,
+    currentTurnPlayerId,
+    turnExpiresAt,
     isHost,
     canStart,
     roomPageState,
