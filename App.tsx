@@ -107,6 +107,8 @@ function MainApp() {
   // AI Robot Opponent State
   const robotRef = useRef<RobotOpponent | null>(null);
   const [robotLines, setRobotLines] = useState<number>(0);
+  const [currentTurnPlayerId, setCurrentTurnPlayerId] = useState<string | undefined>();
+  const [turnExpiresAt, setTurnExpiresAt] = useState<number | undefined>();
 
   const callerIntervalRef = useRef<any>(null);
 
@@ -362,6 +364,8 @@ function MainApp() {
 
     robotRef.current = new RobotOpponent(difficulty, `robot-${seed}`);
     setRobotLines(0);
+    setCurrentTurnPlayerId(player.id);
+    setTurnExpiresAt(Date.now() + 10000); // 10 seconds timeout
     setScreenState('GAMEPLAY');
   };
 
@@ -428,15 +432,33 @@ function MainApp() {
       if (!targetBoard || !isGameActive) return;
       if (cell.state === 'MARKED' || cell.state === 'COMPLETED') return;
 
-      const isLegitCalled = AntiCheatValidator.validateDaub(cell.value, drawnNumbers);
-      if (!isLegitCalled) {
-        SoundEngine.playError();
-        setClaimFeedback({
-          success: false,
-          message: `Number ${cell.value} has not been called yet!`,
-        });
-        setTimeout(() => setClaimFeedback(null), 1400);
-        return;
+      if (gameMode === 'ROBOT') {
+        if (currentTurnPlayerId !== player.id) {
+          SoundEngine.playError();
+          return;
+        }
+
+        const isAlreadyCalled = drawnNumbers.includes(cell.value);
+        if (!isAlreadyCalled) {
+          // Player calls a new number
+          setDrawnNumbers((prevCalls) => [cell.value, ...prevCalls]);
+          SoundEngine.playBallDrawn();
+          SoundEngine.speakNumber(cell.value);
+
+          // Remove from pool if it was there
+          setNumberPool((prev) => prev.filter((n) => n !== cell.value));
+        }
+      } else {
+        const isLegitCalled = AntiCheatValidator.validateDaub(cell.value, drawnNumbers);
+        if (!isLegitCalled) {
+          SoundEngine.playError();
+          setClaimFeedback({
+            success: false,
+            message: `Number ${cell.value} has not been called yet!`,
+          });
+          setTimeout(() => setClaimFeedback(null), 1400);
+          return;
+        }
       }
 
       const newMatrix = targetBoard.matrix.map((row) =>
@@ -486,8 +508,24 @@ function MainApp() {
 
         setTimeout(() => setLastCompletedPatternName(undefined), 2500);
       }
+
+      if (gameMode === 'ROBOT' && currentTurnPlayerId === player.id) {
+        // Pass turn to AI
+        if (robotRef.current) {
+          robotRef.current.onNumberCalled(cell.value, (_r, _c, robotLinesCount) => {
+            setRobotLines(robotLinesCount);
+            if (robotLinesCount >= 3) {
+              setIsGameActive(false);
+              setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
+              setScreenState('RESULTS');
+            }
+          });
+        }
+        setCurrentTurnPlayerId('ROBOT');
+        setTurnExpiresAt(Date.now() + 10000);
+      }
     },
-    [board, additionalBoards, isGameActive, drawnNumbers, completedPatternIds]
+    [board, additionalBoards, isGameActive, drawnNumbers, completedPatternIds, gameMode, currentTurnPlayerId, player.id, matchStartTime]
   );
 
   // Solo Claim Bingo
@@ -536,50 +574,99 @@ function MainApp() {
     }
   }, [player.rating, player.tier]);
 
-  // Automated Solo Ball Caller Loop
+  // Turn-based logic & timeouts for AI Mode
   useEffect(() => {
-    if (gameMode !== 'FRIEND' && screenState === 'GAMEPLAY' && isGameActive && !isPaused) {
+    if (gameMode === 'ROBOT' && screenState === 'GAMEPLAY' && isGameActive && !isPaused) {
+      const interval = setInterval(() => {
+        const now = Date.now();
+        if (turnExpiresAt && now > turnExpiresAt) {
+          // Timeout reached
+          if (currentTurnPlayerId === player.id) {
+            // Player timed out -> player loses
+            setIsGameActive(false);
+            setMatchDuration(Math.floor((now - matchStartTime) / 1000));
+            setClaimFeedback({
+              success: false,
+              message: 'Turn timed out! You lose.',
+            });
+            setTimeout(() => setScreenState('RESULTS'), 2000);
+          } else {
+            // Robot timed out -> shouldn't happen, but pass turn to player to unblock
+            setCurrentTurnPlayerId(player.id);
+            setTurnExpiresAt(now + 10000);
+          }
+        }
+      }, 1000);
+
+      // AI turn execution logic
+      if (currentTurnPlayerId === 'ROBOT' && turnExpiresAt) {
+        // Simulate some thinking time (1.5s to 3s)
+        const thinkingTime = Math.random() * 1500 + 1500;
+        const aiTimeout = setTimeout(() => {
+          if (!isGameActive || isPaused) return;
+          // Pick a random uncalled number
+          setNumberPool((prevPool) => {
+            if (prevPool.length === 0) return prevPool;
+            const nextNumber = prevPool[Math.floor(Math.random() * prevPool.length)];
+            const remaining = prevPool.filter((n) => n !== nextNumber);
+
+            setDrawnNumbers((prevCalls) => [nextNumber, ...prevCalls]);
+            SoundEngine.playBallDrawn();
+            SoundEngine.speakNumber(nextNumber);
+
+            if (robotRef.current) {
+              robotRef.current.onNumberCalled(nextNumber, (_r, _c, robotLinesCount) => {
+                setRobotLines(robotLinesCount);
+                if (robotLinesCount >= 3) {
+                  setIsGameActive(false);
+                  setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
+                  setScreenState('RESULTS');
+                }
+              });
+            }
+
+            // Auto-daub for player if they have it (in traditional vs AI we just give it back to player)
+            // But wait, if AI calls it, player usually has to daub it manually.
+            // For turn-based, let's let the player daub it manually, but pass the turn to player!
+            // BUT, if we pass turn to player, the player might just call a new number without daubing the AI's number!
+            // In Tic-Tac-Toe bingo, you just call it and it auto-daubs. Let's auto-daub for player to keep it simple, OR 
+            // the player just has to notice. Actually, the player's board is auto-daubed in most digital games. Let's not auto daub. Player can daub it.
+            
+            // Wait, we need to pass the turn to the player
+            setCurrentTurnPlayerId(player.id);
+            setTurnExpiresAt(Date.now() + 10000);
+            return remaining;
+          });
+        }, thinkingTime);
+        return () => {
+          clearInterval(interval);
+          clearTimeout(aiTimeout);
+        };
+      }
+
+      return () => clearInterval(interval);
+    } else if (gameMode !== 'FRIEND' && gameMode !== 'ROBOT' && screenState === 'GAMEPLAY' && isGameActive && !isPaused) {
+      // Legacy Automated caller for LOCAL / DAILY
       callerIntervalRef.current = setInterval(() => {
         setNumberPool((prevPool) => {
           if (prevPool.length === 0) {
             if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
             return prevPool;
           }
-
           const nextNumber = prevPool[0];
           const remaining = prevPool.slice(1);
-
           setDrawnNumbers((prevCalls) => [nextNumber, ...prevCalls]);
           SoundEngine.playBallDrawn();
           SoundEngine.speakNumber(nextNumber);
-
-          if (robotRef.current) {
-            robotRef.current.onNumberCalled(nextNumber, (_r, _c, robotLinesCount) => {
-              setRobotLines(robotLinesCount);
-              if (robotLinesCount >= 3) {
-                if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
-                setIsGameActive(false);
-                setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
-                setScreenState('RESULTS');
-              }
-            });
-          }
-
           return remaining;
         });
       }, 3500);
-    } else {
-      if (callerIntervalRef.current) {
-        clearInterval(callerIntervalRef.current);
-      }
-    }
 
-    return () => {
-      if (callerIntervalRef.current) {
-        clearInterval(callerIntervalRef.current);
-      }
-    };
-  }, [gameMode, screenState, isGameActive, isPaused, matchStartTime]);
+      return () => {
+        if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
+      };
+    }
+  }, [gameMode, screenState, isGameActive, isPaused, matchStartTime, currentTurnPlayerId, turnExpiresAt, player.id]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bgCanvas }]}>
@@ -779,8 +866,8 @@ function MainApp() {
               claimFeedback={multiplayer.room ? multiplayer.claimFeedback : claimFeedback}
               opponentLines={gameMode === 'ROBOT' ? robotLines : (multiplayer.room ? multiplayer.opponentLines : undefined)}
               opponentName={gameMode === 'ROBOT' ? 'Robot AI' : (multiplayer.room ? multiplayer.opponentName : undefined)}
-              currentTurnPlayerId={multiplayer.room ? multiplayer.currentTurnPlayerId : undefined}
-              turnExpiresAt={multiplayer.room ? multiplayer.turnExpiresAt : undefined}
+              currentTurnPlayerId={multiplayer.room ? multiplayer.currentTurnPlayerId : (gameMode === 'ROBOT' ? currentTurnPlayerId : undefined)}
+              turnExpiresAt={multiplayer.room ? multiplayer.turnExpiresAt : (gameMode === 'ROBOT' ? turnExpiresAt : undefined)}
               playerId={player.id}
             />
           ) : null
