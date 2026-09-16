@@ -120,7 +120,7 @@ function MainApp() {
   // Authoritative Realtime Multiplayer Room Controller
   const multiplayer = useMultiplayerRoom({
     player,
-    onNavigateToScreen: (screen) => setScreenState(screen),
+    onNavigateToScreen: setScreenState,
   });
 
   // Supabase & Local Session State Listener
@@ -388,7 +388,7 @@ function MainApp() {
 
   const handleJoinRoom = async (roomId: string, password?: string) => {
     setGameMode('FRIEND');
-    multiplayer.joinRoom(roomId, password);
+    await multiplayer.joinRoom(roomId, password);
   };
 
   const handleSelectRoom = (room: PublicRoom, ticketCount?: number) => {
@@ -431,6 +431,8 @@ function MainApp() {
       const targetBoard = boardIndex === 0 ? board : additionalBoards[boardIndex - 1];
       if (!targetBoard || !isGameActive) return;
       if (cell.state === 'MARKED' || cell.state === 'COMPLETED') return;
+      
+      let justCalled = false;
 
       if (gameMode === 'ROBOT') {
         if (currentTurnPlayerId !== player.id) {
@@ -440,6 +442,7 @@ function MainApp() {
 
         const isAlreadyCalled = drawnNumbers.includes(cell.value);
         if (!isAlreadyCalled) {
+          justCalled = true;
           // Player calls a new number
           setDrawnNumbers((prevCalls) => [cell.value, ...prevCalls]);
           SoundEngine.playBallDrawn();
@@ -509,7 +512,7 @@ function MainApp() {
         setTimeout(() => setLastCompletedPatternName(undefined), 2500);
       }
 
-      if (gameMode === 'ROBOT' && currentTurnPlayerId === player.id) {
+      if (gameMode === 'ROBOT' && justCalled) {
         // Pass turn to AI
         if (robotRef.current) {
           robotRef.current.onNumberCalled(cell.value, (_r, _c, robotLinesCount) => {

@@ -39,7 +39,7 @@ export class AuthoritativeRoomServer {
   private winner: { id: string; name: string } | null = null;
   private unsubscribeTransport: (() => void) | null = null;
   private isDestroyed = false;
-  
+
   private currentTurnPlayerId: string | undefined;
   private turnExpiresAt: number | undefined;
   private turnTimerInterval: any = null;
@@ -201,7 +201,7 @@ export class AuthoritativeRoomServer {
     }
 
     // Check expiry (e.g. 15 minutes = 900,000 ms)
-    const isExpired = this.room.status === 'EXPIRED' || (Date.now() - this.room.createdAt > 900000);
+    const isExpired = this.room.status === 'EXPIRED' || (Date.now() - this.room.createdAt > 300000);
     if (isExpired) {
       this.room.status = 'EXPIRED';
       this.transport.send('JOIN_RESPONSE', this.room.id, this.room.hostId, {
@@ -341,31 +341,31 @@ export class AuthoritativeRoomServer {
     if (this.turnTimerInterval) {
       clearInterval(this.turnTimerInterval);
     }
-    
+
     this.turnTimerInterval = setInterval(() => {
       if (this.room.status !== 'ACTIVE' || this.isDestroyed || this.winner) {
         clearInterval(this.turnTimerInterval);
         return;
       }
-      
+
       if (this.turnExpiresAt && Date.now() >= this.turnExpiresAt) {
         // Current player timed out! Opponent wins.
         clearInterval(this.turnTimerInterval);
-        
+
         const opponentId = Array.from(this.players.keys()).find(id => id !== this.currentTurnPlayerId);
         const opponent = opponentId ? this.players.get(opponentId) : null;
-        
+
         if (opponent) {
-           this.winner = { id: opponent.id, name: opponent.name };
-           opponent.hasWon = true;
-           this.room.status = 'CLOSED';
-           
-           this.transport.send('WINNER_DECLARED', this.room.id, this.room.hostId, {
-             winnerId: opponent.id,
-             winnerName: opponent.name,
-             reason: 'Opponent timed out',
-             snapshot: this.getSnapshot(),
-           });
+          this.winner = { id: opponent.id, name: opponent.name };
+          opponent.hasWon = true;
+          this.room.status = 'CLOSED';
+
+          this.transport.send('WINNER_DECLARED', this.room.id, this.room.hostId, {
+            winnerId: opponent.id,
+            winnerName: opponent.name,
+            reason: 'Opponent timed out',
+            snapshot: this.getSnapshot(),
+          });
         }
       }
     }, 1000);
@@ -390,7 +390,7 @@ export class AuthoritativeRoomServer {
     }
 
     const requestedNumber = message.payload.number;
-    
+
     // Check if it was already drawn to prevent duplicates
     if (this.drawnNumbers.includes(requestedNumber)) return;
 

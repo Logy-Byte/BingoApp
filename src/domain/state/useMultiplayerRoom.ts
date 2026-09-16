@@ -66,6 +66,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
   // Concurrency and race protection flags
   const isCreatingRef = useRef<boolean>(false);
   const isJoiningRef = useRef<boolean>(false);
+  const joinPromiseRef = useRef<{ resolve: () => void; reject: (err: string) => void } | null>(null);
 
   const isHost = room?.hostId === player.id;
   const canStart = Boolean(
@@ -142,6 +143,9 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
                 })
               );
               stateMachineRef.current.transition({ type: 'JOIN_SUCCESS', roomId: snapshot.room.id });
+              joinPromiseRef.current?.resolve();
+              joinPromiseRef.current = null;
+              onNavigateToScreen('LOBBY');
             } else {
               const friendlyError = error || 'Unable to join the room. Please try again.';
               setJoinError(friendlyError);
@@ -153,6 +157,8 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
                 setRoomPageState('ERROR');
               }
               SoundEngine.playError();
+              joinPromiseRef.current?.reject(friendlyError);
+              joinPromiseRef.current = null;
             }
           }
           break;
@@ -355,6 +361,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         );
 
         stateMachineRef.current.transition({ type: 'ROOM_CREATED', roomId });
+        onNavigateToScreen('LOBBY');
       } catch (err: any) {
         console.error('CREATE ROOM ERROR:', err);
         setJoinError(`Unable to create room: ${err?.message || err}`);
@@ -369,71 +376,82 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
 
   // 2. Join Room (with Race & Duplicate Request Protection)
   const joinRoom = useCallback(
-    async (rawRoomId: string, password?: string) => {
-      if (isJoiningRef.current) return;
-
-      const formatCheck = validateRoomCodeFormat(rawRoomId);
-      if (!formatCheck.valid) {
-        setJoinError(formatCheck.error);
-        setRoomPageState('ERROR');
-        SoundEngine.playError();
-        return;
-      }
-
-      const cleanId = sanitizeRoomCode(rawRoomId);
-
-      // Same-user protection on client side
-      if (room && room.hostId === player.id && room.id === cleanId) {
-        setJoinError('You already own this room.');
-        setRoomPageState('ERROR');
-        SoundEngine.playError();
-        return;
-      }
-
-      isJoiningRef.current = true;
-      setJoinError(undefined);
-      setRoomPageState('JOINING');
-
-      try {
-        const { globalRoomManager } = await import('../multiplayer/roomManager');
-        const joinResult = await globalRoomManager.joinRoom(cleanId, player, password);
-        
-        if (!joinResult.success) {
-          isJoiningRef.current = false;
-          setJoinError(joinResult.error || 'Unable to join the room.');
-          setRoomPageState('ERROR');
-          SoundEngine.playError();
-          return;
+    (rawRoomId: string, password?: string): Promise<void> => {
+      return new Promise<void>(async (resolve, reject) => {
+        if (isJoiningRef.current) {
+          return reject('Already joining a room.');
         }
 
-        const transport = setupTransport(cleanId);
+        const formatCheck = validateRoomCodeFormat(rawRoomId);
+        if (!formatCheck.valid) {
+          setJoinError(formatCheck.error);
+          setRoomPageState('ERROR');
+          SoundEngine.playError();
+          return reject(formatCheck.error || 'Invalid code');
+        }
 
-        // Send Join Request to authoritative room host
-        transport.send('JOIN_REQUEST', cleanId, player.id, {
-          player,
-          password,
-        });
+        const cleanId = sanitizeRoomCode(rawRoomId);
 
-        // Speculative board while waiting for server response
-        const speculativeBoard = generate5x5Board(`b-${player.id}`, `join-${cleanId}-${Date.now()}`, false);
-        setBoard(speculativeBoard);
+        // Same-user protection on client side
+        if (room && room.hostId === player.id && room.id === cleanId) {
+          setJoinError('You already own this room.');
+          setRoomPageState('ERROR');
+          SoundEngine.playError();
+          return reject('You already own this room.');
+        }
 
-        // Timeout fallback if host never responds within 8s
-        setTimeout(() => {
-          if (isJoiningRef.current) {
+        isJoiningRef.current = true;
+        setJoinError(undefined);
+        setRoomPageState('JOINING');
+        
+        joinPromiseRef.current = { resolve, reject };
+
+        try {
+          const { globalRoomManager } = await import('../multiplayer/roomManager');
+          const joinResult = await globalRoomManager.joinRoom(cleanId, player, password);
+
+          if (!joinResult.success) {
             isJoiningRef.current = false;
-            setJoinError('Room not found or host unavailable.');
+            setJoinError(joinResult.error || 'Unable to join the room.');
             setRoomPageState('ERROR');
             SoundEngine.playError();
+            joinPromiseRef.current = null;
+            return reject(joinResult.error || 'Unable to join');
           }
-        }, 8000);
-      } catch (err: any) {
-        console.error('JOIN ROOM ERROR:', err);
-        isJoiningRef.current = false;
-        setJoinError(`Unable to join: ${err?.message || err}`);
-        setRoomPageState('ERROR');
-        SoundEngine.playError();
-      }
+
+          const transport = setupTransport(cleanId);
+
+          // Send Join Request to authoritative room host
+          transport.send('JOIN_REQUEST', cleanId, player.id, {
+            player,
+            password,
+          });
+
+          // Speculative board while waiting for server response
+          const speculativeBoard = generate5x5Board(`b-${player.id}`, `join-${cleanId}-${Date.now()}`, false);
+          setBoard(speculativeBoard);
+
+          // Timeout fallback if host never responds within 15s
+          setTimeout(() => {
+            if (isJoiningRef.current) {
+              isJoiningRef.current = false;
+              setJoinError('Room not found or host unavailable.');
+              setRoomPageState('ERROR');
+              SoundEngine.playError();
+              joinPromiseRef.current?.reject('Room not found or host unavailable.');
+              joinPromiseRef.current = null;
+            }
+          }, 15000);
+        } catch (err: any) {
+          console.error('JOIN ROOM ERROR:', err);
+          isJoiningRef.current = false;
+          setJoinError(`Unable to join: ${err?.message || err}`);
+          setRoomPageState('ERROR');
+          SoundEngine.playError();
+          joinPromiseRef.current?.reject(err?.message || 'Error joining room');
+          joinPromiseRef.current = null;
+        }
+      });
     },
     [player, setupTransport, room]
   );
@@ -668,9 +686,13 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
     [player, setupTransport, onNavigateToScreen]
   );
 
+  const hasRestoredRef = useRef(false);
+
   // 10. Restore Session on Refresh
   useEffect(() => {
     const restoreActiveSession = async () => {
+      if (hasRestoredRef.current) return;
+      hasRestoredRef.current = true;
       try {
         const stored = await AsyncStorage.getItem(ACTIVE_ROOM_STORAGE_KEY);
         if (!stored) return;
@@ -678,7 +700,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
         if (!parsed?.roomId || !parsed?.joinedAt) return;
 
         // Verify session not older than 15 minutes
-        if (Date.now() - parsed.joinedAt > 900000) {
+        if (Date.now() - parsed.joinedAt > 300000) {
           await AsyncStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
           return;
         }
