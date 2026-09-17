@@ -453,7 +453,11 @@ function MainApp() {
     const totalCost = selectedRoom ? selectedRoom.ticketPrice * cardCount : 0;
     
     if (player.coins < totalCost) {
-      alert(`Insufficient coins. You need $${totalCost} to enter this room.`);
+      if (Platform.OS === 'web') {
+        window.alert(`Insufficient coins. You need 🪙 ${totalCost} to enter this room.`);
+      } else {
+        Alert.alert('Insufficient Coins', `You need 🪙 ${totalCost} to enter this room.`);
+      }
       return;
     }
 
