@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { TabDestination } from '../../domain/types';
 import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from '../../design/tokens';
 import { HomeIcon, LeaderboardIcon, ProfileIcon } from '../icons/CustomIcons';
+import { useTheme } from '../../design/theme';
 
 interface BottomNavBarProps {
   currentTab: TabDestination;
@@ -16,6 +17,8 @@ interface BottomNavBarProps {
  * Home icon updated to match Reference 1 with Gentle Olive accent dot.
  */
 export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelectTab }) => {
+  const { theme, isDark } = useTheme();
+
   const tabs: Array<{ key: TabDestination; label: string; icon: (active: boolean) => React.ReactNode }> = [
     {
       key: 'PLAY',
@@ -23,7 +26,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
       icon: (active) => (
         <HomeIcon
           size={17}
-          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          color={active ? COLORS.activeTabIcon : (isDark ? '#A3A3A3' : COLORS.inactiveTabIcon)}
           variant={active ? 'filled' : 'outline'}
           state={active ? 'active' : 'idle'}
         />
@@ -35,7 +38,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
       icon: (active) => (
         <LeaderboardIcon
           size={17}
-          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          color={active ? COLORS.activeTabIcon : (isDark ? '#A3A3A3' : COLORS.inactiveTabIcon)}
           variant={active ? 'filled' : 'outline'}
           state={active ? 'active' : 'idle'}
         />
@@ -47,7 +50,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
       icon: (active) => (
         <ProfileIcon
           size={17}
-          color={active ? COLORS.activeTabIcon : COLORS.inactiveTabIcon}
+          color={active ? COLORS.activeTabIcon : (isDark ? '#A3A3A3' : COLORS.inactiveTabIcon)}
           variant={active ? 'filled' : 'outline'}
           state={active ? 'active' : 'idle'}
         />
@@ -57,7 +60,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
 
   return (
     <View style={styles.dockWrapper} pointerEvents="box-none">
-      <View style={styles.consoleDock} accessibilityRole="tablist">
+      <View
+        style={[
+          styles.consoleDock,
+          {
+            backgroundColor: theme.bgCard,
+            borderColor: isDark ? theme.borderSubtle : 'rgba(255, 122, 0, 0.2)',
+          },
+        ]}
+        accessibilityRole="tablist"
+      >
         {/* Specular Edge Hairline */}
         <View style={styles.dockTopBevel} />
 
@@ -79,7 +91,6 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({ currentTab, onSelect
                 <View style={styles.activePill}>
                   {tab.icon(true)}
                   <Text style={styles.activeLabel}>{tab.label}</Text>
-                  <View style={styles.activeDot} />
                 </View>
               ) : (
                 <View style={styles.inactivePill}>

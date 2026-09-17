@@ -59,14 +59,19 @@ export const NumberSourceModal: React.FC<NumberSourceModalProps> = ({
             <View>
               {/* Modal Header */}
               <View style={styles.modalHeader}>
-                <View>
+                <View style={styles.headerTextContainer}>
                   <Text style={[styles.heading, { color: theme.textPrimary }]}>Number Source</Text>
                   <Text style={[styles.subheading, { color: theme.textSecondary }]}>
                     {gameModeTitle} • Choose how your 25 numbers are generated
                   </Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button">
-                  <CloseIcon size={18} color={theme.textMuted} />
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={[styles.closeBtn, { backgroundColor: theme.bgRecessed }]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityRole="button"
+                >
+                  <CloseIcon size={16} color={theme.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -99,7 +104,10 @@ export const NumberSourceModal: React.FC<NumberSourceModalProps> = ({
                   style={[
                     styles.optionCard,
                     styles.optionCardPrimary,
-                    { backgroundColor: '#FFF7EF', borderColor: COLORS.primaryOrange },
+                    {
+                      backgroundColor: theme.isDark ? 'rgba(255, 122, 0, 0.14)' : '#FFF7EF',
+                      borderColor: COLORS.primaryOrange,
+                    },
                   ]}
                   onPress={() => {
                     handleRegenerateAi();
@@ -131,7 +139,7 @@ export const NumberSourceModal: React.FC<NumberSourceModalProps> = ({
           {viewState === 'AI_PREVIEW' && (
             <View>
               <View style={styles.modalHeader}>
-                <View>
+                <View style={styles.headerTextContainer}>
                   <Text style={[styles.heading, { color: theme.textPrimary }]}>AI Generated Numbers</Text>
                   <Text style={[styles.subheading, { color: theme.textSecondary }]}>
                     25 unique numbers generated for this match
@@ -139,10 +147,11 @@ export const NumberSourceModal: React.FC<NumberSourceModalProps> = ({
                 </View>
                 <TouchableOpacity
                   onPress={() => setViewState('SELECT')}
-                  style={styles.closeBtn}
+                  style={[styles.closeBtn, { backgroundColor: theme.bgRecessed }]}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
                 >
-                  <CloseIcon size={18} color={theme.textMuted} />
+                  <CloseIcon size={16} color={theme.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -203,16 +212,17 @@ export const NumberSourceModal: React.FC<NumberSourceModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: SPACING.lg,
+    padding: SPACING.md,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 440,
+    maxWidth: 400,
     borderRadius: RADIUS.hero,
-    padding: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md + 4,
     borderWidth: 1.5,
     shadowColor: COLORS.primaryOrange,
     shadowOffset: { width: 0, height: 8 },
@@ -225,19 +235,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  headerTextContainer: {
+    flex: 1,
+    paddingRight: SPACING.xs,
   },
   heading: {
     fontFamily: TYPOGRAPHY.brandFamily,
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
+    letterSpacing: -0.2,
   },
   subheading: {
     fontFamily: TYPOGRAPHY.fontFamily,
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 3,
+    lineHeight: 16,
   },
   closeBtn: {
-    padding: 4,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionList: {
     gap: SPACING.sm,

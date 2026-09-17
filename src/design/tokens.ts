@@ -123,15 +123,19 @@ export const COLORS = {
   cellFreeBorder: '#10B981',
 
   // Aliases for backwards compatibility with existing domain calls
+  primary: '#FF7A00',
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
   signalMint: '#10B981',
   signalMintGlow: 'rgba(16, 185, 129, 0.20)',
   solarAmber: '#F59E0B',
   solarAmberGlow: 'rgba(245, 158, 11, 0.28)',
-  primaryAmber: '#10B981',
-  primaryAmberStrong: '#10B981',
-  primaryAmberHighlight: '#34D399',
-  primaryAmberPressed: '#059669',
-  primaryAmberGlow: 'rgba(16, 185, 129, 0.20)',
+  primaryAmber: '#FF7A00',
+  primaryAmberStrong: '#FF7A00',
+  primaryAmberHighlight: '#FF9A3D',
+  primaryAmberPressed: '#E06900',
+  primaryAmberGlow: 'rgba(255, 122, 0, 0.20)',
   boardSurface: '#121724',
 };
 

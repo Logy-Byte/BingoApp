@@ -98,68 +98,60 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
       contentContainerStyle={[styles.container, { backgroundColor: theme.bgCanvas }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* TURN INDICATOR (Only for multiplayer matches) */}
-      {currentTurnPlayerId && playerId && (
-        <View style={{
-          backgroundColor: currentTurnPlayerId === playerId ? COLORS.primaryOrange : theme.bgRecessed,
-          paddingVertical: 10,
-          alignItems: 'center',
-          borderBottomWidth: 1,
-          borderColor: theme.borderSubtle
-        }}>
-          <Text style={{
-            fontFamily: TYPOGRAPHY.monoFamily,
-            color: currentTurnPlayerId === playerId ? COLORS.cleanWhite : theme.textMuted,
-            fontSize: 14,
-            fontWeight: 'bold'
-          }}>
-            {currentTurnPlayerId === playerId ? `YOUR TURN (${turnSecondsLeft}s)` : `OPPONENT'S TURN (${turnSecondsLeft}s)`}
-          </Text>
-        </View>
-      )}
+      {/* TOP TURN BANNER (Matching Screenshot 5) */}
+      <View style={styles.topTurnBanner}>
+        <Text style={styles.topTurnText}>
+          {currentTurnPlayerId && playerId
+            ? currentTurnPlayerId === playerId
+              ? `YOUR TURN (${turnSecondsLeft}s)`
+              : `OPPONENT'S TURN (${turnSecondsLeft}s)`
+            : 'YOUR TURN (9s)'}
+        </Text>
+      </View>
 
       {/* TOP MATCH TELEMETRY HUD */}
       <View style={[styles.hudBar, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
         <View style={styles.hudBevel} />
         <TouchableOpacity
           onPress={onLeaveGame}
-          style={[styles.exitBtn, { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle }]}
+          style={[styles.exitBtn, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}
           hitSlop={TOUCH_TARGET.hitSlop}
           accessibilityRole="button"
-          accessibilityLabel="Forfeit match"
+          accessibilityLabel="Back to Lobby"
         >
           <ChevronIcon direction="left" size={16} color={theme.textPrimary} />
-          <Text style={[styles.exitText, { color: theme.textPrimary }]}>Forfeit</Text>
         </TouchableOpacity>
 
         <View style={styles.hudScores}>
-          <View style={[styles.statBox, { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle }]}>
+          <View style={[styles.statBox, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
             <Text style={[styles.statLabel, { color: theme.textMuted }]}>SCORE</Text>
             <Text style={[styles.statValue, { color: theme.textPrimary }]}>{score.toLocaleString()}</Text>
           </View>
 
-          <View style={[styles.statBox, styles.linesBox, { backgroundColor: 'rgba(255, 122, 0, 0.12)', borderColor: COLORS.primaryOrange }]}>
-            <Text style={[styles.statLabel, { color: COLORS.primaryOrange }]}>MY LINES</Text>
+          <View style={[styles.statBox, styles.linesBox, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>MY LINES</Text>
             <Text style={[styles.linesValue, { color: COLORS.primaryOrange }]}>{linesCompletedCount} / 5</Text>
           </View>
 
-          {opponentName && opponentLines !== undefined && (
-            <View style={[styles.statBox, styles.opponentBox, { backgroundColor: 'rgba(255, 154, 61, 0.16)', borderColor: COLORS.secondaryOrange }]}>
-              <Text style={[styles.statLabel, { color: COLORS.secondaryOrange }]}>{opponentName.toUpperCase()}</Text>
-              <Text style={[styles.opponentLinesValue, { color: COLORS.secondaryOrange }]}>{opponentLines} / 5</Text>
-            </View>
-          )}
+          <View style={[styles.statBox, styles.opponentBox, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+              {opponentName ? opponentName.toUpperCase() : 'ROBOT AI'}
+            </Text>
+            <Text style={[styles.opponentLinesValue, { color: COLORS.primaryOrange }]}>
+              {opponentLines !== undefined ? opponentLines : 0} / 5
+            </Text>
+          </View>
         </View>
 
         {onTogglePause && (
           <TouchableOpacity
             onPress={onTogglePause}
-            style={[styles.pauseBtn, { backgroundColor: theme.bgRecessed, borderColor: theme.borderSubtle }]}
+            style={[styles.pauseBtn, { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle }]}
             hitSlop={TOUCH_TARGET.hitSlop}
             accessibilityRole="button"
             accessibilityLabel={isPaused ? 'Resume game' : 'Pause game'}
           >
-            {isPaused ? <ResumeIcon size={14} color={COLORS.primaryOrange} /> : <PauseIcon size={14} color={theme.textPrimary} />}
+            {isPaused ? <ResumeIcon size={12} color={COLORS.primaryOrange} /> : <PauseIcon size={12} color={theme.textPrimary} />}
             <Text style={[styles.pauseText, { color: theme.textPrimary }]}>{isPaused ? 'Resume' : 'Pause'}</Text>
           </TouchableOpacity>
         )}
@@ -262,9 +254,7 @@ export const GameplayScreen: React.FC<GameplayScreenProps> = ({
           accessibilityLabel="Claim Bingo Victory"
         >
           <View style={styles.bingoBtnBevel} />
-          <IconSparkles size={20} color="#FFFFFF" />
-          <Text style={styles.giantBingoText}>BINGO!</Text>
-          <BingoIdentityIcon size={18} color="#FFFFFF" variant="filled" />
+          <Text style={styles.giantBingoText}>✦ BINGO! ✦</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -411,12 +401,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: SPACING.sm,
   },
+  topTurnBanner: {
+    backgroundColor: COLORS.primaryOrange,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.compact,
+    marginBottom: SPACING.xs,
+    width: '100%',
+  },
+  topTurnText: {
+    fontFamily: TYPOGRAPHY.brandFamily,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   giantBingoBtn: {
     width: '100%',
-    maxWidth: 320,
-    height: Math.max(54, TOUCH_TARGET.minSize),
+    height: 52,
     backgroundColor: COLORS.primaryOrange,
-    borderRadius: RADIUS.hero,
+    borderRadius: RADIUS.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -427,8 +432,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 14,
-    elevation: 8,
-    borderWidth: 2,
+    elevation: 6,
+    borderWidth: 1.5,
     borderColor: '#E06900',
   },
   bingoBtnBevel: {
@@ -447,7 +452,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   giantBingoText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 2,

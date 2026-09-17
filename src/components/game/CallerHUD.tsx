@@ -62,8 +62,7 @@ export const CallerHUD: React.FC<CallerHUDProps> = ({
       {/* Header telemetry ribbon */}
       <View style={styles.telemetryRow}>
         <View style={styles.liveBadge}>
-          <BingoIdentityIcon size={12} color={COLORS.gentleOlive} variant="filled" style={{ marginRight: 4 }} />
-          <View style={[styles.livePulsePip, { backgroundColor: COLORS.gentleOlive }]} />
+          <Text style={[styles.liveBadgeText, { color: COLORS.primaryOrange, marginRight: 6 }]}>✦ ✦</Text>
           <Text style={[styles.liveBadgeText, { color: theme.textPrimary }]}>
             LIVE BROADCAST CALLER
           </Text>

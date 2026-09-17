@@ -58,11 +58,11 @@ export const StreakBarChart: React.FC<StreakBarChartProps> = ({
         <View
           style={[
             styles.streakBadge,
-            { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive },
+            { backgroundColor: 'transparent', borderColor: theme.borderSubtle },
           ]}
         >
-          <RankedLightningIcon size={12} color={COLORS.lunarShadow} />
-          <Text style={styles.streakBadgeText}>{currentStreak} DAY STREAK</Text>
+          <RankedLightningIcon size={12} color={COLORS.primaryOrange} />
+          <Text style={[styles.streakBadgeText, { color: theme.textPrimary }]}>+ {currentStreak} DAY STREAK</Text>
         </View>
       </View>
 
@@ -70,10 +70,10 @@ export const StreakBarChart: React.FC<StreakBarChartProps> = ({
       <View style={styles.barsRow}>
         {days.map((item, idx) => {
           const barColor = item.active
-            ? COLORS.gentleOlive
+            ? COLORS.primaryOrange
             : theme.isDark
             ? '#363A42'
-            : '#E8E8E8';
+            : '#E2E8F0';
 
           return (
             <View key={`day-${idx}-${item.label}`} style={styles.barColumn}>

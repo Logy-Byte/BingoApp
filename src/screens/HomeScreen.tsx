@@ -89,8 +89,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [voiceEnabled, setVoiceEnabled] = useState(SoundEngine.isVoiceEnabled());
   const [showRobotModal, setShowRobotModal] = useState(false);
 
-  const loadLobbyData = () => {
-    setOnlineCount(globalRoomManager.getLiveOnlinePlayerCount());
+  const loadLobbyData = async () => {
+    const count = await globalRoomManager.getLiveOnlinePlayerCount();
+    setOnlineCount(count);
   };
 
   useEffect(() => {
@@ -170,7 +171,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           id="ONLINE"
           title="PLAY ONLINE"
           tagline="Find a player and compete live"
-          badge="Live 1v1"
+          badge="LIVE 1V1"
           onPress={handleRandomPlayerAction}
           testID="home-mode-online"
           accessibilityLabel="Play Random Player, Real Human 1v1 Matchmaking"
@@ -181,7 +182,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           id="FRIENDS"
           title="PLAY WITH FRIENDS"
           tagline="Create or join a private room"
-          badge="Room Code"
+          badge="ROOM CODE"
           onPress={handlePlayFriendsAction}
           testID="home-mode-friends"
         />
@@ -191,7 +192,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           id="AI"
           title="PLAY WITH AI"
           tagline="Play instantly against AI"
-          badge="Instant"
+          badge="INSTANT"
           onPress={handlePlayAIAction}
           testID="home-mode-ai"
         />

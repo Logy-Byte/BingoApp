@@ -19,7 +19,7 @@ import { useTheme } from '../design/theme';
 import { PublicRoom } from '../domain/types';
 import {
   ChevronIcon,
-  IconCoinStack,
+  IconFire,
   IconGemstone,
   IconSparkles,
 } from '../components/icons/CustomIcons';
@@ -75,11 +75,11 @@ export const RoomSelectionScreen: React.FC<RoomSelectionScreenProps> = ({
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Bingo Rooms</Text>
 
-        {/* 100% Vector Currency Status Badges */}
+        {/* 100% Vector Streak & Status Badges */}
         <View style={styles.currencyGroup}>
-          <View style={[styles.currencyPill, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-            <IconCoinStack size={14} color="#D97706" />
-            <Text style={[styles.currencyText, { color: '#D97706' }]}>{coins.toLocaleString()}</Text>
+          <View style={[styles.currencyPill, { backgroundColor: 'rgba(255, 122, 0, 0.12)' }]}>
+            <IconFire size={14} color={COLORS.primaryOrange} />
+            <Text style={[styles.currencyText, { color: COLORS.primaryOrange }]}>{coins.toLocaleString()}</Text>
           </View>
           <View style={[styles.currencyPill, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
             <IconGemstone size={14} color="#2563EB" />

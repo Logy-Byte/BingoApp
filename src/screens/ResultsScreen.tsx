@@ -25,8 +25,6 @@ import {
 } from '../design/tokens';
 import {
   IconTrophy,
-  IconCoinStack,
-  IconGemstone,
   IconFire,
   IconSparkles,
   CloseIcon,
@@ -78,13 +76,12 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   const badgeOuterRadius = 40;
   const badgeInnerRadius = calcConcentricRadius(badgeOuterRadius, 6, 20);
 
-  // Economic calculations
-  const basePrizeCoins = hasWon ? 2500 : 150;
-  const lineBonusCoins = linesCompletedCount * 250;
-  const streakBonusCoins = hasWon ? 500 : 0;
-  const totalCoinsAwarded = basePrizeCoins + lineBonusCoins + streakBonusCoins;
-  const totalGemsAwarded = hasWon ? 25 : 5;
-  const xpEarned = hasWon ? 450 : 120;
+  // XP Progress & Rewards calculations (strictly EXP only, no coins or diamonds)
+  const basePlacementXp = hasWon ? 300 : 80;
+  const lineBonusXp = linesCompletedCount * 50;
+  const streakBonusXp = hasWon ? 100 : 0;
+  const totalXpDisbursed = basePlacementXp + lineBonusXp + streakBonusXp;
+  const xpEarned = totalXpDisbursed;
   const currentTierProgress = hasWon ? 78 : 62; // percentage to next level
 
   // XP Radial Wheel geometry
@@ -241,28 +238,28 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           <View style={styles.tableRow}>
             <Text style={[styles.rowLabel, { color: theme.textSecondary }]}>Base Placement</Text>
             <View style={styles.rowValGroup}>
-              <IconCoinStack size={14} color={COLORS.goldPrimary} />
-              <Text style={[styles.rowValText, { color: theme.textPrimary }]}>+{basePrizeCoins.toLocaleString()}</Text>
+              <IconFire size={13} color={COLORS.primaryOrange} />
+              <Text style={[styles.rowValText, { color: theme.textPrimary }]}>+{basePlacementXp} XP</Text>
             </View>
           </View>
 
           <View style={styles.tableRow}>
             <Text style={[styles.rowLabel, { color: theme.textSecondary }]}>Lines Verified ({linesCompletedCount})</Text>
             <View style={styles.rowValGroup}>
-              <IconCoinStack size={14} color={COLORS.goldPrimary} />
-              <Text style={[styles.rowValText, { color: theme.textPrimary }]}>+{lineBonusCoins.toLocaleString()}</Text>
+              <IconFire size={13} color={COLORS.primaryOrange} />
+              <Text style={[styles.rowValText, { color: theme.textPrimary }]}>+{lineBonusXp} XP</Text>
             </View>
           </View>
 
-          {streakBonusCoins > 0 && (
+          {streakBonusXp > 0 && (
             <View style={styles.tableRow}>
               <View style={styles.streakLabelRow}>
-                <IconFire size={13} color="#F97316" />
-                <Text style={[styles.rowLabel, { color: '#F97316' }]}>Daub Speed Streak</Text>
+                <IconFire size={13} color={COLORS.primaryOrange} />
+                <Text style={[styles.rowLabel, { color: COLORS.primaryOrange }]}>Daub Speed Streak</Text>
               </View>
               <View style={styles.rowValGroup}>
-                <IconCoinStack size={14} color={COLORS.goldPrimary} />
-                <Text style={[styles.rowValText, { color: COLORS.goldPrimary }]}>+{streakBonusCoins}</Text>
+                <IconFire size={13} color={COLORS.primaryOrange} />
+                <Text style={[styles.rowValText, { color: COLORS.primaryOrange }]}>+{streakBonusXp} XP</Text>
               </View>
             </View>
           )}
@@ -272,13 +269,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: theme.textPrimary }]}>Total Disbursed</Text>
             <View style={styles.totalPillsRow}>
-              <View style={[styles.rewardPill, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-                <IconCoinStack size={14} color={COLORS.goldPrimary} />
-                <Text style={styles.totalCoinVal}>+{totalCoinsAwarded.toLocaleString()}</Text>
-              </View>
-              <View style={[styles.rewardPill, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
-                <IconGemstone size={14} color={COLORS.infoBlue} />
-                <Text style={styles.totalGemVal}>+{totalGemsAwarded}</Text>
+              <View style={[styles.rewardPill, { backgroundColor: 'rgba(255, 122, 0, 0.12)' }]}>
+                <IconFire size={13} color={COLORS.primaryOrange} />
+                <Text style={[styles.totalCoinVal, { color: COLORS.primaryOrange }]}>+{totalXpDisbursed} XP</Text>
               </View>
             </View>
           </View>
@@ -315,7 +308,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             style={[
               styles.primaryBtn,
               {
-                backgroundColor: hasWon ? COLORS.winterHazel : COLORS.playEmerald,
+                backgroundColor: COLORS.primaryOrange,
                 transform: [{ scale: isPrimaryPressed ? SPRING_CONFIGS.cardPress.scaleDown : 1 }],
               },
             ]}
@@ -327,10 +320,10 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
             accessibilityLabel={isMultiplayer ? 'Rematch opponent' : 'Play again'}
           >
             <View style={styles.btnBevel} />
-            <Text style={styles.primaryBtnText}>
-              {isMultiplayer ? 'Rematch Opponent' : 'Play Again'}
+            <Text style={[styles.primaryBtnText, { color: '#FFFFFF' }]}>
+              {isMultiplayer ? 'Play Again' : 'Play Again'}
             </Text>
-            <ChevronIcon direction="right" size={16} color="#0B0E14" />
+            <ChevronIcon direction="right" size={16} color="#FFFFFF" />
           </TouchableOpacity>
 
           <TouchableOpacity

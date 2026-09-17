@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { LeaderboardEntry, Player } from '../domain/types';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
-import { TrophyIcon, RankIcon } from '../components/icons/CustomIcons';
+import { TrophyIcon, RankIcon, CheckIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
 import { leaderboardService } from '../domain/services/leaderboardService';
 import { InlineLoader } from '../components/common/InlineLoader';
@@ -54,10 +54,10 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
           <View
             style={[
               styles.trophyIconWrap,
-              { backgroundColor: theme.accentHazelTint },
+              { backgroundColor: theme.accentOliveTint, borderColor: COLORS.primaryOrange },
             ]}
           >
-            <TrophyIcon size={22} color={COLORS.winterHazel} />
+            <CheckIcon size={20} color={COLORS.primaryOrange} />
           </View>
           <View>
             <Text style={[styles.screenTitle, { color: theme.textPrimary }]}>
@@ -201,7 +201,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
                 {/* Avatar & Floating Gold Crown */}
                 <View style={styles.avatarHolder}>
                   <View style={[styles.avatarGoldRing, { backgroundColor: theme.bgRecessed }]}>
-                    <Text style={[styles.avatarInitialsGold, { color: COLORS.winterHazel }]}>
+                    <Text style={[styles.avatarInitialsGold, { color: COLORS.primaryOrange }]}>
                       {topThree[0].avatar}
                     </Text>
                   </View>
@@ -222,7 +222,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
                   ]}
                 >
                   <RankIcon size={12} color={COLORS.winterHazel} style={{ marginRight: 4 }} />
-                  <Text style={[styles.ratingPillScore, { color: '#8A6724' }]}>
+                  <Text style={[styles.ratingPillScore, { color: COLORS.primaryOrange }]}>
                     {topThree[0].rating}
                   </Text>
                 </View>
@@ -233,8 +233,8 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
                     styles.pedestalStep,
                     styles.pedestalGold,
                     {
-                      backgroundColor: isDark ? '#3D3425' : '#FEF3C7',
-                      borderColor: COLORS.winterHazel,
+                      backgroundColor: isDark ? '#3D3425' : '#FFF0DB',
+                      borderColor: COLORS.primaryOrange,
                     },
                   ]}
                 >
@@ -455,14 +455,11 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
                   style={[
                     styles.dossierBadge,
                     {
-                      backgroundColor:
-                        selectedPlayer.rank === 1
-                          ? COLORS.winterHazel
-                          : COLORS.gentleOlive,
+                      backgroundColor: COLORS.primaryOrange,
                     },
                   ]}
                 >
-                  <Text style={styles.dossierRankTag}>
+                  <Text style={[styles.dossierRankTag, { color: '#FFFFFF' }]}>
                     RANK #{selectedPlayer.rank} • {selectedPlayer.tier.toUpperCase()}
                   </Text>
                 </View>

@@ -185,11 +185,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             styles.kpiCardHighlight,
             {
               backgroundColor: theme.bgCard,
-              borderColor: COLORS.gentleOlive,
+              borderColor: COLORS.primaryOrange,
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.gentleOlive }]}>
+          <Text style={[styles.kpiValue, { color: COLORS.primaryOrange }]}>
             {profile.winRate}%
           </Text>
           <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>WIN RATE</Text>
@@ -203,7 +203,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             },
           ]}
         >
-          <Text style={[styles.kpiValue, { color: COLORS.winterHazel }]}>
+          <Text style={[styles.kpiValue, { color: theme.textPrimary }]}>
             {profile.gamesPlayed}
           </Text>
           <Text style={[styles.kpiLabel, { color: theme.textMuted }]}>MATCHES</Text>
@@ -265,20 +265,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Text style={[styles.cardHeader, { color: theme.textPrimary }]}>
                 Season Progression
               </Text>
-              <Text style={[styles.progressPercent, { color: COLORS.gentleOlive }]}>
+              <Text style={[styles.progressPercent, { color: COLORS.primaryOrange }]}>
                 72.5%
               </Text>
             </View>
             <View
               style={[
                 styles.progressTrack,
-                { backgroundColor: isDark ? '#363A42' : '#ECECEC' },
+                { backgroundColor: isDark ? '#363A42' : '#F1F5F9' },
               ]}
             >
               <View
                 style={[
                   styles.progressBar,
-                  { width: '72.5%', backgroundColor: COLORS.gentleOlive },
+                  { width: '72.5%', backgroundColor: COLORS.primaryOrange },
                 ]}
               />
             </View>

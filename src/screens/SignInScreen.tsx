@@ -124,7 +124,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         </View>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Clash Pro</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sign in to save your coins, gems, and stats
+          Sign in to save your streaks, XP, and stats
         </Text>
       </View>
 

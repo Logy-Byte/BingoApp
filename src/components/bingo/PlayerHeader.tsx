@@ -26,7 +26,16 @@ export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
   const { theme, isDark, toggleTheme } = useTheme();
 
   return (
-    <View style={styles.floatingSurface} testID={testID}>
+    <View
+      style={[
+        styles.floatingSurface,
+        {
+          backgroundColor: theme.bgCard,
+          borderColor: isDark ? theme.borderSubtle : 'rgba(255, 122, 0, 0.15)',
+        },
+      ]}
+      testID={testID}
+    >
       {/* Hairline Specular Bevel */}
       <View style={styles.bevel} />
 
@@ -44,7 +53,7 @@ export const PlayerHeader: React.FC<PlayerHeaderProps> = ({
           <Text style={[styles.avatarText, { color: theme.textPrimary }]}>
             {playerName.slice(0, 2).toUpperCase()}
           </Text>
-          <View style={styles.presencePip} />
+          <View style={[styles.presencePip, { borderColor: theme.bgCard }]} />
         </View>
 
         <View style={styles.textStack}>

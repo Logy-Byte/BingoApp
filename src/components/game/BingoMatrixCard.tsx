@@ -115,12 +115,12 @@ export const BingoMatrixCard: React.FC<BingoMatrixCardProps> = React.memo(({
             style={[
               styles.cardPill,
               {
-                backgroundColor: theme.accentHazelTint,
-                borderColor: COLORS.winterHazel,
+                backgroundColor: 'rgba(255, 122, 0, 0.12)',
+                borderColor: COLORS.primaryOrange,
               },
             ]}
           >
-            <Text style={[styles.cardPillText, { color: '#8A6724' }]}>
+            <Text style={[styles.cardPillText, { color: COLORS.primaryOrange }]}>
               CARD {boardIndex + 1}
             </Text>
           </View>
@@ -128,8 +128,8 @@ export const BingoMatrixCard: React.FC<BingoMatrixCardProps> = React.memo(({
           {/* Active Streak Multiplier Badge */}
           {activeStreak > 1 && (
             <View style={styles.streakBadge}>
-              <IconFire size={12} color="#F97316" />
-              <Text style={styles.streakText}>{activeStreak}x STREAK</Text>
+              <IconFire size={12} color={COLORS.primaryOrange} />
+              <Text style={[styles.streakText, { color: COLORS.primaryOrange }]}>{activeStreak}x STREAK</Text>
             </View>
           )}
         </View>

@@ -94,15 +94,15 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
           style={[
             styles.arrowButton,
             {
-              backgroundColor: isPrimary ? COLORS.primaryOrange : theme.bgRecessed,
+              backgroundColor: isPrimary ? COLORS.primaryOrange : theme.bgCard,
               borderColor: isPrimary ? COLORS.primaryOrange : theme.borderSubtle,
             },
           ]}
         >
           <ChevronIcon
-            size={16}
+            size={14}
             direction="right"
-            color={isPrimary ? '#FFFFFF' : theme.textPrimary}
+            color={isPrimary ? '#FFFFFF' : COLORS.primaryOrange}
           />
         </View>
       </View>
