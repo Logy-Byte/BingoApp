@@ -9,6 +9,8 @@ import {
   View,
   StatusBar,
   BackHandler,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -245,10 +247,7 @@ function MainApp() {
   useEffect(() => {
     const onBackPress = () => {
       if (screenState === 'GAMEPLAY') {
-        const shouldQuit = window.confirm
-          ? window.confirm('Are you sure you want to quit the current match?')
-          : true;
-        if (shouldQuit) {
+        const quitMatch = () => {
           if (gameMode === 'FRIEND') {
             multiplayer.leaveRoom();
           } else {
@@ -256,6 +255,22 @@ function MainApp() {
             if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
             setScreenState('TAB_NAV');
           }
+        };
+
+        if (Platform.OS === 'web') {
+          const shouldQuit = typeof window !== 'undefined' && window.confirm 
+            ? window.confirm('Are you sure you want to quit the current match?')
+            : true;
+          if (shouldQuit) quitMatch();
+        } else {
+          Alert.alert(
+            'Quit Match',
+            'Are you sure you want to quit the current match?',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Quit', style: 'destructive', onPress: quitMatch }
+            ]
+          );
         }
         return true;
       }
