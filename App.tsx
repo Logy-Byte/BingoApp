@@ -748,6 +748,8 @@ function MainApp() {
               <ProfileScreen
                 playerId={player.id}
                 playerName={player.name}
+                rating={player.rating}
+                tier={player.tier}
                 coins={player.coins}
                 gems={player.gems}
                 onUpdateName={(name) => setPlayer((prev) => ({ ...prev, name }))}

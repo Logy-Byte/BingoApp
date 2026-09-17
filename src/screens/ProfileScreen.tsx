@@ -12,6 +12,8 @@ type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 interface ProfileScreenProps {
   playerId?: string;
   playerName?: string;
+  rating?: number;
+  tier?: string;
   coins?: number;
   gems?: number;
   onUpdateName?: (name: string) => void;
@@ -22,6 +24,8 @@ interface ProfileScreenProps {
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   playerId = 'player-local',
   playerName = 'Player_One',
+  rating = 1000,
+  tier = 'Bronze',
   coins = 50380,
   gems = 1000,
   onUpdateName,
@@ -46,8 +50,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     id: playerId,
     name: playerName,
     avatar: playerName.slice(0, 2).toUpperCase(),
-    tier: 'Bronze',
-    rating: 1000,
+    tier: tier,
+    rating: rating,
     gamesPlayed: 0,
     wins: 0,
     winRate: 0,
@@ -93,8 +97,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           ...prev,
           name: p.name || playerName,
           avatar: p.avatar || playerName.slice(0, 2).toUpperCase(),
-          tier: p.tier || 'Bronze',
-          rating: p.rating || 1000,
+          tier: p.tier || tier,
+          rating: p.rating || rating,
           gamesPlayed,
           wins,
           winRate,
