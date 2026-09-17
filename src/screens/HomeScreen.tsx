@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Modal,
+  Image,
 } from 'react-native';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { Player, RobotDifficulty } from '../domain/types';
@@ -153,6 +154,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* HERO SECTION: WELCOME & LOGO */}
       <View style={styles.heroSection}>
+        <Image
+          source={require('../assets/app_icon.png')}
+          style={styles.heroAppIcon}
+          resizeMode="contain"
+          accessibilityLabel="Bingo Adventure Compass Emblem"
+        />
         <View style={styles.logoBadge}>
           <Text style={styles.logoText}>BINGO</Text>
         </View>
@@ -356,6 +363,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
+  },
+  heroAppIcon: {
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    marginBottom: SPACING.sm,
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   logoBadge: {
     backgroundColor: COLORS.primaryOrange,

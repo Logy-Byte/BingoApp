@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY, TOUCH_TARGET } from '../design/tokens';
@@ -120,9 +121,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
       {/* Brand Identity & Header Section */}
       <View style={styles.headerSection}>
         <View style={styles.logoWrap}>
-          <AppIconVector size={80} />
+          <Image
+            source={require('../assets/app_icon.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+            accessibilityLabel="Bingo Adventure Compass Icon"
+          />
         </View>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Clash Pro</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Adventure</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           Sign in to save your streaks, XP, and stats
         </Text>
@@ -270,6 +276,16 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 24,
+    shadowColor: COLORS.primaryOrange,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 6,
   },
   title: {
     fontSize: 22,
