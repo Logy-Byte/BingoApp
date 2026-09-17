@@ -110,7 +110,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     setLoading(false);
 
     if (error) {
-      setServerError('Something went wrong. Please try again.');
+      console.log('Anonymous sign-in not enabled, falling back to local guest session.');
+      const localGuestId = `guest-${Math.random().toString(36).substring(2, 10)}`;
+      onLogin('Guest Player', localGuestId);
     } else if (data?.user) {
       onLogin('Guest Player', data.user.id);
     }
