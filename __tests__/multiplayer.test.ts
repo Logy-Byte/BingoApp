@@ -37,8 +37,8 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(/^[A-Z0-9]{6}$/.test(code)).toBe(true);
     });
 
-    test('creates open room with valid host assignment', () => {
-      const room = roomManager.createRoom('Alpha Arena', testPlayer, 'open');
+    test('creates open room with valid host assignment', async () => {
+      const room = await roomManager.createRoom('Alpha Arena', testPlayer, 'open');
 
       expect(room.id.length).toBe(6);
       expect(room.hostId).toBe('host-1');
@@ -47,8 +47,8 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(room.status).toBe('WAITING');
     });
 
-    test('creates and enforces password-protected rooms', () => {
-      const room = roomManager.createRoom(
+    test('creates and enforces password-protected rooms', async () => {
+      const room = await roomManager.createRoom(
         'Secret Room',
         testPlayer,
         'password',
@@ -59,7 +59,7 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(room.passwordHash).toBeDefined();
 
       // Joining with wrong password must fail
-      const joinWrong = roomManager.joinRoom(
+      const joinWrong = await roomManager.joinRoom(
         room.id,
         { ...testPlayer, id: 'p-2', name: 'Infiltrator' },
         'WrongPass'
@@ -68,7 +68,7 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(joinWrong.error).toContain('Incorrect room password');
 
       // Joining with correct password must succeed
-      const joinCorrect = roomManager.joinRoom(
+      const joinCorrect = await roomManager.joinRoom(
         room.id,
         { ...testPlayer, id: 'p-3', name: 'Ally' },
         'TopSecretPass'
@@ -77,11 +77,11 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(joinCorrect.room?.playerCount).toBe(2);
     });
 
-    test('prevents joining full rooms beyond capacity', () => {
-      const room = roomManager.createRoom('Duel', testPlayer, 'open'); // Max 2 players
+    test('prevents joining full rooms beyond capacity', async () => {
+      const room = await roomManager.createRoom('Duel', testPlayer, 'open'); // Max 2 players
 
-      roomManager.joinRoom(room.id, { ...testPlayer, id: 'p2', name: 'P2' });
-      const joinThird = roomManager.joinRoom(room.id, { ...testPlayer, id: 'p3', name: 'P3' });
+      await roomManager.joinRoom(room.id, { ...testPlayer, id: 'p2', name: 'P2' });
+      const joinThird = await roomManager.joinRoom(room.id, { ...testPlayer, id: 'p3', name: 'P3' });
 
       expect(joinThird.success).toBe(false);
       expect(joinThird.error).toContain('full');
@@ -93,8 +93,8 @@ describe('Multiplayer & Anti-Cheat Validation Test Suite', () => {
       expect(sanitizeRoomCode('')).toBe('');
     });
 
-    test('returns structured error and human message for invalid codes', () => {
-      const result = roomManager.joinRoom('BAD', testPlayer);
+    test('returns structured error and human message for invalid codes', async () => {
+      const result = await roomManager.joinRoom('BAD', testPlayer);
       expect(result.success).toBe(false);
       expect(result.errorCode).toBe('INVALID_ROOM_CODE');
       expect(result.error).toBe(getHumanErrorMessage('INVALID_ROOM_CODE'));

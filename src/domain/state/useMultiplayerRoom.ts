@@ -33,7 +33,7 @@ const ACTIVE_ROOM_STORAGE_KEY = 'bingo_active_room_session';
 export interface UseMultiplayerRoomProps {
   player: Player;
   onNavigateToScreen: (screen: 'LOBBY' | 'GAMEPLAY' | 'RESULTS' | 'TAB_NAV' | 'ROOMS') => void;
-  onMatchEnd?: (isWin: boolean, mode: string) => void;
+  onMatchEnd?: (isWin: boolean, mode: string, score: number, linesCompletedCount: number, ratingDelta: number) => void;
 }
 
 export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: UseMultiplayerRoomProps) {
@@ -64,6 +64,19 @@ export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: U
   const serverRef = useRef<AuthoritativeRoomServer | null>(null);
   const stateMachineRef = useRef<GameStateMachine>(new GameStateMachine('IDLE'));
   const matchStartTimeRef = useRef<number>(0);
+
+  // Refs for latest state to avoid stale closures in handleTransportMessage
+  const latestStateRef = useRef({
+    room,
+    score,
+    linesCompletedCount,
+    onMatchEnd,
+    player
+  });
+
+  useEffect(() => {
+    latestStateRef.current = { room, score, linesCompletedCount, onMatchEnd, player };
+  }, [room, score, linesCompletedCount, onMatchEnd, player]);
 
   // Concurrency and race protection flags
   const isCreatingRef = useRef<boolean>(false);
@@ -258,18 +271,19 @@ export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: U
           }
 
           // Record match in Supabase Match History
-          const gameMode = room?.privacy === 'open' ? 'RANKED' : 'FRIEND';
+          const { room: latestRoom, score: latestScore, linesCompletedCount: latestLines, onMatchEnd: latestOnMatchEnd } = latestStateRef.current;
+          const gameMode = latestRoom?.privacy === 'open' ? 'RANKED' : 'FRIEND';
           leaderboardService.recordMatchResult(
             player.id, 
             winnerId === player.id, 
             gameMode, 
-            score, 
-            linesCompletedCount, 
+            latestScore, 
+            latestLines, 
             winnerId === player.id ? 25 : -15
           );
 
-          if (onMatchEnd) {
-            onMatchEnd(winnerId === player.id, gameMode);
+          if (latestOnMatchEnd) {
+            latestOnMatchEnd(winnerId === player.id, gameMode, latestScore, latestLines, winnerId === player.id ? 25 : -15);
           }
 
           stateMachineRef.current.transition({ type: 'CLAIM_VERIFIED', winnerId, winnerName });

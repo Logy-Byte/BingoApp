@@ -117,15 +117,44 @@ function MainApp() {
   const [matchedOpponent, setMatchedOpponent] = useState<Player | null>(null);
   const [matchCountdown, setMatchCountdown] = useState<number | null>(null);
 
+  // Helper to calculate new rating/tier and apply to player state
+  const applyMatchOutcome = (isWin: boolean, mode: string, score: number, linesCompletedCount: number, ratingDelta: number) => {
+    setPlayer((prev) => {
+      // Calculate MMR Delta
+      const newRating = Math.max(1000, (prev.rating || 1000) + ratingDelta);
+      
+      // Calculate Tier
+      let newTier = prev.tier || 'Bronze';
+      if (newRating >= 1800) newTier = 'Grandmaster';
+      else if (newRating >= 1600) newTier = 'Master';
+      else if (newRating >= 1400) newTier = 'Platinum';
+      else if (newRating >= 1200) newTier = 'Gold';
+      else if (newRating >= 1100) newTier = 'Silver';
+      else newTier = 'Bronze';
+      
+      // Calculate Coins
+      const coinDelta = isWin ? 1500 : -500;
+      const newCoins = Math.max(0, prev.coins + coinDelta);
+
+      // Record to DB asynchronously
+      leaderboardService.recordMatchResult(prev.id, isWin, mode, score, linesCompletedCount, ratingDelta);
+
+      return {
+        ...prev,
+        coins: newCoins,
+        score: prev.score + score + (isWin ? 1000 : 0),
+        rating: newRating,
+        tier: newTier,
+      };
+    });
+  };
+
   // Authoritative Realtime Multiplayer Room Controller
   const multiplayer = useMultiplayerRoom({
     player,
     onNavigateToScreen: setScreenState,
-    onMatchEnd: (isWin, mode) => {
-      setPlayer((prev) => ({
-        ...prev,
-        coins: Math.max(0, isWin ? prev.coins + 1500 : prev.coins - 500)
-      }));
+    onMatchEnd: (isWin, mode, score, linesCompletedCount, ratingDelta) => {
+      applyMatchOutcome(isWin, mode, score, linesCompletedCount, ratingDelta);
     }
   });
 
@@ -537,9 +566,12 @@ function MainApp() {
             if (robotLinesCount >= 5) {
               setIsGameActive(false);
               setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
-              leaderboardService.recordMatchResult(player.id, false, 'ROBOT', score, linesCompletedCount, -15);
-              setPlayer(prev => ({ ...prev, coins: Math.max(0, prev.coins - 500) }));
-              setScreenState('RESULTS');
+              applyMatchOutcome(false, 'ROBOT', score, linesCompletedCount, -15);
+              setClaimFeedback({
+                success: false,
+                message: 'The Robot called BINGO before you!',
+              });
+              setTimeout(() => setScreenState('RESULTS'), 3000);
             }
           });
         }
@@ -569,24 +601,7 @@ function MainApp() {
     setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
     if (callerIntervalRef.current) clearInterval(callerIntervalRef.current);
 
-    setPlayer((prev) => {
-      const newRating = (prev.rating || 1000) + 20;
-      let newTier = prev.tier || 'Bronze';
-      if (newRating >= 1200) newTier = 'Silver';
-      if (newRating >= 1600) newTier = 'Gold';
-      if (newRating >= 2000) newTier = 'Platinum';
-      if (newRating >= 2400) newTier = 'Diamond';
-
-      return {
-        ...prev,
-        coins: prev.coins + 1500,
-        score: prev.score + score + 1000,
-        rating: newRating,
-        tier: newTier,
-      };
-    });
-
-    leaderboardService.recordMatchResult(player.id, true, gameMode, score + 1000, linesCompletedCount, 20);
+    applyMatchOutcome(true, gameMode, score, linesCompletedCount, 20);
     setScreenState('RESULTS');
   }, [board, isGameActive, linesCompletedCount, score, matchStartTime, player.id, gameMode]);
 
@@ -612,8 +627,7 @@ function MainApp() {
               success: false,
               message: 'Turn timed out! You lose.',
             });
-            leaderboardService.recordMatchResult(player.id, false, 'ROBOT', score, linesCompletedCount, -20);
-            setPlayer(prev => ({ ...prev, coins: Math.max(0, prev.coins - 500) }));
+            applyMatchOutcome(false, 'ROBOT', score, linesCompletedCount, -20);
             setTimeout(() => setScreenState('RESULTS'), 2000);
           } else {
             // Robot timed out -> shouldn't happen, but pass turn to player to unblock
