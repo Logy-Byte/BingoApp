@@ -85,3 +85,5 @@ yarn-error.log
 #dist
 dist/bundle.web.js
 
+#env
+.env
