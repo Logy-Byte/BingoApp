@@ -280,6 +280,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
           setJoinError(reason);
           setRoomPageState('CLOSED');
           AsyncStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+          onNavigateToScreen('ROOMS');
           break;
         }
 

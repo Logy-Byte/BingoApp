@@ -34,12 +34,14 @@ import {
 
 interface PreGameScreenProps {
   room: PublicRoom;
+  userBalanceCoins: number;
   onBuyTickets: (cardCount: number) => void;
   onBack: () => void;
 }
 
 export const PreGameScreen: React.FC<PreGameScreenProps> = ({
   room,
+  userBalanceCoins,
   onBuyTickets,
   onBack,
 }) => {
@@ -55,7 +57,8 @@ export const PreGameScreen: React.FC<PreGameScreenProps> = ({
     if (cardCount > 1) setCardCount((prev) => prev - 1);
   };
 
-  const totalCost = (room.ticketPrice * cardCount).toFixed(2);
+  const totalCost = room.ticketPrice * cardCount;
+  const canAfford = userBalanceCoins >= totalCost;
   const totalJackpotCoins = room.jackpotAmount;
 
   // Concentric metrics
@@ -240,20 +243,25 @@ export const PreGameScreen: React.FC<PreGameScreenProps> = ({
             style={[
               styles.buyBtn,
               {
-                backgroundColor: COLORS.playEmerald,
+                backgroundColor: canAfford ? COLORS.playEmerald : '#334155',
                 transform: [{ scale: isBuyPressed ? SPRING_CONFIGS.cardPress.scaleDown : 1 }],
               },
             ]}
             onPressIn={() => setIsBuyPressed(true)}
             onPressOut={() => setIsBuyPressed(false)}
-            onPress={() => onBuyTickets(cardCount)}
+            onPress={() => {
+              if (canAfford) onBuyTickets(cardCount);
+            }}
+            disabled={!canAfford}
             activeOpacity={0.88}
             accessibilityRole="button"
-            accessibilityLabel={`Confirm and buy ${cardCount} tickets for $${totalCost}`}
+            accessibilityLabel={canAfford ? `Stake $${totalCost.toFixed(2)}` : 'Insufficient Funds'}
           >
             <View style={styles.btnBevel} />
-            <Text style={styles.buyBtnText}>Confirm & Stake ${totalCost}</Text>
-            <ChevronIcon direction="right" size={18} color="#0B0E14" />
+            <Text style={[styles.buyBtnText, { color: canAfford ? '#0B0E14' : '#94A3B8' }]}>
+              {canAfford ? `Stake $${totalCost.toFixed(2)}` : 'Insufficient Funds'}
+            </Text>
+            <ChevronIcon direction="right" size={16} color={canAfford ? "#0B0E14" : "#94A3B8"} />
           </TouchableOpacity>
         </View>
       </ScrollView>

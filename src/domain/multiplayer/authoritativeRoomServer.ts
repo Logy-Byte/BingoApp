@@ -329,11 +329,17 @@ export class AuthoritativeRoomServer {
     setTimeout(() => {
       if (this.isDestroyed || this.room.status !== 'ACTIVE') return;
 
+      // Assign first turn randomly or to host
+      const playerIds = Array.from(this.players.keys());
+      this.currentTurnPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
+      this.turnExpiresAt = Date.now() + this.TURN_DURATION_MS;
+
       this.transport.send('MATCH_STARTED', this.room.id, this.room.hostId, {
         snapshot: this.getSnapshot(),
       });
 
       this.startBallCaller();
+      this.startTurnTimer();
     }, 3000);
   }
 

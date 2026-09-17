@@ -400,6 +400,17 @@ function MainApp() {
   };
 
   const handleBuyTickets = (cardCount: number) => {
+    const totalCost = selectedRoom ? selectedRoom.ticketPrice * cardCount : 0;
+    
+    if (player.coins < totalCost) {
+      alert(`Insufficient coins. You need $${totalCost} to enter this room.`);
+      return;
+    }
+
+    if (totalCost > 0) {
+      setPlayer((prev) => ({ ...prev, coins: prev.coins - totalCost }));
+    }
+
     setPurchasedCardsCount(cardCount);
     initGame('LOCAL', cardCount);
   };
@@ -757,6 +768,7 @@ function MainApp() {
         {screenState === 'PRE_GAME' && selectedRoom && (
           <PreGameScreen
             room={selectedRoom}
+            userBalanceCoins={player.coins}
             onBuyTickets={handleBuyTickets}
             onBack={() => setScreenState('ROOM_SELECTION')}
           />
@@ -878,15 +890,37 @@ function MainApp() {
 
         {screenState === 'RESULTS' && (
           <ResultsScreen
-            hasWon={linesCompletedCount > 0}
-            score={score}
-            linesCompletedCount={linesCompletedCount}
-            totalCallsCount={drawnNumbers.length}
-            matchDurationSec={matchDuration}
+            hasWon={
+              multiplayer.room 
+                ? multiplayer.winner?.id === player.id 
+                : linesCompletedCount >= 5
+            }
+            score={multiplayer.room ? multiplayer.score : score}
+            linesCompletedCount={multiplayer.room ? multiplayer.linesCompletedCount : linesCompletedCount}
+            totalCallsCount={multiplayer.room ? multiplayer.drawnNumbers.length : drawnNumbers.length}
+            matchDurationSec={multiplayer.room ? multiplayer.matchDuration : matchDuration}
             isRanked={gameMode === 'RANKED'}
             ratingDelta={25}
-            onPlayAgain={() => initGame(gameMode, purchasedCardsCount)}
-            onReturnHome={() => setScreenState('TAB_NAV')}
+            winnerName={
+              multiplayer.room 
+                ? multiplayer.winner?.name 
+                : (gameMode === 'ROBOT' && linesCompletedCount < 5 ? 'Robot AI' : player.name)
+            }
+            isMultiplayer={multiplayer.room !== null || gameMode === 'ROBOT'}
+            onPlayAgain={() => {
+              if (multiplayer.room) {
+                multiplayer.requestRematch();
+              } else {
+                initGame(gameMode, purchasedCardsCount);
+              }
+            }}
+            onReturnHome={() => {
+              if (multiplayer.room) {
+                multiplayer.leaveRoom();
+              } else {
+                setScreenState('TAB_NAV');
+              }
+            }}
           />
         )}
 
