@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { PlayerProfile } from '../domain/types';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../src/design/tokens';
 import { CheckIcon, TrophyIcon, Icon, IconName, RankIcon, EditPencilIcon } from '../components/icons/CustomIcons';
 import { StreakBarChart } from '../components/common/StreakBarChart';
 import { useTheme } from '../design/theme';
+import { leaderboardService } from '../domain/services/leaderboardService';
 
 type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 
 interface ProfileScreenProps {
+  playerId?: string;
   playerName?: string;
   coins?: number;
   gems?: number;
@@ -18,6 +20,7 @@ interface ProfileScreenProps {
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
+  playerId = 'player-local',
   playerName = 'Player_One',
   coins = 50380,
   gems = 1000,
@@ -38,30 +41,92 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  // Authentic local player identity state
-  const profile: PlayerProfile = {
-    id: 'player-local',
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<PlayerProfile>({
+    id: playerId,
     name: playerName,
     avatar: playerName.slice(0, 2).toUpperCase(),
-    tier: 'Platinum',
-    rating: 1450,
-    gamesPlayed: 48,
-    wins: 34,
-    winRate: 71,
-    bestStreak: 6,
-    currentStreak: 2,
+    tier: 'Bronze',
+    rating: 1000,
+    gamesPlayed: 0,
+    wins: 0,
+    winRate: 0,
+    bestStreak: 0,
+    currentStreak: 0,
     achievements: [
       { id: 'a1', title: 'First Victory', description: 'Win your first 5×5 Bingo match', unlocked: true, icon: 'trophy' },
       { id: 'a2', title: 'Triple Threat', description: 'Complete 3 lines in a single match', unlocked: true, icon: 'ranked' },
       { id: 'a3', title: 'Corner Master', description: 'Complete the four corners pattern', unlocked: false, icon: 'bingo' },
       { id: 'a4', title: 'Grandmaster Clash', description: 'Defeat the Grandmaster Robot AI', unlocked: false, icon: 'winner' },
     ],
-    recentMatches: [
-      { id: 'm1', date: 'Today, 14:20', mode: 'RANKED', result: 'WIN', score: 2500, lines: 3, ratingDelta: 25 },
-      { id: 'm2', date: 'Yesterday, 19:45', mode: 'ROBOT', result: 'WIN', score: 2000, lines: 2, ratingDelta: 0 },
-      { id: 'm3', date: 'Sep 10, 11:10', mode: 'DAILY', result: 'WIN', score: 1850, lines: 3, ratingDelta: 0 },
-    ],
-  };
+    recentMatches: [],
+  });
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchProfile = async () => {
+      const data = await leaderboardService.getPlayerProfile(playerId);
+      if (mounted && data) {
+        const p = data.profile || {};
+        const history = data.history || [];
+        
+        const wins = history.filter((m: any) => m.result === 'WIN').length;
+        const gamesPlayed = history.length;
+        const winRate = gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0;
+
+        let currentStreak = 0;
+        let bestStreak = 0;
+        let streak = 0;
+        
+        // Calculate streaks (history is ordered by recent first, so we reverse it or just iterate from back)
+        for (let i = history.length - 1; i >= 0; i--) {
+          if (history[i].result === 'WIN') {
+            streak++;
+            if (streak > bestStreak) bestStreak = streak;
+          } else {
+            streak = 0;
+          }
+        }
+        currentStreak = streak; // The streak at the end (most recent)
+
+        setProfile((prev) => ({
+          ...prev,
+          name: p.name || playerName,
+          avatar: p.avatar || playerName.slice(0, 2).toUpperCase(),
+          tier: p.tier || 'Bronze',
+          rating: p.rating || 1000,
+          gamesPlayed,
+          wins,
+          winRate,
+          bestStreak,
+          currentStreak,
+          recentMatches: history.map((m: any) => ({
+            id: m.id,
+            date: new Date(m.created_at).toLocaleDateString(),
+            mode: m.mode || 'RANKED',
+            result: m.result,
+            score: m.score || 0,
+            lines: m.lines || 0,
+            ratingDelta: m.rating_delta || 0,
+          })),
+        }));
+      }
+      if (mounted) setIsLoading(false);
+    };
+
+    fetchProfile();
+    return () => {
+      mounted = false;
+    };
+  }, [playerId, playerName]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.bgCanvas, justifyContent: 'center', alignItems: 'center', height: '100%' }]}>
+        <ActivityIndicator size="large" color={COLORS.primaryOrange} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView

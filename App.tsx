@@ -121,6 +121,12 @@ function MainApp() {
   const multiplayer = useMultiplayerRoom({
     player,
     onNavigateToScreen: setScreenState,
+    onMatchEnd: (isWin, mode) => {
+      setPlayer((prev) => ({
+        ...prev,
+        coins: Math.max(0, isWin ? prev.coins + 1500 : prev.coins - 500)
+      }));
+    }
   });
 
   // Supabase & Local Session State Listener
@@ -528,9 +534,11 @@ function MainApp() {
         if (robotRef.current) {
           robotRef.current.onNumberCalled(cell.value, (_r, _c, robotLinesCount) => {
             setRobotLines(robotLinesCount);
-            if (robotLinesCount >= 3) {
+            if (robotLinesCount >= 5) {
               setIsGameActive(false);
               setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
+              leaderboardService.recordMatchResult(player.id, false, 'ROBOT', score, linesCompletedCount, -15);
+              setPlayer(prev => ({ ...prev, coins: Math.max(0, prev.coins - 500) }));
               setScreenState('RESULTS');
             }
           });
@@ -578,8 +586,9 @@ function MainApp() {
       };
     });
 
+    leaderboardService.recordMatchResult(player.id, true, gameMode, score + 1000, linesCompletedCount, 20);
     setScreenState('RESULTS');
-  }, [board, isGameActive, linesCompletedCount, score, matchStartTime]);
+  }, [board, isGameActive, linesCompletedCount, score, matchStartTime, player.id, gameMode]);
 
   useEffect(() => {
     // Only upsert if it's an authenticated Supabase user profile
@@ -603,6 +612,8 @@ function MainApp() {
               success: false,
               message: 'Turn timed out! You lose.',
             });
+            leaderboardService.recordMatchResult(player.id, false, 'ROBOT', score, linesCompletedCount, -20);
+            setPlayer(prev => ({ ...prev, coins: Math.max(0, prev.coins - 500) }));
             setTimeout(() => setScreenState('RESULTS'), 2000);
           } else {
             // Robot timed out -> shouldn't happen, but pass turn to player to unblock
@@ -631,9 +642,11 @@ function MainApp() {
             if (robotRef.current) {
               robotRef.current.onNumberCalled(nextNumber, (_r, _c, robotLinesCount) => {
                 setRobotLines(robotLinesCount);
-                if (robotLinesCount >= 3) {
+                if (robotLinesCount >= 5) {
                   setIsGameActive(false);
                   setMatchDuration(Math.floor((Date.now() - matchStartTime) / 1000));
+                  leaderboardService.recordMatchResult(player.id, false, 'ROBOT', score, linesCompletedCount, -15);
+                  setPlayer(prev => ({ ...prev, coins: Math.max(0, prev.coins - 500) }));
                   setScreenState('RESULTS');
                 }
               });
@@ -733,6 +746,7 @@ function MainApp() {
 
             {currentTab === 'PROFILE' && (
               <ProfileScreen
+                playerId={player.id}
                 playerName={player.name}
                 coins={player.coins}
                 gems={player.gems}
@@ -899,8 +913,9 @@ function MainApp() {
             linesCompletedCount={multiplayer.room ? multiplayer.linesCompletedCount : linesCompletedCount}
             totalCallsCount={multiplayer.room ? multiplayer.drawnNumbers.length : drawnNumbers.length}
             matchDurationSec={multiplayer.room ? multiplayer.matchDuration : matchDuration}
-            isRanked={gameMode === 'RANKED'}
-            ratingDelta={25}
+            coinDelta={
+              (multiplayer.room ? multiplayer.winner?.id === player.id : linesCompletedCount >= 5) ? 1500 : -500
+            }
             winnerName={
               multiplayer.room 
                 ? multiplayer.winner?.name 

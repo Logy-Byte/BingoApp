@@ -39,8 +39,7 @@ interface ResultsScreenProps {
   linesCompletedCount: number;
   totalCallsCount: number;
   matchDurationSec: number;
-  isRanked?: boolean;
-  ratingDelta?: number;
+  coinDelta?: number;
   winnerName?: string;
   isMultiplayer?: boolean;
   onPlayAgain: () => void;
@@ -53,8 +52,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
   linesCompletedCount,
   totalCallsCount,
   matchDurationSec,
-  isRanked = false,
-  ratingDelta = 25,
+  coinDelta = 0,
   winnerName,
   isMultiplayer = false,
   onPlayAgain,
@@ -266,6 +264,23 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
 
           <View style={[styles.tableDivider, { backgroundColor: theme.borderSubtle }]} />
 
+          {coinDelta !== 0 && (
+            <View style={styles.tableRow}>
+              <View style={styles.streakLabelRow}>
+                <Text style={[styles.rowLabel, { color: coinDelta > 0 ? COLORS.gentleOlive : COLORS.dangerRed }]}>
+                  Match Purse
+                </Text>
+              </View>
+              <View style={styles.rowValGroup}>
+                <Text style={[styles.rowValText, { color: coinDelta > 0 ? COLORS.gentleOlive : COLORS.dangerRed }]}>
+                  {coinDelta > 0 ? '+' : ''}{coinDelta} Coins
+                </Text>
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.tableDivider, { backgroundColor: theme.borderSubtle }]} />
+
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: theme.textPrimary }]}>Total Disbursed</Text>
             <View style={styles.totalPillsRow}>
@@ -273,6 +288,13 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({
                 <IconFire size={13} color={COLORS.primaryOrange} />
                 <Text style={[styles.totalCoinVal, { color: COLORS.primaryOrange }]}>+{totalXpDisbursed} XP</Text>
               </View>
+              {coinDelta !== 0 && (
+                <View style={[styles.rewardPill, { backgroundColor: coinDelta > 0 ? 'rgba(76, 175, 80, 0.12)' : 'rgba(244, 67, 54, 0.12)', marginLeft: 6 }]}>
+                  <Text style={[styles.totalCoinVal, { color: coinDelta > 0 ? COLORS.gentleOlive : COLORS.dangerRed }]}>
+                    {coinDelta > 0 ? '+' : ''}{coinDelta} Coins
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
         </View>

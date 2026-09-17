@@ -15,6 +15,7 @@ import { AntiCheatValidator } from '../multiplayer/antiCheatValidator';
 import { evaluate5x5Wins, generate5x5Board } from '../engine/gridGameEngine';
 import { SoundEngine } from '../../audio/soundEngine';
 import { GameStateMachine, GameState } from './gameStateMachine';
+import { leaderboardService } from '../services/leaderboardService';
 
 export type RoomPageState =
   | 'IDLE'
@@ -32,9 +33,10 @@ const ACTIVE_ROOM_STORAGE_KEY = 'bingo_active_room_session';
 export interface UseMultiplayerRoomProps {
   player: Player;
   onNavigateToScreen: (screen: 'LOBBY' | 'GAMEPLAY' | 'RESULTS' | 'TAB_NAV' | 'ROOMS') => void;
+  onMatchEnd?: (isWin: boolean, mode: string) => void;
 }
 
-export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplayerRoomProps) {
+export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: UseMultiplayerRoomProps) {
   const [room, setRoom] = useState<PublicRoom | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [board, setBoard] = useState<Board5x5 | null>(null);
@@ -255,6 +257,21 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
             SoundEngine.playError();
           }
 
+          // Record match in Supabase Match History
+          const gameMode = room?.privacy === 'open' ? 'RANKED' : 'FRIEND';
+          leaderboardService.recordMatchResult(
+            player.id, 
+            winnerId === player.id, 
+            gameMode, 
+            score, 
+            linesCompletedCount, 
+            winnerId === player.id ? 25 : -15
+          );
+
+          if (onMatchEnd) {
+            onMatchEnd(winnerId === player.id, gameMode);
+          }
+
           stateMachineRef.current.transition({ type: 'CLAIM_VERIFIED', winnerId, winnerName });
           onNavigateToScreen('RESULTS');
           break;
@@ -301,7 +318,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen }: UseMultiplaye
 
           stateMachineRef.current.transition({ type: 'REMATCH_CONFIRMED' });
           setRoomPageState('ROOM_READY');
-          onNavigateToScreen('ROOMS');
+          onNavigateToScreen('LOBBY');
           break;
         }
       }

@@ -7,7 +7,7 @@ import { useTheme } from '../design/theme';
 import { leaderboardService } from '../domain/services/leaderboardService';
 import { InlineLoader } from '../components/common/InlineLoader';
 
-type PeriodFilter = 'Daily' | 'Weekly' | 'All Time';
+export type PeriodFilter = 'Daily' | 'Weekly' | 'All Time';
 
 interface LeaderboardScreenProps {
   player: Player;
@@ -28,7 +28,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
       // Upsert current player first so they appear in the fetch
       await leaderboardService.upsertPlayer(player);
       
-      const players = await leaderboardService.fetchTopPlayers(player.id);
+      const players = await leaderboardService.fetchTopPlayers(player.id, period);
       
       if (mounted) {
         setRankedPlayers(players);
@@ -41,7 +41,7 @@ export const LeaderboardScreen: React.FC<LeaderboardScreenProps> = ({ player }) 
     return () => {
       mounted = false;
     };
-  }, [player]);
+  }, [player, period]);
 
   const topThree = rankedPlayers.slice(0, 3);
   const remainingPlayers = rankedPlayers.slice(3);
