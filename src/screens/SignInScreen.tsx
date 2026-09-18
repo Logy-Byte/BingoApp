@@ -165,7 +165,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           error={emailError}
           icon={<UserIcon size={18} color={theme.textMuted} />}
         />
-        
+
         <View style={{ height: 12 }} />
 
         <PasswordField
@@ -225,38 +225,6 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             </Text>
           )}
         </TouchableOpacity>
-
-        {/* QA DEMO PROFILES SECTION FOR TWO-PLAYER VERIFICATION */}
-        <View style={[styles.qaContainer, { borderColor: theme.borderSubtle, backgroundColor: theme.bgRecessed }]}>
-          <View style={styles.qaHeaderRow}>
-            <UsersIcon size={14} color={COLORS.winterHazel} />
-            <Text style={[styles.qaHeaderText, { color: theme.textMuted }]}>
-              QA DEMO MULTIPLAYER PROFILES
-            </Text>
-          </View>
-          <Text style={[styles.qaSubtitle, { color: theme.textSecondary }]}>
-            Instant 1-click login to test dual-browser real-time matchmaking:
-          </Text>
-          <View style={styles.qaButtonRow}>
-            <TouchableOpacity
-              style={[styles.qaBtn, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}
-              onPress={() => onLogin('Alpha Commander', 'qa-user-alpha-001')}
-              accessibilityRole="button"
-              accessibilityLabel="Login as QA Player A"
-            >
-              <Text style={[styles.qaBtnText, { color: COLORS.lunarShadow }]}>QA Player A (Alpha)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.qaBtn, { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel }]}
-              onPress={() => onLogin('Bravo Striker', 'qa-user-bravo-002')}
-              accessibilityRole="button"
-              accessibilityLabel="Login as QA Player B"
-            >
-              <Text style={[styles.qaBtnText, { color: '#8A6724' }]}>QA Player B (Bravo)</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </View>
     </View>
   );
