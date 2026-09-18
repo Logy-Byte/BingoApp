@@ -65,13 +65,7 @@ export class AntiCheatValidator {
           };
         }
 
-        // Must be marked
-        if (boardCell.state !== 'MARKED' && boardCell.state !== 'COMPLETED') {
-          return {
-            isValid: false,
-            reason: `Cell [${patternCoord.row},${patternCoord.col}] has not been marked.`,
-          };
-        }
+        // The server does not track local daub states, so we only verify it was called.
       }
 
       return {
@@ -90,8 +84,7 @@ export class AntiCheatValidator {
         if (!cell) return false;
         if (cell.isFreeSpace) return true;
         const isCalled = calledNumbersSet.has(cell.value);
-        const isMarked = cell.state === 'MARKED' || cell.state === 'COMPLETED';
-        return isCalled && isMarked;
+        return isCalled;
       });
 
       if (isPatternValid) {

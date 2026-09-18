@@ -121,13 +121,17 @@ export class AuthoritativeRoomServer {
     this.currentTurnPlayerId = playerIds[Math.floor(Math.random() * playerIds.length)];
     this.turnExpiresAt = Date.now() + this.TURN_DURATION_MS;
 
-    // Broadcast instant match start to all clients
-    this.transport.send('MATCH_STARTED', this.room.id, this.room.hostId, {
-      snapshot: this.getSnapshot(),
-    });
+    // Broadcast instant match start to all clients after a brief delay
+    // This delay ensures the guest client has successfully connected to the websocket
+    setTimeout(() => {
+      if (this.isDestroyed) return;
+      this.transport.send('MATCH_STARTED', this.room.id, this.room.hostId, {
+        snapshot: this.getSnapshot(),
+      });
 
-    // Start turn timeout checker
-    this.startTurnTimer();
+      // Start turn timeout checker
+      this.startTurnTimer();
+    }, 2500);
   }
 
   private broadcastRoomAnnounce() {
@@ -269,7 +273,7 @@ export class AuthoritativeRoomServer {
     const newPlayer: Player = {
       ...player,
       isHost: player.id === this.room.hostId,
-      isReady: player.id === this.room.hostId, // Host is ready by default
+      isReady: true, // Everyone is ready by default when they join
       score: 0,
       linesCompleted: 0,
       hasWon: false,
@@ -310,6 +314,10 @@ export class AuthoritativeRoomServer {
     const allReady = Array.from(this.players.values()).every((p) => p.isHost || p.isReady);
     if (!allReady || this.players.size < 2) {
       return;
+    }
+
+    if (this.room.status === 'ACTIVE') {
+      return; // Prevent infinite loop of START_COUNTDOWN broadcasts
     }
 
     // Update room status
@@ -516,7 +524,7 @@ export class AuthoritativeRoomServer {
       p.hasWon = false;
       p.linesCompleted = 0;
       p.score = 0;
-      p.isReady = p.isHost;
+      p.isReady = true; // Everyone is ready by default for the rematch
     });
 
     this.transport.send('REMATCH_CONFIRMED', this.room.id, this.room.hostId, {
