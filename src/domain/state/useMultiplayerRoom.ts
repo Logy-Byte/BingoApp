@@ -316,7 +316,7 @@ export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: U
         }
 
         case 'REMATCH_CONFIRMED': {
-          const snapshot: AuthoritativeRoomSnapshot = msg.payload;
+          const snapshot: AuthoritativeRoomSnapshot = msg.payload.snapshot;
           setRoom(snapshot.room);
           setPlayers(snapshot.players);
           setIsGameActive(false);
@@ -535,12 +535,12 @@ export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: U
         }
 
         // Send a request to call this number to the server.
-        // We do NOT mark the cell yet. The server will broadcast NUMBER_DRAWN,
-        // and the player will manually mark it once it appears as drawn.
         if (transportRef.current && room) {
           transportRef.current.send('CALL_NUMBER_REQUEST', room.id, player.id, { number: cell.value });
+          // Optimistically lock the turn to prevent rapid-fire cheating
+          setCurrentTurnPlayerId('server-processing');
         }
-        return;
+        // Do not return; let it fall through to optimistically mark the cell.
       }
 
       // Mark cell
@@ -705,15 +705,9 @@ export function useMultiplayerRoom({ player, onNavigateToScreen, onMatchEnd }: U
       ]);
       setOpponentName(opponent.name);
       setOpponentLines(0);
-      setIsGameActive(true);
-      setDrawnNumbers([]);
-      setScore(0);
-      setLinesCompletedCount(0);
-      setCompletedPatternIds([]);
-      setWinner(null);
-      matchStartTimeRef.current = Date.now();
-      stateMachineRef.current.transition({ type: 'MATCH_STARTED' });
-      onNavigateToScreen('GAMEPLAY');
+      
+      // Do NOT navigate to GAMEPLAY synchronously here.
+      // Wait for the server's MATCH_STARTED broadcast to set the board and transition the screen.
     },
     [player, setupTransport, onNavigateToScreen]
   );
