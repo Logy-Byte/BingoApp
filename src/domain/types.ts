@@ -9,6 +9,7 @@ export type TabDestination = 'PLAY' | 'LEADERBOARD' | 'PROFILE' | 'SHOP';
 export type ScreenState = 
   | 'SPLASH'
   | 'SIGN_IN'
+  | 'REGISTER'
   | 'TAB_NAV'
   | 'ROOM_SELECTION'
   | 'PRE_GAME'
@@ -21,7 +22,8 @@ export type ScreenState =
   | 'JOIN_ROOM'
   | 'DAILY_PUZZLE'
   | 'SETTINGS'
-  | 'SHOP';
+  | 'SHOP'
+  | 'DELETE_ACCOUNT';
 
 export type GameModeType = 'RANKED' | 'ROBOT' | 'FRIEND' | 'DAILY' | 'LOCAL';
 

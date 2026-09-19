@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { PlayerProfile } from '../domain/types';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../src/design/tokens';
 import { CheckIcon, TrophyIcon, Icon, IconName, RankIcon, EditPencilIcon } from '../components/icons/CustomIcons';
 import { StreakBarChart } from '../components/common/StreakBarChart';
 import { useTheme } from '../design/theme';
 import { leaderboardService } from '../domain/services/leaderboardService';
+import { supabase } from '../lib/supabase';
 
 type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 
@@ -19,6 +20,7 @@ interface ProfileScreenProps {
   onUpdateName?: (name: string) => void;
   onOpenSettings?: () => void;
   onLogout?: () => void;
+  onNavigateDeleteAccount?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -30,6 +32,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   gems = 1000,
   onUpdateName,
   onLogout,
+  onNavigateDeleteAccount,
 }) => {
   const { theme, isDark } = useTheme();
   const [activeSection, setActiveSection] = useState<ProfileSection>('Overview');
@@ -571,6 +574,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <Text style={[styles.logoutBtnText, { color: COLORS.dangerRed }]}>
               Log Out
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.logoutBtn,
+              {
+                backgroundColor: COLORS.dangerRed,
+                borderColor: COLORS.dangerRed,
+                marginTop: SPACING.md,
+              },
+            ]}
+            onPress={onNavigateDeleteAccount}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Delete Account"
+          >
+            <Text style={[styles.logoutBtnText, { color: COLORS.lunarShadow }]}>
+              Delete Account
             </Text>
           </TouchableOpacity>
         </View>

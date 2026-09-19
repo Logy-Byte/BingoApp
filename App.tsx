@@ -42,6 +42,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNavBar } from './src/components/navigation/BottomNavBar';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
+import { RegisterScreen } from './src/screens/RegisterScreen';
+import { DeleteAccountScreen } from './src/screens/DeleteAccountScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { RoomSelectionScreen } from './src/screens/RoomSelectionScreen';
 import { PreGameScreen } from './src/screens/PreGameScreen';
@@ -753,6 +755,13 @@ function MainApp() {
               AsyncStorage.setItem('bingo_user_session', JSON.stringify({ userId: activeId, name }));
               setScreenState('TAB_NAV');
             }}
+            onNavigateRegister={() => setScreenState('REGISTER')}
+          />
+        )}
+
+        {screenState === 'REGISTER' && (
+          <RegisterScreen
+            onNavigateSignIn={() => setScreenState('SIGN_IN')}
           />
         )}
 
@@ -788,11 +797,19 @@ function MainApp() {
                 onUpdateName={(name) => setPlayer((prev) => ({ ...prev, name }))}
                 onOpenSettings={() => setScreenState('SETTINGS')}
                 onLogout={handleLogout}
+                onNavigateDeleteAccount={() => setScreenState('DELETE_ACCOUNT')}
               />
             )}
 
             <BottomNavBar currentTab={currentTab} onSelectTab={setCurrentTab} />
           </>
+        )}
+
+        {screenState === 'DELETE_ACCOUNT' && (
+          <DeleteAccountScreen
+            onCancel={() => setScreenState('TAB_NAV')}
+            onAccountDeleted={handleLogout}
+          />
         )}
 
         {screenState === 'MATCHMAKING' && (

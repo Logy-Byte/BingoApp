@@ -8,24 +8,19 @@ import {
   Image,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY, TOUCH_TARGET } from '../design/tokens';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
-import { AppIconVector } from '../components/icons/AppIconVector';
 import { GameButton } from '../components/common/GameButton';
 import { GameInput } from '../components/common/GameInput';
 import { PasswordField } from '../components/auth/PasswordField';
-import { ProfileIcon as UserIcon, UsersIcon } from '../components/icons/CustomIcons';
+import { ProfileIcon as UserIcon } from '../components/icons/CustomIcons';
 
-interface SignInScreenProps {
-  currentName: string;
-  onLogin: (name: string, userId?: string) => void;
-  onNavigateRegister: () => void;
+interface RegisterScreenProps {
+  onNavigateSignIn: () => void;
 }
 
-export const SignInScreen: React.FC<SignInScreenProps> = ({
-  currentName,
-  onLogin,
-  onNavigateRegister,
+export const RegisterScreen: React.FC<RegisterScreenProps> = ({
+  onNavigateSignIn,
 }) => {
   const { theme } = useTheme();
   const [email, setEmail] = useState('');
@@ -63,42 +58,23 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     return isValid;
   };
 
-  async function signInWithEmail() {
+  async function signUpWithEmail() {
     if (loading) return;
     if (!validateForm()) return;
 
     setLoading(true);
     setServerError(undefined);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password: password,
     });
     setLoading(false);
 
     if (error) {
-      setServerError('Email or password is incorrect.');
+      setServerError('Something went wrong. Please try again.');
     } else if (data?.user) {
-      onLogin(data.user.email?.split('@')[0] || 'Player', data.user.id);
-    }
-  }
-
-  // Sign up logic moved to RegisterScreen
-
-  async function handleGuestSubmit() {
-    if (loading) return;
-    setLoading(true);
-    setServerError(undefined);
-
-    const { data, error } = await supabase.auth.signInAnonymously();
-    setLoading(false);
-
-    if (error) {
-      console.log('Anonymous sign-in not enabled, falling back to local guest session.');
-      const localGuestId = `guest-${Math.random().toString(36).substring(2, 10)}`;
-      onLogin('Guest Player', localGuestId);
-    } else if (data?.user) {
-      onLogin('Guest Player', data.user.id);
+      setSuccessMessage('Please check your email for the login confirmation link!');
     }
   }
 
@@ -114,9 +90,9 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             accessibilityLabel="Bingo Adventure Compass Icon"
           />
         </View>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Bingo Adventure</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Create Account</Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          Sign in to save your streaks, XP, and stats
+          Join Bingo Adventure today
         </Text>
       </View>
 
@@ -160,32 +136,20 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
             if (passwordError) setPasswordError(undefined);
             if (serverError) setServerError(undefined);
           }}
-          placeholder="Enter your password"
+          placeholder="Create a password"
           error={passwordError}
           disabled={loading}
         />
 
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: SPACING.md }}>
-          <View style={{ flex: 1 }}>
-            <GameButton
-              title={loading ? 'Signing In…' : 'Sign In'}
-              onPress={signInWithEmail}
-              variant="primary"
-              size="lg"
-              fullWidth
-              disabled={loading}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <GameButton
-              title="Sign Up"
-              onPress={onNavigateRegister}
-              variant="secondary"
-              size="lg"
-              fullWidth
-              disabled={loading}
-            />
-          </View>
+        <View style={{ marginTop: SPACING.lg }}>
+          <GameButton
+            title={loading ? 'Creating Account…' : 'Sign Up'}
+            onPress={signUpWithEmail}
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={loading}
+          />
         </View>
 
         <View style={styles.dividerRow}>
@@ -196,56 +160,19 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
 
         <TouchableOpacity
           style={styles.guestLink}
-          onPress={handleGuestSubmit}
+          onPress={onNavigateSignIn}
           disabled={loading}
           accessibilityRole="button"
-          accessibilityLabel="Quick guest play"
+          accessibilityLabel="Go to Sign In"
         >
-          {loading ? (
-            <ActivityIndicator size="small" color={theme.textPrimary} />
-          ) : (
-            <Text style={[styles.guestLinkText, { color: theme.textSecondary }]}>
-              Continue as Anonymous Guest • Instant Play
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        {/* QA DEMO PROFILES SECTION FOR TWO-PLAYER VERIFICATION */}
-        <View style={[styles.qaContainer, { borderColor: theme.borderSubtle, backgroundColor: theme.bgRecessed }]}>
-          <View style={styles.qaHeaderRow}>
-            <UsersIcon size={14} color={COLORS.winterHazel} />
-            <Text style={[styles.qaHeaderText, { color: theme.textMuted }]}>
-              QA DEMO MULTIPLAYER PROFILES
-            </Text>
-          </View>
-          <Text style={[styles.qaSubtitle, { color: theme.textSecondary }]}>
-            Instant 1-click login to test dual-browser real-time matchmaking:
+          <Text style={[styles.guestLinkText, { color: theme.textSecondary }]}>
+            Already have an account? Sign In
           </Text>
-          <View style={styles.qaButtonRow}>
-            <TouchableOpacity
-              style={[styles.qaBtn, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}
-              onPress={() => onLogin('Alpha Commander', 'qa-user-alpha-001')}
-              accessibilityRole="button"
-              accessibilityLabel="Login as QA Player A"
-            >
-              <Text style={[styles.qaBtnText, { color: COLORS.lunarShadow }]}>QA Player A (Alpha)</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.qaBtn, { backgroundColor: theme.accentHazelTint, borderColor: COLORS.winterHazel }]}
-              onPress={() => onLogin('Bravo Striker', 'qa-user-bravo-002')}
-              accessibilityRole="button"
-              accessibilityLabel="Login as QA Player B"
-            >
-              <Text style={[styles.qaBtnText, { color: '#8A6724' }]}>QA Player B (Bravo)</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -289,9 +216,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 340,
   },
-  actionBtn: {
-    marginTop: SPACING.xs,
-  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,35 +232,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     fontFamily: TYPOGRAPHY.fontFamily,
   },
-  socialRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    width: '100%',
-  },
-  socialBrandBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: RADIUS.control,
-    borderWidth: 1,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  socialBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
   guestLink: {
     alignItems: 'center',
-    marginTop: SPACING.lg,
     padding: SPACING.xs,
   },
   guestLinkText: {
@@ -344,11 +241,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
     fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  eyeBtn: {
-    padding: SPACING.xs,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   messageBanner: {
     paddingVertical: 8,
@@ -363,47 +255,4 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily,
     textAlign: 'center',
   },
-  qaContainer: {
-    marginTop: SPACING.xl,
-    padding: SPACING.md,
-    borderRadius: RADIUS.control,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-  },
-  qaHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  qaHeaderText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  qaSubtitle: {
-    fontSize: 11,
-    marginBottom: SPACING.sm,
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
-  qaButtonRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  qaBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    borderRadius: RADIUS.compact,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qaBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    fontFamily: TYPOGRAPHY.fontFamily,
-  },
 });
-
