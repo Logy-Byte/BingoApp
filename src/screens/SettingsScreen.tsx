@@ -18,6 +18,7 @@ import {
 } from '../components/icons';
 import { AppIconVector } from '../components/icons/AppIconVector';
 import { useTheme, REFERENCE_PALETTE } from '../design/theme';
+import { ModerationAdminPanel } from '../components/ugc/ModerationAdminPanel';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -36,6 +37,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
   const [voiceCaller, setVoiceCaller] = useState(SoundEngine.isVoiceEnabled());
   const [volumeLevel, setVolumeLevel] = useState<'low' | 'med' | 'high'>('med');
   const [showSpecimenSheet, setShowSpecimenSheet] = useState(false);
+  const [showModerationAdmin, setShowModerationAdmin] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [accountResetDone, setAccountResetDone] = useState(false);
 
@@ -399,6 +401,47 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
             />
           )}
         </GameCard>
+
+        {/* 5. DEVELOPER SUPPORT & SAFETY CONTACT (Apple Guideline 1.2 / Google Play UGC Compliance) */}
+        <GameCard
+          style={[
+            styles.card,
+            { backgroundColor: theme.bgCard, borderColor: theme.borderSubtle },
+          ]}
+        >
+          <Text style={[styles.sectionHeader, { color: theme.textPrimary }]}>
+            Support & Moderation Contact
+          </Text>
+
+          <SettingsRow
+            title="Developer / Publisher"
+            description="Bingo Clash Pro Mobile Studios"
+            icon={<InfoIcon size={18} color={theme.textMuted} />}
+          />
+
+          <SettingsRow
+            title="Customer Support Email"
+            description="support@bingoclashpro.com"
+            icon={<InfoIcon size={18} color={COLORS.gentleOlive} />}
+          />
+
+          <SettingsRow
+            title="Abuse & Moderation Contact"
+            description="safety@bingoclashpro.com • 24-Hour SLA"
+            icon={<WarningIcon size={18} color={COLORS.primaryOrange} />}
+          />
+
+          <SettingsRow
+            title="Moderation Queue & 24h SLA Inspector"
+            description="Audit active reports, SLA countdown, and user enforcement"
+            icon={<WarningIcon size={18} color={COLORS.dangerRed} />}
+            showDivider={false}
+            onPress={() => setShowModerationAdmin(true)}
+            rightElement={
+              <ChevronIcon direction="right" size={16} color={theme.textPrimary} />
+            }
+          />
+        </GameCard>
       </ScrollView>
 
       {/* Icon Specimen Modal */}
@@ -406,9 +449,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         visible={showSpecimenSheet}
         onClose={() => setShowSpecimenSheet(false)}
       />
+
+      {/* Moderation Queue & SLA Inspector Modal */}
+      <ModerationAdminPanel
+        visible={showModerationAdmin}
+        onClose={() => setShowModerationAdmin(false)}
+      />
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   screenContainer: {

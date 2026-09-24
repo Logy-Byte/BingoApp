@@ -6,8 +6,9 @@ import { GameInput } from '../components/common/GameInput';
 import { GameCard } from '../components/common/GameCard';
 import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { RoomPrivacy } from '../domain/types';
-import { LockIcon, UnlockIcon } from '../components/icons/CustomIcons';
+import { LockIcon, UnlockIcon, WarningIcon } from '../components/icons/CustomIcons';
 import { useTheme } from '../design/theme';
+import { globalModerationService } from '../domain/services/moderationService';
 
 interface CreateRoomScreenProps {
   onCreateRoom: (name: string, privacy: RoomPrivacy, password?: string) => Promise<void>;
@@ -23,11 +24,22 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
   const [privacy, setPrivacy] = useState<RoomPrivacy>('open');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   const handleCreate = async () => {
+    setFilterError(null);
+    const targetName = roomName.trim() || 'Friendly Arena';
+
+    // Pre-publication content filtering
+    const filterRes = globalModerationService.filterContent(targetName);
+    if (filterRes.isObjectionable) {
+      setFilterError(`Room name rejected: ${filterRes.reason || 'Contains prohibited content.'}`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await onCreateRoom(roomName.trim() || 'Friendly Arena', privacy, password.trim());
+      await onCreateRoom(targetName, privacy, password.trim());
     } finally {
       setIsSubmitting(false);
     }
@@ -47,11 +59,34 @@ export const CreateRoomScreen: React.FC<CreateRoomScreenProps> = ({
             },
           ]}
         >
+          {filterError && (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                borderColor: COLORS.dangerRed,
+                borderWidth: 1,
+                padding: SPACING.sm,
+                borderRadius: RADIUS.card,
+              }}
+            >
+              <WarningIcon size={16} color={COLORS.dangerRed} />
+              <Text style={{ fontSize: 12, color: COLORS.dangerRed, fontWeight: '700', flex: 1 }}>
+                {filterError}
+              </Text>
+            </View>
+          )}
+
           {/* ROOM NAME INPUT */}
           <GameInput
             label="ROOM NAME"
             value={roomName}
-            onChangeText={setRoomName}
+            onChangeText={(txt) => {
+              setFilterError(null);
+              setRoomName(txt);
+            }}
             placeholder="e.g. Friendly Arena"
             maxLength={24}
           />

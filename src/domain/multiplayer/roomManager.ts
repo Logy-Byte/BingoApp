@@ -1,5 +1,6 @@
 import { PublicRoom, RoomPrivacy, Player } from '../types';
 import { supabase } from '../../lib/supabase';
+import { globalModerationService } from '../services/moderationService';
 
 export function generateRoomId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // omit ambiguous 0, O, 1, I
@@ -149,12 +150,20 @@ export class RoomManager {
     privacy: RoomPrivacy = 'open',
     password?: string
   ): Promise<PublicRoom> {
+    const rawName = name.trim() || 'Custom Arena';
+
+    // Content Safety & Moderation Filter
+    const filterRes = globalModerationService.filterContent(rawName);
+    if (filterRes.isObjectionable) {
+      throw new Error(`Room name rejected by safety filter: ${filterRes.reason || 'Prohibited content'}`);
+    }
+
     const roomId = generateRoomId();
     const passwordHashStr = password && password.trim().length > 0 ? hashPassword(password.trim()) : null;
 
     const insertPayload = {
         id: roomId,
-        name: name.trim() || 'Custom Arena',
+        name: rawName,
         privacy: privacy,
         password_hash: passwordHashStr,
         host_id: host.id,

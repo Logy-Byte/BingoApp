@@ -7,6 +7,7 @@ import { StreakBarChart } from '../components/common/StreakBarChart';
 import { useTheme } from '../design/theme';
 import { leaderboardService } from '../domain/services/leaderboardService';
 import { supabase } from '../lib/supabase';
+import { globalModerationService } from '../domain/services/moderationService';
 
 type ProfileSection = 'Overview' | 'Achievements' | 'Match History';
 
@@ -43,6 +44,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const handleSaveName = () => {
     const trimmed = nameInput.trim();
     if (trimmed) {
+      const filterRes = globalModerationService.filterContent(trimmed);
+      if (filterRes.isObjectionable) {
+        Alert.alert(
+          'Name Rejected',
+          `The display name contains prohibited content: ${filterRes.reason || 'Please choose a respectful name.'}`
+        );
+        return;
+      }
       onUpdateName?.(trimmed);
       setIsEditingName(false);
     }

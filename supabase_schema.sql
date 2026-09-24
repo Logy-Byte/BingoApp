@@ -95,3 +95,75 @@ CREATE POLICY "Users can update room player count."
 CREATE POLICY "Hosts can delete their rooms."
   ON rooms FOR DELETE
   USING ( true );
+
+-- 8. UGC Safety & Moderation Tables (Apple Guideline 1.2 / Google Play UGC Compliance)
+
+-- UGC Posts Table
+CREATE TABLE IF NOT EXISTS ugc_posts (
+  id TEXT PRIMARY KEY,
+  author_id TEXT NOT NULL,
+  author_name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  status TEXT DEFAULT 'PUBLISHED',
+  reports_count INTEGER DEFAULT 0,
+  removal_reason TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE ugc_posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public posts are viewable by everyone." ON ugc_posts FOR SELECT USING ( status = 'PUBLISHED' );
+CREATE POLICY "Users can create posts." ON ugc_posts FOR INSERT WITH CHECK ( true );
+CREATE POLICY "Authors can update own posts." ON ugc_posts FOR UPDATE USING ( true );
+
+-- UGC Reports Table (24-Hour SLA Tracking)
+CREATE TABLE IF NOT EXISTS ugc_reports (
+  id TEXT PRIMARY KEY,
+  post_id TEXT NOT NULL,
+  reported_user_id TEXT NOT NULL,
+  reporter_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  priority TEXT DEFAULT 'MEDIUM',
+  status TEXT DEFAULT 'OPEN',
+  sla_deadline TIMESTAMP WITH TIME ZONE NOT NULL,
+  moderator_id TEXT,
+  resolution TEXT,
+  enforcement_action TEXT,
+  content_snapshot TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  resolved_at TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE ugc_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can submit reports." ON ugc_reports FOR INSERT WITH CHECK ( true );
+CREATE POLICY "Users can view own reports." ON ugc_reports FOR SELECT USING ( true );
+
+-- User Blocks Table
+CREATE TABLE IF NOT EXISTS user_blocks (
+  id TEXT PRIMARY KEY,
+  blocker_user_id TEXT NOT NULL,
+  blocked_user_id TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE user_blocks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage blocks." ON user_blocks FOR ALL USING ( true );
+
+-- User Moderation States Table
+CREATE TABLE IF NOT EXISTS user_moderation_states (
+  user_id TEXT PRIMARY KEY,
+  enforcement_level INTEGER DEFAULT 0,
+  is_banned BOOLEAN DEFAULT false,
+  ban_expires_at TIMESTAMP WITH TIME ZONE,
+  age_verified BOOLEAN DEFAULT false,
+  age_verified_at TIMESTAMP WITH TIME ZONE,
+  terms_accepted BOOLEAN DEFAULT false,
+  terms_accepted_at TIMESTAMP WITH TIME ZONE,
+  terms_version TEXT DEFAULT 'v1.0',
+  warning_count INTEGER DEFAULT 0,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE user_moderation_states ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view and update moderation state." ON user_moderation_states FOR ALL USING ( true );

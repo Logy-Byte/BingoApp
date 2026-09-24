@@ -227,3 +227,84 @@ export interface PlayerProfile {
   }>;
 }
 
+// UGC Safety & Moderation System Types
+export type PostStatus =
+  | 'PENDING'
+  | 'PUBLISHED'
+  | 'REPORTED'
+  | 'QUARANTINED'
+  | 'REMOVED'
+  | 'REJECTED';
+
+export type ReportCategory =
+  | 'HARASSMENT'
+  | 'THREAT'
+  | 'HATE_SPEECH'
+  | 'SEXUAL_CONTENT'
+  | 'MINOR_SAFETY'
+  | 'SELF_HARM'
+  | 'SPAM'
+  | 'DOXXING'
+  | 'ILLEGAL'
+  | 'OTHER';
+
+export type ReportStatus =
+  | 'OPEN'
+  | 'UNDER_REVIEW'
+  | 'ACTION_REQUIRED'
+  | 'RESOLVED'
+  | 'DISMISSED'
+  | 'ESCALATED';
+
+export type EnforcementLevel = 0 | 1 | 2 | 3;
+
+export interface UgcPost {
+  id: string;
+  authorId: string;           // Internal stable user ID
+  authorName: string;         // Public display name / Anonymous alias
+  content: string;
+  status: PostStatus;
+  createdAt: number;
+  updatedAt: number;
+  reportsCount?: number;
+  removalReason?: string;
+}
+
+export interface UgcReport {
+  id: string;
+  postId: string;
+  reportedUserId: string;     // Internal stable user ID
+  reporterId: string;         // Reporter stable user ID
+  category: ReportCategory;
+  description?: string;
+  createdAt: number;
+  slaDeadline: number;        // Created + 24 Hours SLA
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  status: ReportStatus;
+  moderatorId?: string;
+  resolvedAt?: number;
+  resolution?: string;
+  enforcementAction?: string;
+  contentSnapshot?: string;
+}
+
+export interface UserBlock {
+  id: string;
+  blockerUserId: string;
+  blockedUserId: string;
+  createdAt: number;
+}
+
+export interface UserModerationState {
+  userId: string;
+  enforcementLevel: EnforcementLevel;
+  isBanned: boolean;
+  banExpiresAt?: number;
+  ageVerified: boolean;
+  ageVerifiedAt?: number;
+  termsAccepted: boolean;
+  termsAcceptedAt?: number;
+  termsVersion?: string;
+  warningCount: number;
+}
+

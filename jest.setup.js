@@ -18,11 +18,23 @@ jest.mock('react-native-haptic-feedback', () => ({
 }), { virtual: true });
 
 // Mock @react-native-async-storage/async-storage
+const mockAsyncStorageMap = new Map();
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(() => Promise.resolve()),
-  getItem: jest.fn(() => Promise.resolve(null)),
-  removeItem: jest.fn(() => Promise.resolve()),
-  clear: jest.fn(() => Promise.resolve()),
+  setItem: jest.fn((key, value) => {
+    mockAsyncStorageMap.set(key, value);
+    return Promise.resolve();
+  }),
+  getItem: jest.fn((key) => {
+    return Promise.resolve(mockAsyncStorageMap.get(key) || null);
+  }),
+  removeItem: jest.fn((key) => {
+    mockAsyncStorageMap.delete(key);
+    return Promise.resolve();
+  }),
+  clear: jest.fn(() => {
+    mockAsyncStorageMap.clear();
+    return Promise.resolve();
+  }),
 }));
 
 // Mock Supabase client for testing
@@ -50,6 +62,23 @@ jest.mock('./src/lib/supabase', () => {
     }),
   });
 
+  const createQueryBuilder = () => {
+    const builder = {
+      select: jest.fn(() => builder),
+      insert: jest.fn(() => builder),
+      update: jest.fn(() => builder),
+      upsert: jest.fn(() => builder),
+      delete: jest.fn(() => builder),
+      eq: jest.fn(() => builder),
+      order: jest.fn(() => builder),
+      limit: jest.fn(() => builder),
+      single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      maybeSingle: jest.fn(() => Promise.resolve({ data: null, error: null })),
+      then: (resolve) => resolve({ data: null, error: null }),
+    };
+    return builder;
+  };
+
   return {
     supabase: {
       auth: {
@@ -61,15 +90,7 @@ jest.mock('./src/lib/supabase', () => {
         signUp: jest.fn(() => Promise.resolve({ data: { user: null }, error: null })),
         signInAnonymously: jest.fn(() => Promise.resolve({ data: { user: { id: 'guest-1' } }, error: null })),
       },
-      from: jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: null, error: null })),
-          })),
-        })),
-        insert: jest.fn(() => Promise.resolve({ data: null, error: null })),
-        update: jest.fn(() => Promise.resolve({ data: null, error: null })),
-      })),
+      from: jest.fn(() => createQueryBuilder()),
       channel: jest.fn((name) => createMockChannel(name)),
       removeChannel: jest.fn(),
     },
