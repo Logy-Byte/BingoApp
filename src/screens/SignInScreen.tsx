@@ -39,6 +39,20 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
   async function handleGoogleSignIn() {
     try {
       setLoading(true);
+
+      if (Platform.OS === 'web') {
+        // Use Supabase's native web OAuth for the browser
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          }
+        });
+        if (error) throw error;
+        // Supabase will handle the redirect automatically
+        return;
+      }
+
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
 

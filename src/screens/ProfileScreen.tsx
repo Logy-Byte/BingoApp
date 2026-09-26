@@ -41,7 +41,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(playerName);
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     const trimmed = nameInput.trim();
     if (trimmed) {
       const filterRes = globalModerationService.filterContent(trimmed);
@@ -54,6 +54,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       }
       onUpdateName?.(trimmed);
       setIsEditingName(false);
+      
+      // Update in database immediately so it doesn't revert
+      await leaderboardService.updatePlayerName(playerId, trimmed);
     }
   };
 

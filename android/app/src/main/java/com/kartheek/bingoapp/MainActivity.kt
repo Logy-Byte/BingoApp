@@ -1,4 +1,4 @@
-package com.bingoapp
+package com.kartheek.bingoapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

@@ -57,6 +57,24 @@ export const leaderboardService = {
   },
 
   /**
+   * Update the current player's display name
+   */
+  async updatePlayerName(playerId: string, name: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name })
+        .eq('id', playerId);
+        
+      if (error) {
+        console.error('Failed to update player name:', error);
+      }
+    } catch (e) {
+      console.error('Update player name exception:', e);
+    }
+  },
+
+  /**
    * Record a match result in match_history
    */
   async recordMatchResult(

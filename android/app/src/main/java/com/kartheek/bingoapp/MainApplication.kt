@@ -1,4 +1,4 @@
-package com.bingoapp
+package com.kartheek.bingoapp
 
 import android.app.Application
 import com.facebook.react.PackageList
