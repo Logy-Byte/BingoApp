@@ -20,7 +20,6 @@ import {
   UsersIcon,
 } from '../components/icons/CustomIcons';
 import { NumberSourceModal } from '../components/bingo/NumberSourceModal';
-import { CommunityFeedSection } from '../components/ugc/CommunityFeedSection';
 import { useTheme } from '../design/theme';
 
 interface HomeScreenProps {
@@ -205,9 +204,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           testID="home-mode-ai"
         />
       </View>
-
-      {/* 4. COMMUNITY BOARD / UGC FEED (Apple Guideline 1.2 & Google Play UGC Compliant) */}
-      <CommunityFeedSection player={player} />
 
       <Modal visible={showRobotModal} transparent animationType="fade">
         <View style={styles.modalBackdrop}>

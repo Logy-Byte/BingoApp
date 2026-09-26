@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,89 +6,97 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY, TOUCH_TARGET } from '../design/tokens';
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../design/tokens';
 import { useTheme } from '../design/theme';
-import { AppIconVector } from '../components/icons/AppIconVector';
 import { GameButton } from '../components/common/GameButton';
-import { GameInput } from '../components/common/GameInput';
-import { PasswordField } from '../components/auth/PasswordField';
-import { ProfileIcon as UserIcon, UsersIcon } from '../components/icons/CustomIcons';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import appleAuth from '@invertase/react-native-apple-authentication';
+import { GOOGLE_CLIENT_ID } from '@env';
 
 interface SignInScreenProps {
   currentName: string;
   onLogin: (name: string, userId?: string) => void;
-  onNavigateRegister: () => void;
 }
 
 export const SignInScreen: React.FC<SignInScreenProps> = ({
   currentName,
   onLogin,
-  onNavigateRegister,
 }) => {
   const { theme } = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState<string | undefined>();
-  const [passwordError, setPasswordError] = useState<string | undefined>();
-  const [serverError, setServerError] = useState<string | undefined>();
-  const [successMessage, setSuccessMessage] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
-  const validateForm = (): boolean => {
-    let isValid = true;
-    setEmailError(undefined);
-    setPasswordError(undefined);
-    setServerError(undefined);
-    setSuccessMessage(undefined);
-
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setEmailError('Enter your email.');
-      isValid = false;
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        setEmailError('Enter a valid email address.');
-        isValid = false;
-      }
-    }
-
-    if (!password) {
-      setPasswordError('Enter your password.');
-      isValid = false;
-    }
-
-    return isValid;
-  };
-
-  async function signInWithEmail() {
-    if (loading) return;
-    if (!validateForm()) return;
-
-    setLoading(true);
-    setServerError(undefined);
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password,
+  useEffect(() => {
+    // Note: You must configure the Web Client ID from Google Cloud Console here
+    GoogleSignin.configure({
+      webClientId: GOOGLE_CLIENT_ID,
+      iosClientId: 'YOUR_GOOGLE_IOS_CLIENT_ID_HERE.apps.googleusercontent.com',
     });
-    setLoading(false);
+  }, []);
 
-    if (error) {
-      setServerError('Email or password is incorrect.');
-    } else if (data?.user) {
-      onLogin(data.user.email?.split('@')[0] || 'Player', data.user.id);
+  async function handleGoogleSignIn() {
+    try {
+      setLoading(true);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+
+      if (response.type === 'success' && response.data.idToken) {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: response.data.idToken,
+        });
+
+        if (error) throw error;
+        if (data.user) {
+          onLogin(data.user.user_metadata?.full_name || 'Player', data.user.id);
+        }
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Sign up logic moved to RegisterScreen
+  async function handleAppleSignIn() {
+    try {
+      setLoading(true);
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      const credentialState = await appleAuth.getCredentialStateForUser(appleAuthRequestResponse.user);
+
+      if (credentialState === appleAuth.State.AUTHORIZED) {
+        const { identityToken } = appleAuthRequestResponse;
+        if (identityToken) {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: identityToken,
+          });
+
+          if (error) throw error;
+          if (data.user) {
+            const name = data.user.user_metadata?.full_name || 'Player';
+            onLogin(name, data.user.id);
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.code !== appleAuth.Error.CANCELED) {
+        console.error('Apple Sign-In Error:', error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleGuestSubmit() {
     if (loading) return;
     setLoading(true);
-    setServerError(undefined);
 
     const { data, error } = await supabase.auth.signInAnonymously();
     setLoading(false);
@@ -121,71 +129,25 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
       </View>
 
       <View style={styles.formContainer}>
-        {/* Server error banner */}
-        {serverError ? (
-          <View style={[styles.messageBanner, { backgroundColor: 'rgba(239, 68, 68, 0.12)', borderColor: COLORS.dangerRed }]}>
-            <Text style={[styles.messageText, { color: COLORS.dangerRed }]}>{serverError}</Text>
-          </View>
-        ) : null}
-
-        {/* Success message banner */}
-        {successMessage ? (
-          <View style={[styles.messageBanner, { backgroundColor: theme.accentOliveTint, borderColor: COLORS.gentleOlive }]}>
-            <Text style={[styles.messageText, { color: COLORS.lunarShadow }]}>{successMessage}</Text>
-          </View>
-        ) : null}
-
-        <GameInput
-          label="EMAIL ADDRESS"
-          value={email}
-          onChangeText={(text) => {
-            setEmail(text);
-            if (emailError) setEmailError(undefined);
-            if (serverError) setServerError(undefined);
-          }}
-          placeholder="Enter your email"
-          autoCapitalize="none"
-          keyboardType="email-address"
-          error={emailError}
-          icon={<UserIcon size={18} color={theme.textMuted} />}
-        />
-
-        <View style={{ height: 12 }} />
-
-        <PasswordField
-          label="PASSWORD"
-          value={password}
-          onChangeText={(text) => {
-            setPassword(text);
-            if (passwordError) setPasswordError(undefined);
-            if (serverError) setServerError(undefined);
-          }}
-          placeholder="Enter your password"
-          error={passwordError}
-          disabled={loading}
-        />
-
-        <View style={{ flexDirection: 'row', gap: 12, marginTop: SPACING.md }}>
-          <View style={{ flex: 1 }}>
+        <View style={{ gap: SPACING.md }}>
+          {Platform.OS === 'ios' && appleAuth.isSupported && (
             <GameButton
-              title={loading ? 'Signing In…' : 'Sign In'}
-              onPress={signInWithEmail}
-              variant="primary"
-              size="lg"
-              fullWidth
-              disabled={loading}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <GameButton
-              title="Sign Up"
-              onPress={onNavigateRegister}
+              title={loading ? 'Please wait...' : 'Sign in with Apple'}
+              onPress={handleAppleSignIn}
               variant="secondary"
               size="lg"
               fullWidth
               disabled={loading}
             />
-          </View>
+          )}
+          <GameButton
+            title={loading ? 'Please wait...' : 'Sign in with Google'}
+            onPress={handleGoogleSignIn}
+            variant="secondary"
+            size="lg"
+            fullWidth
+            disabled={loading}
+          />
         </View>
 
         <View style={styles.dividerRow}>

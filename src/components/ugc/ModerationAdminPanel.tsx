@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: RADIUS.button,
+    borderRadius: RADIUS.control,
   },
   actionBtnText: {
     fontSize: 11,

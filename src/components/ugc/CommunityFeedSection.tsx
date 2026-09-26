@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   postBtn: {
     paddingHorizontal: SPACING.md,
     paddingVertical: 6,
-    borderRadius: RADIUS.button,
+    borderRadius: RADIUS.control,
     borderWidth: 1,
   },
   postBtnText: {

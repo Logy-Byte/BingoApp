@@ -111,6 +111,13 @@ export const TermsAcceptanceModal: React.FC<TermsAcceptanceModalProps> = ({
                 <Text style={[styles.termsText, { color: theme.textSecondary }]}>
                   Violations of these community rules will result in immediate content removal, in-app account suspension, and potential permanent ejection from the platform. Reports are reviewed by human moderators within 24 hours.
                 </Text>
+
+                <Text style={[styles.sectionHeading, { color: theme.textPrimary }]}>
+                  4. Contact Information & Support
+                </Text>
+                <Text style={[styles.termsText, { color: theme.textSecondary }]}>
+                  To manually report inappropriate activity, appeal a suspension, or if you have any safety concerns, please contact our moderation team directly at support@bingoapp.com.
+                </Text>
               </ScrollView>
 
               {/* Buttons */}
@@ -224,7 +231,7 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     height: 48,
-    borderRadius: RADIUS.button,
+    borderRadius: RADIUS.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -237,7 +244,7 @@ const styles = StyleSheet.create({
   acceptBtn: {
     flex: 1.4,
     height: 48,
-    borderRadius: RADIUS.button,
+    borderRadius: RADIUS.control,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

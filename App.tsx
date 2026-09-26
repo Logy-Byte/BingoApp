@@ -42,7 +42,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNavBar } from './src/components/navigation/BottomNavBar';
 import { SplashScreen } from './src/screens/SplashScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
-import { RegisterScreen } from './src/screens/RegisterScreen';
 import { DeleteAccountScreen } from './src/screens/DeleteAccountScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { RoomSelectionScreen } from './src/screens/RoomSelectionScreen';
@@ -164,9 +163,24 @@ function MainApp() {
 
   // Supabase & Local Session State Listener
   useEffect(() => {
-    const fetchProfile = async (userId: string, email: string | undefined) => {
+    const fetchProfile = async (userId: string, email: string | undefined): Promise<boolean> => {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      
       if (data && !error) {
+        // Block login if banned (Apple requirement)
+        if (data.is_banned) {
+          await supabase.auth.signOut();
+          await AsyncStorage.removeItem('bingo_user_session');
+          if (Platform.OS === 'web') {
+            window.alert('Your account has been suspended due to multiple reports.');
+          } else {
+            Alert.alert('Account Suspended', 'Your account has been suspended due to multiple reports.');
+          }
+          setAuthStatus('UNAUTHENTICATED');
+          setScreenState('SIGN_IN');
+          return false;
+        }
+
         const updated = {
           id: data.id,
           name: data.name,
@@ -177,10 +191,12 @@ function MainApp() {
         };
         setPlayer((prev) => ({ ...prev, ...updated }));
         AsyncStorage.setItem('bingo_user_session', JSON.stringify({ userId: data.id, name: data.name }));
+        return true;
       } else {
         const updated = { id: userId, name: email?.split('@')[0] || 'Player' };
         setPlayer((prev) => ({ ...prev, ...updated }));
         AsyncStorage.setItem('bingo_user_session', JSON.stringify(updated));
+        return true;
       }
     };
 
@@ -189,9 +205,11 @@ function MainApp() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
-          await fetchProfile(session.user.id, session.user.email);
-          setAuthStatus('AUTHENTICATED');
-          setScreenState('TAB_NAV');
+          const isAllowed = await fetchProfile(session.user.id, session.user.email);
+          if (isAllowed) {
+            setAuthStatus('AUTHENTICATED');
+            setScreenState('TAB_NAV');
+          }
           return;
         }
 
@@ -216,11 +234,13 @@ function MainApp() {
 
     initAuth();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
       if (session?.user) {
-        fetchProfile(session.user.id, session.user.email);
-        setAuthStatus('AUTHENTICATED');
-        setScreenState('TAB_NAV');
+        const isAllowed = await fetchProfile(session.user.id, session.user.email);
+        if (isAllowed) {
+          setAuthStatus('AUTHENTICATED');
+          setScreenState('TAB_NAV');
+        }
       }
     });
 
@@ -755,15 +775,10 @@ function MainApp() {
               AsyncStorage.setItem('bingo_user_session', JSON.stringify({ userId: activeId, name }));
               setScreenState('TAB_NAV');
             }}
-            onNavigateRegister={() => setScreenState('REGISTER')}
           />
         )}
 
-        {screenState === 'REGISTER' && (
-          <RegisterScreen
-            onNavigateSignIn={() => setScreenState('SIGN_IN')}
-          />
-        )}
+
 
         {screenState === 'TAB_NAV' && (
           <>

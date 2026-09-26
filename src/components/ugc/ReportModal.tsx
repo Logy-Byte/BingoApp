@@ -208,6 +208,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   <Text style={styles.submitBtnText}>Submit Report</Text>
                 )}
               </TouchableOpacity>
+              
+              <Text style={[styles.contactInfo, { color: theme.textMuted }]}>
+                For immediate assistance or manual reporting, contact support@bingoapp.com
+              </Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -299,7 +303,7 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     height: 48,
-    borderRadius: RADIUS.button,
+    borderRadius: RADIUS.control,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -307,6 +311,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
+    fontFamily: TYPOGRAPHY.fontFamily,
+  },
+  contactInfo: {
+    fontSize: 11,
+    marginTop: SPACING.md,
+    textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily,
   },
 });
