@@ -14,7 +14,7 @@ import { useTheme } from '../design/theme';
 import { GameButton } from '../components/common/GameButton';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import appleAuth from '@invertase/react-native-apple-authentication';
-import { GOOGLE_CLIENT_ID } from '@env';
+import { GOOGLE_CLIENT_ID, IOS_CLIENT_ID } from '@env';
 
 interface SignInScreenProps {
   currentName: string;
@@ -32,13 +32,14 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
     // Note: You must configure the Web Client ID from Google Cloud Console here
     GoogleSignin.configure({
       webClientId: GOOGLE_CLIENT_ID,
-      iosClientId: 'YOUR_GOOGLE_IOS_CLIENT_ID_HERE.apps.googleusercontent.com',
+      iosClientId: IOS_CLIENT_ID,
     });
   }, []);
 
   async function handleGoogleSignIn() {
     try {
       setLoading(true);
+      let user = null;
 
       if (Platform.OS === 'web') {
         // Use Supabase's native web OAuth for the browser
@@ -63,9 +64,19 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
         });
 
         if (error) throw error;
-        if (data.user) {
-          onLogin(data.user.user_metadata?.full_name || 'Player', data.user.id);
-        }
+        user = data.user;
+      }
+
+      if (user) {
+        // Fetch the user's custom name from the profiles table, in case they edited it!
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+
+        const finalName = profile?.name || user.user_metadata?.full_name || 'Player';
+        onLogin(finalName, user.id);
       }
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);

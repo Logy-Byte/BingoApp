@@ -52,11 +52,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         );
         return;
       }
-      onUpdateName?.(trimmed);
+      
       setIsEditingName(false);
       
-      // Update in database immediately so it doesn't revert
+      // Optimistically update local profile state
+      setProfile((prev) => ({ ...prev, name: trimmed, avatar: trimmed.slice(0, 2).toUpperCase() }));
+
+      // Update database FIRST
       await leaderboardService.updatePlayerName(playerId, trimmed);
+      
+      // Then trigger upstream App state
+      onUpdateName?.(trimmed);
     }
   };
 
