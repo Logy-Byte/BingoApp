@@ -101,6 +101,7 @@ export const SignInScreen: React.FC<SignInScreenProps> = ({
           const { data, error } = await supabase.auth.signInWithIdToken({
             provider: 'apple',
             token: identityToken,
+            nonce: appleAuthRequestResponse.nonce,
           });
 
           if (error) throw error;
